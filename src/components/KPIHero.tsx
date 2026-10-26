@@ -45,7 +45,7 @@ function SatuUbin({
 }) {
   return (
     <Link
-      href={`/barang?status=${item.status}`}
+      href={`/toko/barang?status=${item.status}`}
       className="rounded-card border-muted border p-3"
       aria-label={`${item.label}: ${bucket.count} barang, ${rupiah(bucket.lockedValue)} terkunci`}
     >

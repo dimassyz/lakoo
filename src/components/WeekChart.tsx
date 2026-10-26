@@ -1,30 +1,41 @@
-import React from "react";
+const TINGGI_MAKS = 80;
 
-const WeekChart: React.FC = () => {
-  return (
-    <div className="rounded-[8px] border border-[#6B7280] bg-white p-4">
-      <div className="mb-3 text-sm text-[#6B7280]">8 Minggu Penjualan</div>
-      <div className="flex h-40 items-end gap-1">
-        {Array.from({ length: 8 }, (_, i) => (
-          <div
-            key={i}
-            className="flex-1 rounded-t bg-[#10B981]"
-            style={{ height: `${50 + Math.random() * 30}%` }}
-          />
-        ))}
-      </div>
-      <div className="mt-2 flex justify-between text-xs text-[#6B7280]">
-        <div>1</div>
-        <div>2</div>
-        <div>3</div>
-        <div>4</div>
-        <div>5</div>
-        <div>6</div>
-        <div>7</div>
-        <div>8</div>
-      </div>
-    </div>
-  );
+type Props = {
+  /** Terjual per jendela 7 hari; indeks 0 = 7 hari terakhir (SPEC §4.2). */
+  weekQty: number[];
 };
 
-export default WeekChart;
+/**
+ * FSD §11.1 — batang dari `weekQty`, dibalik supaya kiri = terlama.
+ * Tinggi dalam piksel, bukan persen: kolom flex tidak punya tinggi pasti,
+ * jadi persentase akan runtuh.
+ */
+export function WeekChart({ weekQty }: Props) {
+  const nilai = [...weekQty].reverse();
+  const puncak = Math.max(1, ...nilai);
+
+  return (
+    <section className="rounded-card border-muted border p-3">
+      <h2 className="text-muted text-[13px] font-semibold">
+        Terjual per 7 hari · kiri terlama
+      </h2>
+      <div className="mt-2 flex items-end gap-1" aria-hidden="true">
+        {nilai.map((n, i) => (
+          <div key={i} className="flex flex-1 flex-col items-center gap-1">
+            <span className="text-[11px]">{n}</span>
+            <div
+              className="bg-safe w-full rounded-t"
+              style={{
+                height: Math.max(2, Math.round((n / puncak) * TINGGI_MAKS)),
+              }}
+            />
+          </div>
+        ))}
+      </div>
+      <p className="sr-only">
+        Penjualan tujuh hari terakhir, dari terlama ke terbaru:{" "}
+        {nilai.join(", ")} unit.
+      </p>
+    </section>
+  );
+}

@@ -7,8 +7,11 @@ import {
 } from "../../../backend/src/http/node-adapter.ts";
 import { createDb } from "../../../database/src/db.ts";
 
-/** Body dibaca mentah oleh adapter supaya batas 2 MB ditegakkan sebelum buffering. */
-export const config = { api: { bodyParser: false } };
+/**
+ * Body dibaca mentah oleh adapter supaya batas 2 MB ditegakkan sebelum buffering.
+ * `maxDuration` 60 dtk: `/cron/daily` (SPEC §10.1) melewati batas default Vercel.
+ */
+export const config = { api: { bodyParser: false }, maxDuration: 60 };
 
 function allowedOrigins(): string[] {
   return [
