@@ -13,6 +13,7 @@ import { authRoutes } from "./routes/auth.ts";
 import { meRoutes } from "./routes/me.ts";
 import { dashboardRoutes } from "./routes/dashboard.ts";
 import { productRoutes } from "./routes/products.ts";
+import { storeRoutes } from "./routes/store.ts";
 
 export interface AppDeps {
   db: AnyDb;
@@ -47,6 +48,7 @@ export function createApp(deps: AppDeps) {
   app.route("/", meRoutes({ db: deps.db, now }));
   app.route("/", productRoutes({ db: deps.db, now }));
   app.route("/", dashboardRoutes({ db: deps.db, now }));
+  app.route("/", storeRoutes({ db: deps.db, now }));
 
   app.get("/health", async (c) => {
     try {

@@ -44,7 +44,8 @@ function requestBody(context: PromptContext): string {
 
 function textOf(body: GeminiBody): string {
   const text = body.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (typeof text !== "string") throw new Error("Gemini tidak mengembalikan teks");
+  if (typeof text !== "string")
+    throw new Error("Gemini tidak mengembalikan teks");
   return text;
 }
 
@@ -60,12 +61,18 @@ export async function requestPlan(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
   try {
-    const response = await fetchImpl(`${ENDPOINT}/${config.model}:generateContent`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": config.apiKey },
-      signal: controller.signal,
-      body: requestBody(context),
-    });
+    const response = await fetchImpl(
+      `${ENDPOINT}/${config.model}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-goog-api-key": config.apiKey,
+        },
+        signal: controller.signal,
+        body: requestBody(context),
+      },
+    );
     if (!response.ok) throw new Error(`Gemini HTTP ${response.status}`);
 
     const body = (await response.json()) as GeminiBody;

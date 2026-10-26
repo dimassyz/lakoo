@@ -136,14 +136,14 @@ function buildQuery(
     ),
     fs AS (
       SELECT product_id, MIN(received_on) AS first_stock_date
-      FROM stock_ins
-      WHERE store_id = ${storeId} AND qty > 0
+      FROM stock_ins, as_of
+      WHERE store_id = ${storeId} AND qty > 0 AND received_on <= as_of.d
       GROUP BY product_id
     ),
     lc AS (
       SELECT DISTINCT ON (product_id) product_id, unit_cost
-      FROM stock_ins
-      WHERE store_id = ${storeId}
+      FROM stock_ins, as_of
+      WHERE store_id = ${storeId} AND received_on <= as_of.d
       ORDER BY product_id, received_on DESC, created_at DESC
     )
     ${statSelect(storeId, includeArchived)}

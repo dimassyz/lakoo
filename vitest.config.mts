@@ -9,6 +9,7 @@ export default defineConfig({
       "src/**/*.{test,spec}.{ts,tsx}",
       "backend/**/*.{test,spec}.{ts,tsx}",
       "database/**/*.{test,spec}.{ts,tsx}",
+      "test/**/*.{test,spec}.{ts,tsx}",
     ],
   },
 });

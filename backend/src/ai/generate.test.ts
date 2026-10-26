@@ -262,7 +262,6 @@ describe("generatePlan — jaring pengaman template (BR-14)", () => {
     expect(result.source).toBe("template");
     expect(result.fallbackReason).toBe("abort");
   });
-
 });
 
 describe("generatePlan — kegagalan yang harus jatuh ke template", () => {
