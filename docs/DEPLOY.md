@@ -128,3 +128,37 @@ pnpm melaporkan "Already up to date" karena tidak memverifikasi ISI paket,
 hanya keberadaannya. `package.json` + `pnpm-lock.yaml` tidak berubah oleh
 insiden maupun recovery — tidak ada commit yang perlu dibuat untuk insidennya
 sendiri.
+
+## 10. Isu dikenal: perf test di CI (PGlite vs Neon)
+
+**Gejala:** gate CI hijau sampai lapis Type check; lapis Test merah HANYA di
+satu test — `database/src/queries/productStats.test.ts` (SPEC §4.2: ≤ 300 ms
+untuk 500 produk × 365 hari). Lapis Build/Security belum terjangkau.
+
+**Data (3 run CI, kode hampir identik):**
+
+| Run      | Hasil                                               |
+| -------- | --------------------------------------------------- |
+| @734df56 | FAIL — tercepat 337.8 ms dari [337.8, 346.8, 346.6] |
+| @1303608 | PASS (outlier — seluruh gate hijau)                 |
+| @e3862de | FAIL — tercepat 332.4 ms dari [333.5, 334.3, 332.4] |
+
+**Karakterisasi: SISTEMATIS, bukan flaky.** Query konsisten 332–346 ms di
+runner CI; satu lolos adalah kebetulan (outlier menyesatkan). `fileParallelism:
+false` sudah efektif (suite serial) — jadi ini kecepatan query, bukan
+contention.
+
+**Status: isu DIKETAHUI, optimasi query dalam pengerjaan (backend-dev).**
+Target: headroom nyata (jauh di bawah 300 ms) supaya variasi runner tidak
+menentukan hijau-merah. Ambang 300 ms TETAP — SPEC §4.2 menuliskannya sebagai
+requirement; menaikkan ambang supaya CI hijau = melemahkan gate.
+
+**Jaring sekunder:** `retry: 1` khusus test perf (kegagalan sistematis tetap
+gagal dua kali — jujur; retry hanya menyerap runner yang sedang lebih lambat
+dari biasa).
+
+**Fallback (bukan langkah pertama):** test ini jalan di PGlite (WASM
+in-memory) sementara produksi Neon (Postgres native). Kalau backend-dev
+melaporkan query sudah optimal dan PGlite sendiri yang jadi plafon, opsi
+berikutnya: Postgres native service container di CI — memperbaiki lingkungan
+pengukuran, bukan menurunkan syarat. Keputusan terpisah.
