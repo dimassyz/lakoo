@@ -124,7 +124,9 @@ export const stores = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    storeType: storeType("store_type").notNull(),
+    // Nullable: diisi saat onboarding lewat PATCH /store, bukan saat registrasi
+    // (openapi Store.storeType oneOf [StoreType, null]; SPEC §4.1 baris 408).
+    storeType: storeType("store_type"),
     location: text("location"),
     customerTypes: customerType("customer_types")
       .array()

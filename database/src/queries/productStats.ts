@@ -29,6 +29,7 @@ export interface ProductStat {
   sold28: number;
   saleDays28: number;
   sold90: number;
+  archived: boolean;
 }
 
 interface RawStatRow {
@@ -48,6 +49,7 @@ interface RawStatRow {
   sold_28: number | string;
   sale_days_28: number | string;
   sold_90: number | string;
+  archived: boolean;
 }
 
 const num = (value: number | string | null): number =>
@@ -83,7 +85,7 @@ function salesCte(storeId: string): SQL {
     )`;
 }
 
-function statSelect(storeId: string): SQL {
+function statSelect(storeId: string, includeArchived: boolean): SQL {
   return sql`SELECT
       p.id AS product_id,
       p.name,
@@ -100,18 +102,23 @@ function statSelect(storeId: string): SQL {
       ARRAY[${sql.join(weekArray(), sql`, `)}] AS week_qty,
       COALESCE(sales.sold_28, 0) AS sold_28,
       COALESCE(sales.sale_days_28, 0) AS sale_days_28,
-      COALESCE(sales.sold_90, 0) AS sold_90
+      COALESCE(sales.sold_90, 0) AS sold_90,
+      (p.archived_at IS NOT NULL) AS archived
     FROM products p
     LEFT JOIN ins ON ins.product_id = p.id
     LEFT JOIN sales ON sales.product_id = p.id
     LEFT JOIN adj ON adj.product_id = p.id
     LEFT JOIN fs ON fs.product_id = p.id
     LEFT JOIN lc ON lc.product_id = p.id
-    WHERE p.store_id = ${storeId} AND p.archived_at IS NULL
+    WHERE p.store_id = ${storeId} AND (${includeArchived} OR p.archived_at IS NULL)
     ORDER BY p.name ASC`;
 }
 
-function buildQuery(storeId: string, asOf: string): SQL {
+function buildQuery(
+  storeId: string,
+  asOf: string,
+  includeArchived: boolean,
+): SQL {
   return sql`
     WITH as_of AS (SELECT ${asOf}::date AS d),
     ins AS (
@@ -139,7 +146,7 @@ function buildQuery(storeId: string, asOf: string): SQL {
       WHERE store_id = ${storeId}
       ORDER BY product_id, received_on DESC, created_at DESC
     )
-    ${statSelect(storeId)}
+    ${statSelect(storeId, includeArchived)}
   `;
 }
 
@@ -164,6 +171,7 @@ function toStat(row: RawStatRow): ProductStat {
     sold28: num(row.sold_28),
     saleDays28: num(row.sale_days_28),
     sold90: num(row.sold_90),
+    archived: row.archived,
   };
 }
 
@@ -172,7 +180,8 @@ export async function productStats(
   db: SqlRunner,
   storeId: string,
   asOf: string,
+  includeArchived = false,
 ): Promise<ProductStat[]> {
-  const result = await db.execute(buildQuery(storeId, asOf));
+  const result = await db.execute(buildQuery(storeId, asOf, includeArchived));
   return (result.rows as unknown as RawStatRow[]).map(toStat);
 }

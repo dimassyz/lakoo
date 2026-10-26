@@ -36,6 +36,15 @@ async function firstStoreId(): Promise<string | undefined> {
   return (result.rows[0] as { id: string } | undefined)?.id;
 }
 
+/**
+ * Tren empat minggu terakhir (`weekQty[0]` = minggu terbaru): menurun
+ * berturut-turut dan puncaknya minimal 4 unit (SPEC §5.1).
+ */
+function isDeclining(weekQty: readonly number[]): boolean {
+  const at = (index: number): number => weekQty[index] ?? 0;
+  return at(3) > at(2) && at(2) > at(1) && at(1) > at(0) && at(3) >= 4;
+}
+
 /** Cermin SPEC §5.1 di atas hasil query, bukan di atas generator. */
 function statusOfStat(stat: ProductStat): string {
   if (stat.stock <= 0) return "stok_habis";
@@ -44,9 +53,7 @@ function statusOfStat(stat: ProductStat): string {
     : daysBetween(stat.firstStockDate, AS_OF);
   if (days > 45) return "mati";
   if (days > 14) return "sekarat";
-  const [w1 = 0, w2 = 0, w3 = 0, w4 = 0] = stat.weekQty;
-  const declining = w4 > w3 && w3 > w2 && w2 > w1 && w4 >= 4;
-  return declining ? "waspada" : "sehat";
+  return isDeclining(stat.weekQty) ? "waspada" : "sehat";
 }
 
 function statFor(name: string): ProductStat {

@@ -1,8 +1,13 @@
 import { Pool } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
+import type { NeonDatabase } from "drizzle-orm/neon-serverless";
+import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "./schema.ts";
 
 export type Db = ReturnType<typeof createDb>["db"];
+
+/** Neon (produksi) dan PGlite (test) sama-sama memenuhi bentuk ini. */
+export type AnyDb = NeonDatabase<typeof schema> | PgliteDatabase<typeof schema>;
 
 /**
  * Klien Neon (SPEC §3.3). Pool WebSocket mendukung transaksi, yang dibutuhkan
