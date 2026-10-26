@@ -72,8 +72,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   backend-gate:
-    name: Backend gate (format → lint → typecheck → test)
+    name: Backend gate (format → lint → typecheck → test → perf native PG)
     runs-on: ubuntu-latest
+    # Service container Postgres native (SPEC §4.2): perf test diukur di
+    # lingkungan production-like, bukan PGlite/WASM di runner bersama.
+    # Keputusan tech-lead — perbaikan LINGKUNGAN PENGUKURAN, bukan ambang
+    # (300 ms tetap). Suite lain tetap PGlite (cepat, isolasi per file).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: lakoo
+          POSTGRES_PASSWORD: lakoo
+          POSTGRES_DB: lakoo_perf
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -100,8 +118,19 @@ jobs:
       - name: Type check
         run: pnpm typecheck
 
-      # Test: suite database + backend + QA (test/** sudah di root vitest include).
-      # Perf test (§4.2 ≤300ms) tinggal di sini — kalau merah, yang skip hanya
-      # lapis setelahnya di job ini (tidak ada); frontend-gate tetap jalan penuh.
-      - name: Test
-        run: pnpm test
+      # Suite database + backend + QA di PGlite (cepat, isolasi per file).
+      # Perf test TIDAK jalan di sini — punya step sendiri di Postgres native,
+      # supaya sinyal suite tidak dikontaminasi pengukuran dan sebaliknya.
+      - name: Test (suite, PGlite)
+        run: pnpm exec vitest run --exclude '**/productStats.test.ts'
+
+      # Perf test (SPEC §4.2 ≤ 300 ms) terhadap service container Postgres
+      # native: schema dari file migrasi yang SAMA dengan produksi (helper
+      # native-pg), seed deterministik (generateDemo + seedDemoTemplate).
+      # Threshold TIDAK berubah — yang berubah lingkungan ukurnya. Butuh
+      # harness native-pg + PERF_DATABASE_URL switch (backend-dev/QA); kalau
+      # koneksi gagal helper melempar error, TIDAK fallback ke PGlite.
+      - name: Perf test (Postgres native)
+        run: pnpm exec vitest run database/src/queries/productStats.test.ts
+        env:
+          PERF_DATABASE_URL: postgresql://lakoo:lakoo@localhost:5432/lakoo_perf
