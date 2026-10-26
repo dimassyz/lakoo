@@ -94,3 +94,27 @@ demo kedaluwarsa (maks 150 aktif) → bersihkan `idempotency_keys` > 7 hari,
   balik; kalau tidak kompatibel, fix-forward.
 - Setiap rollback dilaporkan (apa yang terjadi, apa yang dilakukan) dan
   membuat card tidak bisa masuk `done` sampai deploy hijau kembali.
+
+## 9. Recovery: `node_modules` rusak (Windows)
+
+Gejala: gate gagal sebelum kode dieksekusi — `vitest` `ERR_MODULE_NOT_FOUND`
+(paket seperti `magic-string`/`sourcemap-codec`), eslint `MODULE_NOT_FOUND`,
+isi direktori paket di `node_modules/.pnpm/...` kosong. Penyebab: install
+pnpm terputus di tengah (dua install paralel pada satu `node_modules`, atau
+proses mati separuh jalan).
+
+Penting: `pnpm install --frozen-lockfile` TIDAK memulihkan ini — pnpm
+melaporkan "Already up to date" karena tidak memverifikasi ISI paket, hanya
+keberadaannya.
+
+Recovery (satu working copy, satu install — jangan jalankan bersamaan dengan
+install orang lain):
+
+```bash
+npx pnpm@10.34.9 install --force --frozen-lockfile
+```
+
+Catatan mesin ini: shim `pnpm` di PATH rusak sejak awal (corepack resolve
+salah path MSYS), jadi `npx pnpm@<versi>` adalah cara BENAR, bukan
+workaround. `package.json` + `pnpm-lock.yaml` tidak berubah oleh insiden
+ini — tidak ada commit yang perlu dibuat untuk recovery itu sendiri.
