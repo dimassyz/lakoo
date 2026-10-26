@@ -209,4 +209,4 @@ Tanggal M1–M3 adalah target; komitmen final menunggu persetujuan Dimas atas TA
 | Tanggal | Versi | Oleh | Keputusan |
 |---|---|---|---|
 | 26 Okt 2026 | Kebutuhan yang disepakati (`docs/KEBUTUHAN.md`) | Dimas | oke |
-| | BRD 1.0 | Dimas | _menunggu_ |
+| 26 Okt 2026 | BRD 1.0 | Dimas | oke (disetujui) |

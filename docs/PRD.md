@@ -189,6 +189,7 @@ Format kriteria: **Diberikan** (kondisi) **Ketika** (aksi) **Maka** (hasil). Sem
 - AC-5: Dashboard tampil ≤ 3 detik di 4G (KS-1).
 - AC-6: Ada bagian "Hari ini" yang hanya berisi: barang yang statusnya berubah sejak kemarin dan tahap rencana yang jatuh tempo hari ini. Bila kosong, tampil satu kalimat "Tidak ada yang perlu dicek hari ini".
 - AC-7: Ketuk satu status → daftar barang berstatus itu, diurutkan menurut skor prioritas (F-12).
+- AC-8: Barang aktif dengan stok 0 berstatus netral **"Stok habis"**. Barang ini tidak masuk empat status di atas dan tidak dihitung sebagai barang bermasalah, karena tidak ada uang yang terkunci di dalamnya.
 
 ### F-11 Perkiraan hari stok habis — Should
 
@@ -255,7 +256,7 @@ Format kriteria: **Diberikan** (kondisi) **Ketika** (aksi) **Maka** (hasil). Sem
 
 **US-17.1** Sebagai pemilik toko, setiap Minggu pagi saya ingin membaca 3 kalimat tentang minggu ini.
 - AC-1: Ringkasan berisi tepat 3 kalimat: (1) apa yang terjadi seminggu ini (total terjual Rp, perubahan uang terkunci), (2) barang yang butuh perhatian (baru masuk Sekarat/Mati/Waspada), (3) rencana yang selesai dan kas pulih minggu ini.
-- AC-2: Ringkasan mencakup Senin–Minggu dan tampil di dashboard pada hari Minggu dan Senin, serta selalu bisa dibuka di halaman Hasil.
+- AC-2: Ringkasan mencakup 7 hari Minggu–Sabtu yang berakhir Sabtu kemarin, sehingga sudah lengkap saat dibaca Minggu pagi. Ringkasan tampil di dashboard pada hari Minggu dan Senin, dan selalu bisa dibuka di halaman Hasil.
 - AC-3: Kalimat boleh disusun AI, tetapi semua angkanya dari sistem. Bila AI gagal, ringkasan dari template tampil dengan angka yang sama.
 - AC-4: Minggu tanpa aktivitas tetap menghasilkan ringkasan yang jujur ("Minggu ini belum ada penjualan tercatat…").
 
@@ -363,4 +364,5 @@ Tidak ada. Semua keputusan bisnis sudah ada di `docs/KEBUTUHAN.md`. Detail tekni
 
 | Tanggal | Versi | Oleh | Keputusan |
 |---|---|---|---|
-| | PRD 1.0 | Dimas | _menunggu_ |
+| 26 Okt 2026 | PRD 1.0 | Dimas | oke (disetujui) |
+| 26 Okt 2026 | PRD 1.1 | tech-lead (delegasi Dimas, lihat `docs/PROJECT_LOG.md`) | Penyelarasan dengan SPEC: F-10 menambah status netral "Stok habis"; F-17 AC-2 mengubah definisi minggu ringkasan |

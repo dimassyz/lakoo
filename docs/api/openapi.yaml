@@ -1,0 +1,1711 @@
+openapi: 3.1.0
+info:
+  title: Lakoo API
+  version: 1.0.0
+  summary: API untuk Lakoo — asisten inventaris toko kelontong.
+  description: |
+    Kontrak API Lakoo. **Sumber kebenaran tunggal** dokumentasi API (lihat AGENTS.md).
+    Hanya tech-lead yang boleh mengubah file ini. Builder yang menemukan kontrak salah/ambigu
+    wajib STOP dan lapor, bukan improvisasi.
+
+    ## Konvensi
+    - Basis path: `/api/v1`, same-origin dengan UI. JSON UTF-8. Field `camelCase`.
+    - Uang = integer Rupiah. Tanggal bisnis = `YYYY-MM-DD` zona Asia/Jakarta (WIB).
+    - Autentikasi: cookie `lakoo_session` (HttpOnly). Semua operasi butuh sesi kecuali yang `security: []`.
+    - Request dengan method selain GET/HEAD wajib `Content-Type: application/json` dan header `Origin`
+      yang diizinkan; bila tidak → `403 bad_origin`.
+    - Resource milik toko lain selalu → `404 not_found` (jangan bocorkan keberadaan).
+    - Body request dengan field tak dikenal → `400 validation_error`.
+    - Logika & rumus: lihat `docs/SPEC.md` §5 (status, skor, harga, kas pulih).
+
+    ## Kode error (`error.code`)
+    `validation_error`, `unauthenticated`, `bad_origin`, `forbidden_demo`, `not_found`,
+    `email_taken`, `invalid_credentials`, `duplicate_product_name`, `insufficient_stock`,
+    `opname_negative`, `edit_window_closed`, `plan_not_applicable`, `plan_already_active`,
+    `plan_invalid_state`, `step_invalid_state`, `idempotency_key_reused`, `rate_limited`,
+    `payload_too_large`, `internal_error`.
+servers:
+  - url: /api/v1
+tags:
+  - name: auth
+    description: Daftar, masuk, keluar, akun demo, sesi saat ini.
+  - name: store
+    description: Profil toko, onboarding, ambang status.
+  - name: products
+    description: Barang, status, penyesuaian stok.
+  - name: stock-ins
+    description: Barang masuk dari nota.
+  - name: sales
+    description: Rekap penjualan harian (jumlah terjual atau opname).
+  - name: imports
+    description: Import daftar barang dan penjualan (baris JSON hasil parsing file di browser).
+  - name: dashboard
+    description: Beranda sekali lirik.
+  - name: plans
+    description: Rencana aksi 3 tahap (AI + cadangan template) dan pelacakannya.
+  - name: results
+    description: Kas pulih dan ringkasan mingguan.
+  - name: system
+    description: Health check dan cron.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /auth/register:
+    post:
+      tags: [auth]
+      operationId: auth_register
+      summary: Daftar akun + toko baru
+      description: Membuat user + toko, lalu langsung membuat sesi (Set-Cookie). Rate limit 5/jam per IP.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+            examples:
+              basic:
+                value: { storeName: Toko Bu Sri, email: sri@contoh.id, password: rahasia123 }
+      responses:
+        '201':
+          description: Akun dibuat dan sesi aktif.
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Email sudah terdaftar (`email_taken`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /auth/login:
+    post:
+      tags: [auth]
+      operationId: auth_login
+      summary: Masuk dengan email + kata sandi
+      description: Rate limit 5 / 15 menit per (IP + email). Pesan gagal selalu generik.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Berhasil masuk.
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401':
+          description: Email atau kata sandi salah (`invalid_credentials`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      operationId: auth_logout
+      summary: Keluar
+      description: Menghapus sesi di server dan mengosongkan cookie. Idempoten.
+      responses:
+        '204':
+          description: Sesi dihapus.
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /auth/demo:
+    post:
+      tags: [auth]
+      operationId: auth_demo_start
+      summary: Mulai akun demo
+      description: |
+        Mengkloning toko template demo menjadi toko pribadi pengunjung (berlaku 24 jam) dan membuat sesi.
+        Rate limit 10/jam per IP. Target ≤ 5 detik. Body boleh kosong `{}`.
+      security: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        '201':
+          description: Toko demo siap.
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503':
+          description: Template demo belum tersedia (`internal_error`). UI menampilkan "Coba lagi sebentar".
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me:
+    get:
+      tags: [auth]
+      operationId: me_get
+      summary: Sesi & toko saat ini
+      responses:
+        '200':
+          description: Data user dan toko.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /store:
+    patch:
+      tags: [store]
+      operationId: store_update
+      summary: Ubah profil toko / onboarding / ambang status
+      description: |
+        Semua field opsional. Field `null` pada `storeType`/`location` = kosongkan.
+        `completeOnboarding: true` mengisi `onboardedAt` (dipakai setelah onboarding, juga saat dilewati).
+        Validasi: `healthyDays` 7–60, `deadDays` 15–180, `healthyDays < deadDays`, `warningWeeks` 2–6.
+        `resetThresholds: true` mengembalikan ambang ke 14/45/3; bila dikirim, field ambang lain di body diabaikan.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StorePatch' }
+      responses:
+        '200':
+          description: Toko setelah diubah.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Store' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /products:
+    get:
+      tags: [products]
+      operationId: products_list
+      summary: Daftar barang dengan status terhitung
+      description: |
+        Mengembalikan semua barang yang cocok (maks 500 barang aktif per toko, tanpa paginasi).
+        Urutan bawaan (`priority`): barang bermasalah menurut `priorityScore` DESC, lalu sisanya `name` ASC.
+        `sort=frequent` mengurutkan menurut `sold28` DESC (dipakai layar rekap & barang masuk).
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/ProductStatus' }
+        - name: q
+          in: query
+          description: Cari nama (case-insensitive, contains). Maks 80 karakter.
+          schema: { type: string, maxLength: 80 }
+        - name: complementary
+          in: query
+          description: Filter barang pelengkap.
+          schema: { type: boolean }
+        - name: includeArchived
+          in: query
+          schema: { type: boolean, default: false }
+        - name: sort
+          in: query
+          schema: { type: string, enum: [priority, name, frequent], default: priority }
+      responses:
+        '200':
+          description: Daftar barang.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, asOf]
+                additionalProperties: false
+                properties:
+                  asOf: { type: string, format: date }
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ProductSummary' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    post:
+      tags: [products]
+      operationId: products_create
+      summary: Tambah barang baru
+      description: |
+        Membuat barang + baris `stock_ins` jenis `opening` (qty = `openingStock`, unitCost = `costPrice`, tanggal hari ini).
+        Nama unik per toko (case/spasi-insensitive) di antara barang aktif → `409 duplicate_product_name`
+        dengan `error.fields.name` dan `error.existingProductId`.
+        Harga jual < harga beli tetap diterima (UI memberi peringatan).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductCreate' }
+            examples:
+              basic:
+                value: { name: Kecap Manis Botol 600ml, costPrice: 21000, sellPrice: 24000, openingStock: 12 }
+      responses:
+        '201':
+          description: Barang dibuat.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductDetail' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/DuplicateProduct' }
+
+  /products/{productId}:
+    parameters:
+      - $ref: '#/components/parameters/ProductId'
+    get:
+      tags: [products]
+      operationId: products_get
+      summary: Detail barang
+      responses:
+        '200':
+          description: Detail barang.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductDetail' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [products]
+      operationId: products_update
+      summary: Ubah barang (termasuk tanda pelengkap)
+      description: |
+        Mengubah `sellPrice` tidak mengubah `daily_sales.unit_price` yang sudah tercatat.
+        Menandai pelengkap (`isComplementary: true`) menghapus rencana `suggested` barang ini;
+        rencana `active` tetap berjalan sampai dihentikan pemilik.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductPatch' }
+      responses:
+        '200':
+          description: Barang setelah diubah.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductDetail' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/DuplicateProduct' }
+
+  /products/{productId}/archive:
+    parameters:
+      - $ref: '#/components/parameters/ProductId'
+    post:
+      tags: [products]
+      operationId: products_archive
+      summary: Arsipkan / pulihkan barang
+      description: |
+        `archived: true` mengarsipkan (rencana suggested dihapus, rencana active → `stopped`).
+        `archived: false` memulihkan; gagal `409 duplicate_product_name` bila nama kini dipakai barang aktif lain.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [archived]
+              additionalProperties: false
+              properties:
+                archived: { type: boolean }
+      responses:
+        '200':
+          description: Barang setelah diubah.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductDetail' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/DuplicateProduct' }
+
+  /products/{productId}/stock-adjustments:
+    parameters:
+      - $ref: '#/components/parameters/ProductId'
+    post:
+      tags: [products]
+      operationId: products_adjust_stock
+      summary: Perbaiki stok tercatat
+      description: |
+        Mengatur stok tercatat hari ini menjadi `countedStock` dengan membuat baris `stock_adjustments`
+        (qty_delta = countedStock − stok sekarang). Bila delta 0 → tidak ada baris, tetap 200.
+        Dipakai tawaran "perbaiki stok" di rekap (PRD US-06.1 AC-5).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [countedStock]
+              additionalProperties: false
+              properties:
+                countedStock: { type: integer, minimum: 0, maximum: 100000 }
+      responses:
+        '200':
+          description: Barang setelah stok diperbaiki.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductDetail' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /stock-ins:
+    get:
+      tags: [stock-ins]
+      operationId: stock_ins_list
+      summary: Riwayat barang masuk
+      description: Urut `receivedOn` DESC, `createdAt` DESC. Bawaan 30 hari terakhir. Hanya kind `purchase`.
+      parameters:
+        - name: from
+          in: query
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          schema: { type: string, format: date }
+        - name: productId
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Daftar barang masuk.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                additionalProperties: false
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/StockIn' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    post:
+      tags: [stock-ins]
+      operationId: stock_ins_create_batch
+      summary: Catat barang masuk (satu nota, banyak baris)
+      description: |
+        Satu transaksi, all-or-nothing. Setiap baris berisi `productId` **atau** `newProduct` (tepat satu).
+        `newProduct` membuat barang baru (tanpa baris opening). Harga beli terakhir barang = `unitCost` baris ini.
+        `receivedOn` tidak boleh masa depan dan ≤ 365 hari lalu. Maks 100 baris.
+        Wajib `Idempotency-Key`. Error per baris dikembalikan di `error.lines[]`.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StockInBatchCreate' }
+            examples:
+              nota:
+                value:
+                  receivedOn: '2026-11-03'
+                  lines:
+                    - { productId: 3f6a1c52-6f0e-4c1e-9d55-2a1c9b7e1a01, qty: 24, unitCost: 3100 }
+                    - { newProduct: { name: Teh Celup Isi 25, sellPrice: 7500 }, qty: 10, unitCost: 6200 }
+      responses:
+        '201':
+          description: Tersimpan.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [batchId, items]
+                additionalProperties: false
+                properties:
+                  batchId: { type: string, format: uuid }
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/StockIn' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+        '422': { $ref: '#/components/responses/LineErrors' }
+
+  /stock-ins/{stockInId}:
+    parameters:
+      - name: stockInId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [stock-ins]
+      operationId: stock_ins_update
+      summary: Koreksi baris barang masuk (≤ 7 hari sejak dibuat)
+      description: |
+        Hanya baris kind `purchase` yang `createdAt` ≤ 7 hari lalu; selain itu `409 edit_window_closed`.
+        Bila koreksi membuat stok hari mana pun < 0 → `422 insufficient_stock`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                qty: { type: integer, minimum: 1, maximum: 100000 }
+                unitCost: { $ref: '#/components/schemas/Rupiah' }
+                receivedOn: { type: string, format: date }
+      responses:
+        '200':
+          description: Baris setelah dikoreksi.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StockIn' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+    delete:
+      tags: [stock-ins]
+      operationId: stock_ins_delete
+      summary: Hapus baris barang masuk (≤ 7 hari sejak dibuat)
+      description: Aturan sama dengan PATCH.
+      responses:
+        '204':
+          description: Terhapus.
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+
+  /sales/recap:
+    get:
+      tags: [sales]
+      operationId: sales_recap_get
+      summary: Data layar rekap untuk satu tanggal
+      description: |
+        Satu baris per barang aktif, urut `sold28` DESC lalu nama.
+        `morningStock` = stok akhir hari sebelumnya + penyesuaian pada tanggal itu;
+        `stockInOnDate` = barang masuk pada tanggal itu; `recordedQty` = penjualan tercatat pada tanggal itu (0 bila belum).
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Data rekap.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SalesRecap' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    put:
+      tags: [sales]
+      operationId: sales_recap_put
+      summary: Simpan rekap penjualan satu tanggal (ganti, bukan tambah)
+      description: |
+        Mode `quantity`: setiap baris `{productId, qty}` → upsert penjualan (qty 0 = hapus).
+        Mode `opname`: setiap baris `{productId, countedStock}` → sold = morningStock + stockInOnDate − countedStock.
+        Barang yang tidak dikirim tidak diubah. Satu transaksi, all-or-nothing (SPEC §5.8).
+        Wajib `Idempotency-Key`. Maks 600 baris; productId tidak boleh berulang.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SalesRecapPut' }
+            examples:
+              quantity:
+                value:
+                  date: '2026-11-03'
+                  mode: quantity
+                  lines: [{ productId: 3f6a1c52-6f0e-4c1e-9d55-2a1c9b7e1a01, qty: 6 }]
+              opname:
+                value:
+                  date: '2026-11-03'
+                  mode: opname
+                  lines: [{ productId: 3f6a1c52-6f0e-4c1e-9d55-2a1c9b7e1a01, countedStock: 18 }]
+      responses:
+        '200':
+          description: Tersimpan.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SalesRecapResult' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+        '422': { $ref: '#/components/responses/LineErrors' }
+
+  /imports/products:
+    post:
+      tags: [imports]
+      operationId: imports_products
+      summary: Import daftar barang (preview / commit)
+      description: |
+        Browser mem-parsing CSV/XLSX lalu mengirim baris JSON. `preview` hanya memvalidasi (tidak menulis).
+        `commit` menulis baris valid saja dalam satu transaksi; baris tidak valid dilaporkan.
+        Duplikat nama dengan barang aktif: `onDuplicate=skip` (lewati) atau `update_price`
+        (perbarui `sellPrice`; bila `costPrice` beda, buat `stock_ins` opening qty 0 dengan harga baru).
+        Duplikat nama di dalam file: baris kedua dst → invalid `duplicate_in_file`. Maks 500 baris.
+        Stok awal dicatat sebagai `stock_ins` opening tanggal hari ini.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ImportProductsRequest' }
+      responses:
+        '200':
+          description: Hasil preview/commit.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportResult' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /imports/sales:
+    post:
+      tags: [imports]
+      operationId: imports_sales
+      summary: Import penjualan (preview / commit)
+      description: |
+        Baris `{date, productName, qty}`; nama dicocokkan dengan `name_key` barang aktif.
+        Baris dengan (barang, tanggal) sama di file dijumlahkan dulu. Penulisan = **ganti** nilai tanggal itu
+        (sama seperti mode quantity), sehingga import ulang file yang sama tidak menggandakan data.
+        Baris yang membuat stok < 0 → invalid `insufficient_stock`. Commit menulis baris valid saja. Maks 5.000 baris.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ImportSalesRequest' }
+      responses:
+        '200':
+          description: Hasil preview/commit.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportResult' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /dashboard:
+    get:
+      tags: [dashboard]
+      operationId: dashboard_get
+      summary: Beranda sekali lirik
+      description: |
+        `today.statusChanges` = barang yang statusnya (asOf hari ini) berbeda dari kemarin.
+        `today.dueSteps` = tahap `in_progress` dengan `dueOn ≤ hari ini`.
+        `weeklySummary` hanya terisi pada hari Minggu dan Senin (WIB); dibuat malas bila belum ada.
+      responses:
+        '200':
+          description: Data beranda.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Dashboard' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /products/{productId}/plans:
+    parameters:
+      - $ref: '#/components/parameters/ProductId'
+    post:
+      tags: [plans]
+      operationId: plans_generate
+      summary: Buat (atau ambil cache) rencana 3 tahap
+      description: |
+        Hanya untuk barang berstatus waspada/sekarat/mati dan bukan pelengkap (`409 plan_not_applicable`).
+        Ada rencana `active` → `409 plan_already_active`.
+        Ada `suggested` dan `regenerate=false` → kembalikan yang ada (200, tanpa AI).
+        Selain itu buat baru (201): AI ≤ 12 detik, gagal apa pun → template (SPEC §6.1). Respons ≤ 15 detik.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                regenerate: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Rencana tersimpan sebelumnya.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Plan' }
+        '201':
+          description: Rencana baru dibuat.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Plan' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /products/{productId}/plans/current:
+    parameters:
+      - $ref: '#/components/parameters/ProductId'
+    get:
+      tags: [plans]
+      operationId: plans_get_current
+      summary: Rencana suggested/active barang ini (bila ada) + rencana terakhir yang sudah berakhir
+      responses:
+        '200':
+          description: Rencana saat ini.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [plan, lastEnded]
+                additionalProperties: false
+                properties:
+                  plan:
+                    oneOf:
+                      - $ref: '#/components/schemas/Plan'
+                      - type: 'null'
+                  lastEnded:
+                    oneOf:
+                      - $ref: '#/components/schemas/Plan'
+                      - type: 'null'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /plans:
+    get:
+      tags: [plans]
+      operationId: plans_list
+      summary: Daftar rencana toko
+      description: |
+        Urut `startedOn` DESC (null terakhir), lalu `generatedAt` DESC.
+        Tanpa filter `state` = semua rencana kecuali `suggested`.
+      parameters:
+        - name: state
+          in: query
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/PlanState' }
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: Daftar rencana.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                additionalProperties: false
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Plan' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /plans/{planId}/start:
+    parameters:
+      - $ref: '#/components/parameters/PlanId'
+    post:
+      tags: [plans]
+      operationId: plans_start
+      summary: Jalankan rencana (suggested → active)
+      description: |
+        Mencatat `startedOn` = hari ini dan `lockedValueAtStart`; tahap 1 → `in_progress`.
+        State bukan `suggested` → `409 plan_invalid_state`. `shareText` diisi ulang dengan tanggal berlaku nyata.
+      responses:
+        '200':
+          description: Rencana aktif.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Plan' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /plans/{planId}/steps/{stepNo}/outcome:
+    parameters:
+      - $ref: '#/components/parameters/PlanId'
+      - $ref: '#/components/parameters/StepNo'
+    post:
+      tags: [plans]
+      operationId: plans_step_outcome
+      summary: Tandai hasil tahap yang sedang berjalan
+      description: |
+        Hanya tahap `in_progress` (lainnya → `409 step_invalid_state`).
+        `succeeded` → rencana `completed`, tahap sisanya `skipped`.
+        `failed` → tahap berikut `in_progress` (mulai hari ini); bila tahap 3 → rencana `exhausted`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [outcome]
+              additionalProperties: false
+              properties:
+                outcome: { type: string, enum: [succeeded, failed] }
+      responses:
+        '200':
+          description: Rencana setelah diperbarui.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Plan' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /plans/{planId}/steps/{stepNo}/apply-price:
+    parameters:
+      - $ref: '#/components/parameters/PlanId'
+      - $ref: '#/components/parameters/StepNo'
+    post:
+      tags: [plans]
+      operationId: plans_step_apply_price
+      summary: Pemilik setuju mengubah harga jual ke harga tahap ini
+      description: |
+        Hanya untuk tahap `in_progress` milik rencana `active`. Mengubah `products.sellPrice` menjadi `newPrice` tahap.
+        Tidak pernah dipanggil otomatis (BRD O-9). Tahap dengan `newPrice` sama dengan harga jual sekarang → `409 step_invalid_state`.
+      responses:
+        '200':
+          description: Barang setelah harga diubah.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductDetail' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /plans/{planId}/stop:
+    parameters:
+      - $ref: '#/components/parameters/PlanId'
+    post:
+      tags: [plans]
+      operationId: plans_stop
+      summary: Hentikan rencana aktif
+      description: active → stopped; tahap `in_progress` → `skipped`. State lain → `409 plan_invalid_state`.
+      responses:
+        '200':
+          description: Rencana dihentikan.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Plan' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /results:
+    get:
+      tags: [results]
+      operationId: results_get
+      summary: Kas pulih & ringkasan hasil
+      description: |
+        `totalRecovered` = Σ kas pulih semua rencana yang pernah dijalankan. `recovered30d` = Σ kas pulih
+        dari penjualan 30 hari terakhir (North Star). `plans` = rencana yang pernah dijalankan (bukan suggested).
+      responses:
+        '200':
+          description: Hasil.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Results' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /weekly-summaries/latest:
+    get:
+      tags: [results]
+      operationId: weekly_summaries_latest
+      summary: Ringkasan minggu lengkap terakhir (dibuat malas bila belum ada)
+      responses:
+        '200':
+          description: Ringkasan.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WeeklySummary' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /health:
+    get:
+      tags: [system]
+      operationId: health_get
+      summary: Health check
+      description: Mengecek koneksi DB (`SELECT 1`). Tidak menyentuh AI.
+      security: []
+      responses:
+        '200':
+          description: Sehat.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, time]
+                additionalProperties: false
+                properties:
+                  status: { type: string, enum: [ok] }
+                  time: { type: string, format: date-time }
+        '503':
+          description: DB tidak terjangkau.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /cron/daily:
+    get:
+      tags: [system]
+      operationId: cron_daily
+      summary: Tugas harian (dipanggil Vercel Cron)
+      description: 'Lihat SPEC §10.1. Wajib header `Authorization: Bearer <CRON_SECRET>`.'
+      security:
+        - cronBearer: []
+      responses:
+        '200':
+          description: Selesai.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [demoTemplateRegenerated, plansWarmed, aiPlansWarmed, demoClonesDeleted, durationMs]
+                additionalProperties: false
+                properties:
+                  demoTemplateRegenerated: { type: boolean }
+                  plansWarmed: { type: integer }
+                  aiPlansWarmed: { type: integer }
+                  demoClonesDeleted: { type: integer }
+                  durationMs: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: lakoo_session
+      description: Token sesi acak 32 byte (base64url). HttpOnly; Secure; SameSite=Lax; 30 hari (demo 24 jam).
+    cronBearer:
+      type: http
+      scheme: bearer
+      description: Nilai env `CRON_SECRET`.
+
+  headers:
+    SessionCookie:
+      description: '`lakoo_session=<token>; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=<detik>`'
+      schema: { type: string }
+
+  parameters:
+    ProductId:
+      name: productId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    PlanId:
+      name: planId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    StepNo:
+      name: stepNo
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1, maximum: 3 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: UUID v4 yang dibuat klien sekali per isian (dipakai ulang saat kirim ulang outbox).
+      schema: { type: string, format: uuid }
+
+  responses:
+    ValidationError:
+      description: Format body/parameter tidak valid (`validation_error`); detail per field di `error.fields`.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthenticated:
+      description: Belum masuk / sesi kedaluwarsa (`unauthenticated`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Origin tidak diizinkan (`bad_origin`) atau aksi dilarang (`forbidden_demo`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Tidak ditemukan atau milik toko lain (`not_found`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: Konflik state (`plan_not_applicable`, `plan_already_active`, `plan_invalid_state`, `step_invalid_state`, `edit_window_closed`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    DuplicateProduct:
+      description: Nama barang sudah dipakai barang aktif (`duplicate_product_name`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    IdempotencyConflict:
+      description: Idempotency-Key sudah dipakai untuk endpoint lain (`idempotency_key_reused`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    BusinessRule:
+      description: Aturan bisnis menolak (`insufficient_stock`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    LineErrors:
+      description: Satu atau lebih baris ditolak; tidak ada yang tersimpan. Detail di `error.lines[]`.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          examples:
+            insufficient:
+              value:
+                error:
+                  code: insufficient_stock
+                  message: Ada baris yang perlu dicek.
+                  lines:
+                    - { index: 2, code: insufficient_stock, message: Stok tercatat hanya 3. }
+    RateLimited:
+      description: Terlalu banyak percobaan (`rate_limited`). Header `Retry-After` dalam detik.
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    PayloadTooLarge:
+      description: Body lebih dari 2 MB atau baris melebihi batas (`payload_too_large`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Rupiah:
+      type: integer
+      minimum: 0
+      maximum: 100000000
+      description: Integer Rupiah.
+
+    Error:
+      type: object
+      required: [error]
+      additionalProperties: false
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          additionalProperties: false
+          properties:
+            code: { type: string }
+            message:
+              type: string
+              description: Bahasa Indonesia, aman ditampilkan ke pengguna.
+            fields:
+              type: object
+              additionalProperties: { type: string }
+              description: Path field → pesan.
+            lines:
+              type: array
+              items:
+                type: object
+                required: [index, code, message]
+                additionalProperties: false
+                properties:
+                  index: { type: integer, minimum: 0 }
+                  code: { type: string }
+                  message: { type: string }
+            existingProductId:
+              type: string
+              format: uuid
+              description: Hanya pada `duplicate_product_name`.
+
+    RegisterRequest:
+      type: object
+      required: [storeName, email, password]
+      additionalProperties: false
+      properties:
+        storeName: { type: string, minLength: 1, maxLength: 60 }
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, minLength: 8, maxLength: 72 }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      additionalProperties: false
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, minLength: 1, maxLength: 72 }
+
+    StoreType:
+      type: string
+      enum: [warung_kelontong, toko_kelontong, minimarket_kecil, warung_sembako, lainnya]
+
+    CustomerType:
+      type: string
+      enum: [warga_perumahan, anak_sekolah, pekerja_pabrik_kantor, pedagang_lain, pengendara_lewat, kos_mahasiswa]
+
+    Store:
+      type: object
+      required: [id, name, storeType, location, customerTypes, healthyDays, deadDays, warningWeeks, aiEnabled, onboarded, profileComplete, isDemo]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        storeType:
+          oneOf:
+            - $ref: '#/components/schemas/StoreType'
+            - type: 'null'
+        location: { type: [string, 'null'] }
+        customerTypes:
+          type: array
+          items: { $ref: '#/components/schemas/CustomerType' }
+        healthyDays: { type: integer }
+        deadDays: { type: integer }
+        warningWeeks: { type: integer }
+        aiEnabled: { type: boolean }
+        onboarded:
+          type: boolean
+          description: onboardedAt sudah terisi.
+        profileComplete:
+          type: boolean
+          description: storeType, location, dan minimal satu customerTypes terisi.
+        isDemo: { type: boolean }
+
+    StorePatch:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 60 }
+        storeType:
+          oneOf:
+            - $ref: '#/components/schemas/StoreType'
+            - type: 'null'
+        location: { type: [string, 'null'], maxLength: 80 }
+        customerTypes:
+          type: array
+          maxItems: 6
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/CustomerType' }
+        healthyDays: { type: integer, minimum: 7, maximum: 60 }
+        deadDays: { type: integer, minimum: 15, maximum: 180 }
+        warningWeeks: { type: integer, minimum: 2, maximum: 6 }
+        resetThresholds: { type: boolean }
+        aiEnabled: { type: boolean }
+        completeOnboarding: { type: boolean }
+
+    Me:
+      type: object
+      required: [user, store]
+      additionalProperties: false
+      properties:
+        user:
+          type: object
+          required: [id, email, isDemo, demoExpiresAt]
+          additionalProperties: false
+          properties:
+            id: { type: string, format: uuid }
+            email:
+              type: [string, 'null']
+              description: Kosong (null) untuk akun demo.
+            isDemo: { type: boolean }
+            demoExpiresAt: { type: [string, 'null'], format: date-time }
+        store: { $ref: '#/components/schemas/Store' }
+
+    ProductStatus:
+      type: string
+      enum: [sehat, waspada, sekarat, mati, stok_habis]
+
+    ProductSummary:
+      description: Ringkasan barang (ketat — tidak boleh ada field tambahan).
+      allOf:
+        - $ref: '#/components/schemas/ProductBase'
+      unevaluatedProperties: false
+
+    ProductBase:
+      description: |
+        Field bersama ProductSummary & ProductDetail. Tidak dipakai langsung di respons;
+        ketatnya dijaga `unevaluatedProperties: false` di skema yang memakainya.
+      type: object
+      required:
+        - id
+        - name
+        - unit
+        - category
+        - sellPrice
+        - lastCost
+        - stock
+        - lockedValue
+        - status
+        - lastSaleDate
+        - daysSinceLastSale
+        - daysUntilEmpty
+        - restockSoon
+        - sold28
+        - isComplementary
+        - complementaryOverstock
+        - complementaryThreshold
+        - priorityScore
+        - reason
+        - planState
+        - archived
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        unit: { type: string }
+        category: { type: [string, 'null'] }
+        sellPrice: { $ref: '#/components/schemas/Rupiah' }
+        lastCost: { $ref: '#/components/schemas/Rupiah' }
+        stock: { type: integer }
+        lockedValue:
+          type: integer
+          description: max(stock, 0) × lastCost.
+        status: { $ref: '#/components/schemas/ProductStatus' }
+        lastSaleDate: { type: [string, 'null'], format: date }
+        daysSinceLastSale:
+          type: [integer, 'null']
+          description: Hari sejak laku terakhir (atau sejak stok pertama bila belum pernah laku).
+        daysUntilEmpty:
+          type: [integer, 'null']
+          description: Hanya sehat/waspada; null bila belum cukup data (SPEC §5.2).
+        restockSoon: { type: boolean }
+        sold28: { type: integer }
+        isComplementary: { type: boolean }
+        complementaryOverstock: { type: boolean }
+        complementaryThreshold:
+          type: [integer, 'null']
+          description: Hanya untuk pelengkap.
+        priorityScore:
+          type: [integer, 'null']
+          minimum: 0
+          maximum: 100
+          description: Hanya waspada/sekarat/mati non-pelengkap.
+        reason: { type: [string, 'null'] }
+        planState:
+          description: State rencana suggested/active bila ada.
+          oneOf:
+            - $ref: '#/components/schemas/PlanState'
+            - type: 'null'
+        archived: { type: boolean }
+
+    ProductDetail:
+      description: Detail barang (ketat).
+      allOf:
+        - $ref: '#/components/schemas/ProductBase'
+        - type: object
+          required: [complementaryMaxStock, weekQty, firstStockDate, createdAt]
+          properties:
+            complementaryMaxStock: { type: [integer, 'null'] }
+            weekQty:
+              type: array
+              minItems: 8
+              maxItems: 8
+              items: { type: integer }
+              description: Terjual per jendela 7 hari; indeks 0 = 7 hari terakhir (SPEC §4.2).
+            firstStockDate: { type: [string, 'null'], format: date }
+            createdAt: { type: string, format: date-time }
+      unevaluatedProperties: false
+
+    ProductCreate:
+      type: object
+      required: [name, costPrice, sellPrice, openingStock]
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+        unit: { type: string, minLength: 1, maxLength: 16, default: pcs }
+        category: { type: [string, 'null'], maxLength: 40 }
+        costPrice: { $ref: '#/components/schemas/Rupiah' }
+        sellPrice: { $ref: '#/components/schemas/Rupiah' }
+        openingStock: { type: integer, minimum: 0, maximum: 100000 }
+        isComplementary: { type: boolean, default: false }
+
+    ProductPatch:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+        unit: { type: string, minLength: 1, maxLength: 16 }
+        category: { type: [string, 'null'], maxLength: 40 }
+        sellPrice: { $ref: '#/components/schemas/Rupiah' }
+        isComplementary: { type: boolean }
+        complementaryMaxStock: { type: [integer, 'null'], minimum: 1, maximum: 100000 }
+
+    StockIn:
+      type: object
+      required: [id, batchId, productId, productName, receivedOn, qty, unitCost, createdAt, editable]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        batchId: { type: string, format: uuid }
+        productId: { type: string, format: uuid }
+        productName: { type: string }
+        receivedOn: { type: string, format: date }
+        qty: { type: integer }
+        unitCost: { $ref: '#/components/schemas/Rupiah' }
+        createdAt: { type: string, format: date-time }
+        editable:
+          type: boolean
+          description: createdAt ≤ 7 hari lalu.
+
+    StockInBatchCreate:
+      type: object
+      required: [receivedOn, lines]
+      additionalProperties: false
+      properties:
+        receivedOn: { type: string, format: date }
+        lines:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: object
+            required: [qty, unitCost]
+            additionalProperties: false
+            properties:
+              productId: { type: string, format: uuid }
+              newProduct:
+                type: object
+                required: [name, sellPrice]
+                additionalProperties: false
+                properties:
+                  name: { type: string, minLength: 1, maxLength: 80 }
+                  unit: { type: string, minLength: 1, maxLength: 16, default: pcs }
+                  category: { type: [string, 'null'], maxLength: 40 }
+                  sellPrice: { $ref: '#/components/schemas/Rupiah' }
+              qty: { type: integer, minimum: 1, maximum: 100000 }
+              unitCost: { $ref: '#/components/schemas/Rupiah' }
+            oneOf:
+              - required: [productId]
+              - required: [newProduct]
+
+    SalesRecap:
+      type: object
+      required: [date, isToday, hasRecord, lines]
+      additionalProperties: false
+      properties:
+        date: { type: string, format: date }
+        isToday: { type: boolean }
+        hasRecord:
+          type: boolean
+          description: Ada penjualan tercatat untuk tanggal ini.
+        lines:
+          type: array
+          items:
+            type: object
+            required: [productId, name, unit, sellPrice, morningStock, stockInOnDate, recordedQty, currentStock]
+            additionalProperties: false
+            properties:
+              productId: { type: string, format: uuid }
+              name: { type: string }
+              unit: { type: string }
+              sellPrice: { $ref: '#/components/schemas/Rupiah' }
+              morningStock: { type: integer }
+              stockInOnDate: { type: integer }
+              recordedQty: { type: integer }
+              currentStock:
+                type: integer
+                description: Stok hari ini (WIB) setelah semua catatan.
+
+    SalesRecapPut:
+      type: object
+      required: [date, mode, lines]
+      additionalProperties: false
+      properties:
+        date: { type: string, format: date }
+        mode: { type: string, enum: [quantity, opname] }
+        lines:
+          type: array
+          minItems: 1
+          maxItems: 600
+          items:
+            type: object
+            required: [productId]
+            additionalProperties: false
+            properties:
+              productId: { type: string, format: uuid }
+              qty:
+                type: integer
+                minimum: 0
+                maximum: 100000
+                description: Wajib pada mode quantity.
+              countedStock:
+                type: integer
+                minimum: 0
+                maximum: 100000
+                description: Wajib pada mode opname.
+
+    SalesRecapResult:
+      type: object
+      required: [date, mode, lines, totalSold, totalRevenue]
+      additionalProperties: false
+      properties:
+        date: { type: string, format: date }
+        mode: { type: string, enum: [quantity, opname] }
+        totalSold: { type: integer }
+        totalRevenue: { type: integer }
+        lines:
+          type: array
+          items:
+            type: object
+            required: [productId, soldQty, stockAfter, status]
+            additionalProperties: false
+            properties:
+              productId: { type: string, format: uuid }
+              soldQty: { type: integer }
+              stockAfter:
+                type: integer
+                description: Stok hari ini setelah simpan.
+              status: { $ref: '#/components/schemas/ProductStatus' }
+
+    ImportMode:
+      type: string
+      enum: [preview, commit]
+
+    ImportProductsRequest:
+      type: object
+      required: [mode, rows]
+      additionalProperties: false
+      properties:
+        mode: { $ref: '#/components/schemas/ImportMode' }
+        onDuplicate: { type: string, enum: [skip, update_price], default: skip }
+        rows:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            type: object
+            required: [name, costPrice, sellPrice, stock]
+            additionalProperties: false
+            properties:
+              name:
+                type: [string, 'null']
+                maxLength: 200
+                description: Divalidasi 1–80 karakter di server per baris.
+              unit: { type: [string, 'null'], maxLength: 50 }
+              category: { type: [string, 'null'], maxLength: 100 }
+              costPrice:
+                type: [integer, string, 'null']
+                description: Angka atau teks mentah dari file; divalidasi per baris.
+              sellPrice: { type: [integer, string, 'null'] }
+              stock: { type: [integer, string, 'null'] }
+
+    ImportSalesRequest:
+      type: object
+      required: [mode, rows]
+      additionalProperties: false
+      properties:
+        mode: { $ref: '#/components/schemas/ImportMode' }
+        rows:
+          type: array
+          minItems: 1
+          maxItems: 5000
+          items:
+            type: object
+            required: [date, productName, qty]
+            additionalProperties: false
+            properties:
+              date:
+                type: [string, 'null']
+                maxLength: 20
+                description: YYYY-MM-DD atau DD/MM/YYYY; divalidasi per baris.
+              productName: { type: [string, 'null'], maxLength: 200 }
+              qty: { type: [integer, string, 'null'] }
+
+    ImportResult:
+      type: object
+      required: [mode, totalRows, validRows, invalidRows, created, updated, skipped]
+      additionalProperties: false
+      properties:
+        mode: { $ref: '#/components/schemas/ImportMode' }
+        totalRows: { type: integer }
+        validRows: { type: integer }
+        created:
+          type: integer
+          description: 0 pada preview.
+        updated:
+          type: integer
+          description: 0 pada preview.
+        skipped:
+          type: integer
+          description: Duplikat yang dilewati (atau akan dilewati pada preview).
+        invalidRows:
+          type: array
+          items:
+            type: object
+            required: [index, code, message]
+            additionalProperties: false
+            properties:
+              index:
+                type: integer
+                minimum: 0
+                description: Indeks baris di rows (0-based).
+              code:
+                type: string
+                enum: [invalid_name, invalid_price, invalid_qty, invalid_date, unknown_product, duplicate_in_file, insufficient_stock]
+              message: { type: string }
+
+    StatusBucket:
+      type: object
+      required: [count, lockedValue]
+      additionalProperties: false
+      properties:
+        count: { type: integer }
+        lockedValue: { type: integer }
+
+    Dashboard:
+      type: object
+      required: [asOf, store, totals, today, topPriority, complementaryOverstock, restockSoon, weeklySummary]
+      additionalProperties: false
+      properties:
+        asOf: { type: string, format: date }
+        store: { $ref: '#/components/schemas/Store' }
+        totals:
+          type: object
+          required: [lockedValue, complementaryLockedValue, problemLockedValue, byStatus]
+          additionalProperties: false
+          properties:
+            lockedValue: { type: integer }
+            complementaryLockedValue: { type: integer }
+            problemLockedValue:
+              type: integer
+              description: Σ lockedValue waspada + sekarat + mati non-pelengkap.
+            byStatus:
+              type: object
+              required: [sehat, waspada, sekarat, mati, stok_habis]
+              additionalProperties: false
+              properties:
+                sehat: { $ref: '#/components/schemas/StatusBucket' }
+                waspada: { $ref: '#/components/schemas/StatusBucket' }
+                sekarat: { $ref: '#/components/schemas/StatusBucket' }
+                mati: { $ref: '#/components/schemas/StatusBucket' }
+                stok_habis: { $ref: '#/components/schemas/StatusBucket' }
+        today:
+          type: object
+          required: [statusChanges, dueSteps]
+          additionalProperties: false
+          properties:
+            statusChanges:
+              type: array
+              items:
+                type: object
+                required: [productId, name, from, to]
+                additionalProperties: false
+                properties:
+                  productId: { type: string, format: uuid }
+                  name: { type: string }
+                  from: { $ref: '#/components/schemas/ProductStatus' }
+                  to: { $ref: '#/components/schemas/ProductStatus' }
+            dueSteps:
+              type: array
+              items:
+                type: object
+                required: [planId, productId, productName, stepNo, title, dueOn]
+                additionalProperties: false
+                properties:
+                  planId: { type: string, format: uuid }
+                  productId: { type: string, format: uuid }
+                  productName: { type: string }
+                  stepNo: { type: integer, minimum: 1, maximum: 3 }
+                  title: { type: string }
+                  dueOn: { type: string, format: date }
+        topPriority:
+          type: array
+          maxItems: 3
+          items: { $ref: '#/components/schemas/ProductSummary' }
+        complementaryOverstock:
+          type: array
+          items: { $ref: '#/components/schemas/ProductSummary' }
+        restockSoon:
+          type: array
+          maxItems: 10
+          items: { $ref: '#/components/schemas/ProductSummary' }
+        weeklySummary:
+          oneOf:
+            - $ref: '#/components/schemas/WeeklySummary'
+            - type: 'null'
+
+    PlanState:
+      type: string
+      enum: [suggested, active, completed, exhausted, stopped, sold_out]
+
+    ActionType:
+      type: string
+      enum: [display_move, bundle, discount, promo_wa, sell_at_cost, clearance, stop_restock]
+
+    PlanStep:
+      type: object
+      required:
+        - stepNo
+        - actionType
+        - title
+        - instructions
+        - successCriteria
+        - durationDays
+        - discountPercent
+        - belowCostPercent
+        - bundleProduct
+        - bundlePrice
+        - oldPrice
+        - newPrice
+        - profitPerUnit
+        - isLoss
+        - cashBackEstimate
+        - shareText
+        - outcome
+        - startedOn
+        - dueOn
+        - endedOn
+      additionalProperties: false
+      properties:
+        stepNo: { type: integer, minimum: 1, maximum: 3 }
+        actionType: { $ref: '#/components/schemas/ActionType' }
+        title:
+          type: string
+          description: Placeholder sudah diisi sistem.
+        instructions: { type: string }
+        successCriteria: { type: string }
+        durationDays: { type: integer, minimum: 3, maximum: 21 }
+        discountPercent: { type: [integer, 'null'] }
+        belowCostPercent: { type: [integer, 'null'] }
+        bundleProduct:
+          oneOf:
+            - type: object
+              required: [id, name, sellPrice]
+              additionalProperties: false
+              properties:
+                id: { type: string, format: uuid }
+                name: { type: string }
+                sellPrice: { type: integer }
+            - type: 'null'
+        bundlePrice:
+          type: [integer, 'null']
+          description: Harga paket A+B (hanya bundle).
+        oldPrice:
+          type: integer
+          description: sellPrice barang saat rencana dibuat.
+        newPrice: { type: integer }
+        profitPerUnit:
+          type: integer
+          description: newPrice − lastCost (bisa negatif).
+        isLoss: { type: boolean }
+        cashBackEstimate:
+          type: integer
+          description: newPrice × stok saat rencana dibuat.
+        shareText: { type: [string, 'null'], maxLength: 500 }
+        outcome: { type: string, enum: [pending, in_progress, succeeded, failed, skipped] }
+        startedOn: { type: [string, 'null'], format: date }
+        dueOn: { type: [string, 'null'], format: date }
+        endedOn: { type: [string, 'null'], format: date }
+
+    Plan:
+      type: object
+      required:
+        - id
+        - productId
+        - productName
+        - source
+        - state
+        - statusAtGeneration
+        - rationale
+        - generatedAt
+        - startedOn
+        - endedOn
+        - lockedValueAtStart
+        - currentStep
+        - recovered
+        - recoveredPercent
+        - steps
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        productId: { type: string, format: uuid }
+        productName: { type: string }
+        source:
+          type: string
+          enum: [ai, template]
+          description: 'Label UI: "Disusun AI" untuk ai, "Saran dasar" untuk template.'
+        state: { $ref: '#/components/schemas/PlanState' }
+        statusAtGeneration: { $ref: '#/components/schemas/ProductStatus' }
+        rationale: { type: string }
+        generatedAt: { type: string, format: date-time }
+        startedOn: { type: [string, 'null'], format: date }
+        endedOn: { type: [string, 'null'], format: date }
+        lockedValueAtStart: { type: [integer, 'null'] }
+        currentStep: { type: [integer, 'null'], minimum: 1, maximum: 3 }
+        recovered:
+          type: integer
+          description: Kas pulih (SPEC §5.7); 0 bila belum dimulai.
+        recoveredPercent: { type: integer, minimum: 0, maximum: 100 }
+        steps:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items: { $ref: '#/components/schemas/PlanStep' }
+
+    WeeklySummary:
+      type: object
+      required: [weekStart, weekEnd, sentences]
+      additionalProperties: false
+      properties:
+        weekStart:
+          type: string
+          format: date
+          description: Hari Minggu awal minggu.
+        weekEnd:
+          type: string
+          format: date
+          description: Hari Sabtu akhir minggu.
+        sentences:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items: { type: string }
+
+    Results:
+      type: object
+      required: [totalRecovered, recovered30d, activeCount, finishedCount, plans, latestWeeklySummary]
+      additionalProperties: false
+      properties:
+        totalRecovered: { type: integer }
+        recovered30d: { type: integer }
+        activeCount: { type: integer }
+        finishedCount:
+          type: integer
+          description: completed + exhausted + stopped + sold_out.
+        plans:
+          type: array
+          items: { $ref: '#/components/schemas/Plan' }
+        latestWeeklySummary:
+          oneOf:
+            - $ref: '#/components/schemas/WeeklySummary'
+            - type: 'null'

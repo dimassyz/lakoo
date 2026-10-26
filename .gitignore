@@ -1,0 +1,48 @@
+# --- dependencies ---
+node_modules/
+.pnpm-store/
+
+# --- build output ---
+dist/
+build/
+out/
+.next/
+*.tsbuildinfo
+next-env.d.ts
+
+# --- env & secrets (kredensial TIDAK BOLEH masuk repo) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+
+# --- vercel ---
+.vercel
+
+# --- test & coverage ---
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# --- lighthouse ---
+.lighthouseci/
+
+# --- logs & OS ---
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+
+# --- editors ---
+.idea/
+.vscode/
+*.swp
+
+# temp files
+.hermes-tmp*
+*.tmp

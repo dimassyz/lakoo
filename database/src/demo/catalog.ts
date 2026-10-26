@@ -1,0 +1,128 @@
+/**
+ * Katalog 100 barang nyata khas kelontong + peran status yang ditargetkan.
+ * Harga beli/jual wajar 2026 (rupiah). Peran dipakai generator untuk membentuk
+ * riwayat penjualan supaya distribusi SPEC §10.2 terpenuhi.
+ */
+
+export type TargetStatus = "sehat" | "waspada" | "sekarat" | "mati" | "stok_habis";
+
+export interface CatalogItem {
+  readonly name: string;
+  readonly unit: string;
+  readonly category: string;
+  readonly sellPrice: number;
+  readonly lastCost: number;
+  readonly role: TargetStatus;
+  /** Pelengkap (SPEC §5.2) — status tetap sehat, dilaporkan terpisah. */
+  readonly isComplementary?: boolean;
+  readonly complementaryMaxStock?: number;
+  /** Override stok akhir; kalau kosong dihitung dari peran. */
+  readonly endStock?: number;
+  /** Barang tanpa penjualan sama sekali dalam 90 hari (kasus brief). */
+  readonly neverSold?: boolean;
+  /** Barang yang penjualannya baru hidup lagi 10 hari terakhir (rencana aktif). */
+  readonly revived?: boolean;
+}
+
+export const CATALOG: readonly CatalogItem[] = [
+  { name: "Mie Instan Goreng", unit: "pcs", category: "Makanan Instan", sellPrice: 3500, lastCost: 2900, role: "sehat" },
+  { name: "Mie Instan Kuah Ayam", unit: "pcs", category: "Makanan Instan", sellPrice: 3300, lastCost: 2750, role: "sehat" },
+  { name: "Mie Instan Soto", unit: "pcs", category: "Makanan Instan", sellPrice: 3300, lastCost: 2750, role: "waspada" },
+  { name: "Mie Telur Kering 200g", unit: "bungkus", category: "Makanan Instan", sellPrice: 8000, lastCost: 6800, role: "sehat" },
+  { name: "Bihun Jagung 100g", unit: "bungkus", category: "Makanan Instan", sellPrice: 4500, lastCost: 3700, role: "sekarat" },
+  { name: "Air Mineral 600ml", unit: "botol", category: "Minuman", sellPrice: 4000, lastCost: 2900, role: "sehat" },
+  { name: "Air Mineral Galon Isi Ulang", unit: "galon", category: "Minuman", sellPrice: 6000, lastCost: 4500, role: "stok_habis" },
+  { name: "Teh Celup 25 Kantung", unit: "kotak", category: "Minuman", sellPrice: 7500, lastCost: 6200, role: "sehat" },
+  { name: "Kopi Sachet Hitam", unit: "sachet", category: "Minuman", sellPrice: 1500, lastCost: 1100, role: "sehat" },
+  { name: "Kopi Sachet Susu", unit: "sachet", category: "Minuman", sellPrice: 2000, lastCost: 1550, role: "sehat" },
+  { name: "Kopi Bubuk 65g", unit: "bungkus", category: "Minuman", sellPrice: 12000, lastCost: 10000, role: "sekarat" },
+  { name: "Susu Kental Manis 370g", unit: "kaleng", category: "Minuman", sellPrice: 12500, lastCost: 10800, role: "sehat" },
+  { name: "Susu UHT 250ml", unit: "kotak", category: "Minuman", sellPrice: 6500, lastCost: 5400, role: "sehat" },
+  { name: "Teh Botol 350ml", unit: "botol", category: "Minuman", sellPrice: 5000, lastCost: 4000, role: "waspada" },
+  { name: "Sirup Marjan 460ml", unit: "botol", category: "Minuman", sellPrice: 23000, lastCost: 20000, role: "mati" },
+  { name: "Minuman Serbuk Rasa Jeruk", unit: "sachet", category: "Minuman", sellPrice: 2000, lastCost: 1500, role: "sehat" },
+  { name: "Kecap Manis Botol 600ml", unit: "botol", category: "Bumbu", sellPrice: 22000, lastCost: 18500, role: "mati", neverSold: true },
+  { name: "Kecap Manis Sachet", unit: "sachet", category: "Bumbu", sellPrice: 1500, lastCost: 1100, role: "sekarat" },
+  { name: "Saus Sambal 335ml", unit: "botol", category: "Bumbu", sellPrice: 15000, lastCost: 12500, role: "sehat" },
+  { name: "Saus Tomat 335ml", unit: "botol", category: "Bumbu", sellPrice: 14500, lastCost: 12000, role: "mati" },
+  { name: "Garam Beryodium 250g", unit: "bungkus", category: "Bumbu", sellPrice: 4000, lastCost: 3100, role: "sehat" },
+  { name: "Gula Pasir 1kg", unit: "kg", category: "Bumbu", sellPrice: 16000, lastCost: 14000, role: "sehat" },
+  { name: "Gula Pasir 250g", unit: "bungkus", category: "Bumbu", sellPrice: 5000, lastCost: 4200, role: "stok_habis" },
+  { name: "Gula Merah 250g", unit: "bungkus", category: "Bumbu", sellPrice: 6000, lastCost: 5000, role: "sehat" },
+  { name: "Penyedap Rasa Sachet", unit: "sachet", category: "Bumbu", sellPrice: 500, lastCost: 350, role: "sehat", isComplementary: true, complementaryMaxStock: 120 },
+  { name: "Penyedap Rasa 100g", unit: "bungkus", category: "Bumbu", sellPrice: 4500, lastCost: 3700, role: "sehat" },
+  { name: "Merica Bubuk Sachet", unit: "sachet", category: "Bumbu", sellPrice: 1000, lastCost: 700, role: "sehat" },
+  { name: "Bawang Merah 250g", unit: "bungkus", category: "Bumbu", sellPrice: 9000, lastCost: 7500, role: "sehat" },
+  { name: "Bawang Putih 250g", unit: "bungkus", category: "Bumbu", sellPrice: 8000, lastCost: 6500, role: "sehat" },
+  { name: "Cabe Merah 100g", unit: "bungkus", category: "Bumbu", sellPrice: 5000, lastCost: 4000, role: "sehat" },
+  { name: "Minyak Goreng 1L", unit: "pouch", category: "Sembako", sellPrice: 18000, lastCost: 16000, role: "sehat" },
+  { name: "Minyak Goreng 2L", unit: "pouch", category: "Sembako", sellPrice: 35000, lastCost: 31500, role: "sekarat" },
+  { name: "Minyak Goreng 500ml", unit: "pouch", category: "Sembako", sellPrice: 10000, lastCost: 8700, role: "sehat" },
+  { name: "Beras Premium 5kg", unit: "karung", category: "Sembako", sellPrice: 72000, lastCost: 65000, role: "sehat" },
+  { name: "Beras Medium 5kg", unit: "karung", category: "Sembako", sellPrice: 65000, lastCost: 58000, role: "sehat" },
+  { name: "Tepung Terigu 1kg", unit: "bungkus", category: "Sembako", sellPrice: 13000, lastCost: 11500, role: "sehat" },
+  { name: "Tepung Bumbu Serbaguna", unit: "bungkus", category: "Sembako", sellPrice: 6000, lastCost: 4800, role: "sehat" },
+  { name: "Telur Ayam 1kg", unit: "kg", category: "Sembako", sellPrice: 30000, lastCost: 26500, role: "sehat" },
+  { name: "Biskuit Kelapa", unit: "bungkus", category: "Snack", sellPrice: 9000, lastCost: 7500, role: "sehat" },
+  { name: "Biskuit Cokelat", unit: "bungkus", category: "Snack", sellPrice: 8500, lastCost: 7000, role: "sehat" },
+  { name: "Wafer Cokelat", unit: "bungkus", category: "Snack", sellPrice: 2000, lastCost: 1500, role: "sehat" },
+  { name: "Keripik Kentang 68g", unit: "bungkus", category: "Snack", sellPrice: 11000, lastCost: 9200, role: "sehat" },
+  { name: "Kerupuk Udang 250g", unit: "bungkus", category: "Snack", sellPrice: 8000, lastCost: 6500, role: "waspada" },
+  { name: "Kacang Goreng 200g", unit: "bungkus", category: "Snack", sellPrice: 9000, lastCost: 7400, role: "sehat" },
+  { name: "Snack Jagung Bakar", unit: "bungkus", category: "Snack", sellPrice: 1500, lastCost: 1000, role: "sehat" },
+  { name: "Permen Mint", unit: "bungkus", category: "Snack", sellPrice: 500, lastCost: 300, role: "stok_habis" },
+  { name: "Cokelat Batang 65g", unit: "bungkus", category: "Snack", sellPrice: 12000, lastCost: 10000, role: "sehat" },
+  { name: "Roti Manis Kemasan", unit: "pcs", category: "Snack", sellPrice: 4000, lastCost: 3000, role: "sehat" },
+  { name: "Sampo Botol 170ml", unit: "botol", category: "Perawatan Diri", sellPrice: 21000, lastCost: 17500, role: "sehat", endStock: 40 },
+  { name: "Sampo Sachet", unit: "sachet", category: "Perawatan Diri", sellPrice: 1000, lastCost: 700, role: "sehat" },
+  { name: "Sabun Mandi Batang", unit: "pcs", category: "Perawatan Diri", sellPrice: 4000, lastCost: 3100, role: "sehat", revived: true },
+  { name: "Sabun Mandi Cair 250ml", unit: "botol", category: "Perawatan Diri", sellPrice: 18000, lastCost: 15000, role: "waspada" },
+  { name: "Pasta Gigi 190g", unit: "tube", category: "Perawatan Diri", sellPrice: 14000, lastCost: 11500, role: "sehat" },
+  { name: "Sikat Gigi", unit: "pcs", category: "Perawatan Diri", sellPrice: 6000, lastCost: 4200, role: "sehat" },
+  { name: "Sabun Cuci Muka", unit: "pcs", category: "Perawatan Diri", sellPrice: 9000, lastCost: 7500, role: "sehat" },
+  { name: "Deodoran Roll On", unit: "pcs", category: "Perawatan Diri", sellPrice: 15000, lastCost: 12500, role: "sekarat" },
+  { name: "Minyak Rambut 100ml", unit: "botol", category: "Perawatan Diri", sellPrice: 11000, lastCost: 9000, role: "mati" },
+  { name: "Sabun Cuci Piring 800ml", unit: "botol", category: "Rumah Tangga", sellPrice: 13000, lastCost: 11000, role: "waspada" },
+  { name: "Sabun Cuci Batang", unit: "pcs", category: "Rumah Tangga", sellPrice: 4500, lastCost: 3500, role: "sehat" },
+  { name: "Deterjen Bubuk 800g", unit: "bungkus", category: "Rumah Tangga", sellPrice: 20000, lastCost: 17000, role: "sehat" },
+  { name: "Deterjen Sachet", unit: "sachet", category: "Rumah Tangga", sellPrice: 2000, lastCost: 1500, role: "sehat" },
+  { name: "Pewangi Pakaian 900ml", unit: "botol", category: "Rumah Tangga", sellPrice: 18000, lastCost: 15500, role: "sehat" },
+  { name: "Pembersih Lantai 800ml", unit: "botol", category: "Rumah Tangga", sellPrice: 15000, lastCost: 12500, role: "sehat" },
+  { name: "Pembersih Kaca 500ml", unit: "botol", category: "Rumah Tangga", sellPrice: 17000, lastCost: 14000, role: "mati" },
+  { name: "Spons Cuci Piring", unit: "pcs", category: "Rumah Tangga", sellPrice: 3000, lastCost: 2000, role: "sehat", isComplementary: true },
+  { name: "Sapu Lantai", unit: "pcs", category: "Rumah Tangga", sellPrice: 25000, lastCost: 19000, role: "sehat" },
+  { name: "Tempat Sampah Kecil", unit: "pcs", category: "Rumah Tangga", sellPrice: 20000, lastCost: 15000, role: "sekarat" },
+  { name: "Lilin Putih", unit: "pcs", category: "Rumah Tangga", sellPrice: 2000, lastCost: 1300, role: "stok_habis" },
+  { name: "Korek Api", unit: "bungkus", category: "Rumah Tangga", sellPrice: 3000, lastCost: 2000, role: "sehat", isComplementary: true },
+  { name: "Gas LPG 3kg", unit: "tabung", category: "Rumah Tangga", sellPrice: 22000, lastCost: 19000, role: "stok_habis" },
+  { name: "Baterai AA", unit: "pcs", category: "Lainnya", sellPrice: 4000, lastCost: 2800, role: "sehat" },
+  { name: "Baterai AAA", unit: "pcs", category: "Lainnya", sellPrice: 4000, lastCost: 2800, role: "sekarat" },
+  { name: "Lampu LED 5W", unit: "pcs", category: "Lainnya", sellPrice: 18000, lastCost: 14000, role: "sekarat" },
+  { name: "Kabel Roll 5m", unit: "pcs", category: "Lainnya", sellPrice: 45000, lastCost: 36000, role: "mati" },
+  { name: "Buku Tulis 38 Lembar", unit: "pcs", category: "Alat Tulis", sellPrice: 4500, lastCost: 3200, role: "sekarat" },
+  { name: "Pulpen Standar", unit: "pcs", category: "Alat Tulis", sellPrice: 3000, lastCost: 2000, role: "stok_habis" },
+  { name: "Pensil 2B", unit: "pcs", category: "Alat Tulis", sellPrice: 2500, lastCost: 1600, role: "sehat" },
+  { name: "Penghapus", unit: "pcs", category: "Alat Tulis", sellPrice: 2000, lastCost: 1200, role: "sehat" },
+  { name: "Penggaris 30cm", unit: "pcs", category: "Alat Tulis", sellPrice: 4000, lastCost: 2800, role: "mati" },
+  { name: "Lem Kertas", unit: "pcs", category: "Alat Tulis", sellPrice: 5000, lastCost: 3600, role: "mati" },
+  { name: "Tisu Gulung", unit: "pcs", category: "Rumah Tangga", sellPrice: 5000, lastCost: 3800, role: "sehat", isComplementary: true, complementaryMaxStock: 6, endStock: 40 },
+  { name: "Tisu Wajah 250 Lembar", unit: "kotak", category: "Rumah Tangga", sellPrice: 15000, lastCost: 12500, role: "waspada" },
+  { name: "Kapas Kecantikan", unit: "bungkus", category: "Perawatan Diri", sellPrice: 6000, lastCost: 4500, role: "mati" },
+  { name: "Pembalut Wanita", unit: "bungkus", category: "Perawatan Diri", sellPrice: 12000, lastCost: 9800, role: "sehat" },
+  { name: "Popok Bayi M", unit: "bungkus", category: "Perawatan Diri", sellPrice: 45000, lastCost: 38000, role: "sehat" },
+  { name: "Susu Formula 400g", unit: "kotak", category: "Perawatan Diri", sellPrice: 68000, lastCost: 60000, role: "sekarat" },
+  { name: "Biskuit Bayi 120g", unit: "bungkus", category: "Snack", sellPrice: 12000, lastCost: 10000, role: "sehat" },
+  { name: "Madu 250ml", unit: "botol", category: "Minuman", sellPrice: 35000, lastCost: 29000, role: "mati" },
+  { name: "Kopi Instan Botol 200g", unit: "botol", category: "Minuman", sellPrice: 28000, lastCost: 24000, role: "sehat" },
+  { name: "Teh Celup Melati 25", unit: "kotak", category: "Minuman", sellPrice: 8000, lastCost: 6500, role: "sehat" },
+  { name: "Air Mineral 1.5L", unit: "botol", category: "Minuman", sellPrice: 6000, lastCost: 4500, role: "sehat" },
+  { name: "Minuman Isotonik 500ml", unit: "botol", category: "Minuman", sellPrice: 8000, lastCost: 6300, role: "sehat" },
+  { name: "Susu Kental Manis Sachet", unit: "sachet", category: "Minuman", sellPrice: 2500, lastCost: 1900, role: "stok_habis" },
+  { name: "Keju Cheddar 160g", unit: "bungkus", category: "Sembako", sellPrice: 22000, lastCost: 18500, role: "mati" },
+  { name: "Mentega Serbaguna 200g", unit: "bungkus", category: "Sembako", sellPrice: 15000, lastCost: 12500, role: "sehat" },
+  { name: "Sarden Kaleng 155g", unit: "kaleng", category: "Makanan Instan", sellPrice: 12000, lastCost: 9800, role: "sehat" },
+  { name: "Kornet Kaleng 198g", unit: "kaleng", category: "Makanan Instan", sellPrice: 25000, lastCost: 21500, role: "sehat" },
+  { name: "Abon Sapi 100g", unit: "bungkus", category: "Makanan Instan", sellPrice: 28000, lastCost: 24000, role: "mati" },
+  { name: "Nugget Ayam 250g", unit: "bungkus", category: "Makanan Instan", sellPrice: 25000, lastCost: 21000, role: "waspada" },
+  { name: "Sosis Ayam 250g", unit: "bungkus", category: "Makanan Instan", sellPrice: 22000, lastCost: 18500, role: "sekarat" },
+];
