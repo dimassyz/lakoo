@@ -130,11 +130,11 @@ T-9 (backend API, CRITICAL PATH) ─> T-10 (cron) ─> T-11 (QA) ─> T-12 (secu
 | T-6  | REQUEST_CHANGES    | 2 dari 3 write gagal; barang.tsx tanpa filter/chip/state, detail.tsx tanpa section rencana, WeekChart pakai Math.random()                                                                                                  |
 | T-7  | BELUM DIBUKA       | menunggu T-3..T-6 lolos review                                                                                                                                                                                             |
 | T-8  | BELUM DIBUKA       | menunggu T-7                                                                                                                                                                                                               |
-| T-9  | BELUM MULAI        | **critical path** — backend-dev mulai setelah 3 keputusan T-10 dijawab (sudah dijawab tech-lead 26 Okt)                                                                                                                    |
-| T-10 | SEBAGIAN           | database/ landed (schema, migrasi, productStats, generator demo, 18 test lulus); cron nunggu T-9; TS5097 nunggu patch tsconfig oleh devops                                                                                 |
+| T-9 | BERJALAN | **critical path** — irisan 1 (fondasi: Hono, error envelope 19 kode, origin guard, /health 503, mount Pages Router, node-adapter) APPROVE 26 Okt dengan bukti runtime; irisan 2 (sesi + argon2id + auth endpoints) dibuka |
+| T-10 | SEBAGIAN | database/ landed (schema, migrasi, productStats, generator demo, 18 test lulus; TS5097 sudah difix via tsconfig); menunggu: fix QA-01 (CTE `lc` asOf) + statusOfStat complexity 13; cron nunggu T-9 |
 | T-11 | SIAP TEST PLAN     | qa-engineer boleh menulis test plan dari dokumen sekarang; eksekusi nunggu staging URL                                                                                                                                     |
 | T-12 | TERBUKA            | review surface saat ini selesai (2 LOW, 0 must-fix); full review nunggu T-9 + staging                                                                                                                                      |
-| T-13 | BLOKIR             | PR #1 landing ada (chore/landing-1.0, d65600a) TAPI gate merah → REQUEST_CHANGES; merge nunggu APPROVE + QA ALL GREEN + SECURE; deploy staging nunggu aplikasi landing + aksi akun (Vercel connect, env §8.3, Neon branch) |
+| T-13 | BLOKIR | PR #1 landing ada (chore/landing-1.0, sekarang 8068e68) — gate: typecheck/test/build hijau untuk file dalam PR; format+lint masih merah lintas pemilik; merge nunggu APPROVE + QA ALL GREEN + SECURE; deploy staging nunggu aplikasi landing + aksi akun (Vercel connect, env §8.3, Neon branch) |
 
 **Keputusan tech-lead 26 Okt 2026 (menggantungkan agen):**
 
