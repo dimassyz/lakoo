@@ -24,3 +24,12 @@ export type PlanStep = components["schemas"]["PlanStep"];
 export type Results = components["schemas"]["Results"];
 export type ProductCreate = components["schemas"]["ProductCreate"];
 export type ProductPatch = components["schemas"]["ProductPatch"];
+export type CustomerType = components["schemas"]["CustomerType"];
+export type ImportProductsRequest =
+  components["schemas"]["ImportProductsRequest"];
+export type ImportResult = components["schemas"]["ImportResult"];
+export type ImportSalesRequest = components["schemas"]["ImportSalesRequest"];
+export type Me = components["schemas"]["Me"];
+export type Store = components["schemas"]["Store"];
+export type StorePatch = components["schemas"]["StorePatch"];
+export type StoreType = components["schemas"]["StoreType"];
