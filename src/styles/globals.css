@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* Token DESIGN.md §2–§5. Satu sumber warna; tidak ada warna lain di src/. */
+@theme {
+  --color-surface: #f8f7f4;
+  --color-ink: #1f1f1f;
+  --color-muted: #6b7280;
+  --color-safe: #10b981;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 8px;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-size: 17px;
+    line-height: 1.5;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-safe);
+    outline-offset: 2px;
+  }
+}
