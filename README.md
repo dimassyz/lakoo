@@ -97,27 +97,35 @@ cadangan template), hosting Vercel. Detail & alasan: SPEC §3.3.
 
 ## Dokumen
 
-> CATATAN: `docs/` bersifat DISK-ONLY kecuali `docs/api/openapi.yaml` (input
-> build). Fresh clone tidak memuat SPEC/FSD/PROJECT_LOG — salin dari working
-> tree mesin pengembang dulu.
+**Di repo** (bisa dibuka dari halaman ini):
 
-| Dokumen                       | Isi                                                                         |
-| ----------------------------- | --------------------------------------------------------------------------- |
-| `docs/SPEC.md`                | Spesifikasi teknis (arsitektur, data model, domain, keamanan) — v1.0 FROZEN |
-| `docs/FSD.md`                 | Perilaku per layar (input, proses, output, validasi, error)                 |
-| `docs/DESIGN.md`              | Arah visual                                                                 |
-| `docs/api/openapi.yaml`       | Kontrak API — sumber kebenaran (satu-satunya docs yang di-repo)             |
-| `docs/BRD.md` / `docs/PRD.md` | Kebutuhan bisnis & produk                                                   |
-| `docs/TASKS.md`               | Rincian task per role                                                       |
-| `docs/DEPLOY.md`              | Runbook deploy: lingkungan, env, migrasi, cron, rollback                    |
-| `AGENTS.md`                   | Konteks bersama untuk semua agent (kepemilikan file, konvensi)              |
-| `CODE_STANDARDS.md`           | Standar kode & gate CI (beku)                                               |
+| Dokumen                                          | Isi                                                            |
+| ------------------------------------------------ | -------------------------------------------------------------- |
+| [`docs/api/openapi.yaml`](docs/api/openapi.yaml) | Kontrak API — sumber kebenaran; input build `pnpm api:types`   |
+| [`AGENTS.md`](AGENTS.md)                         | Konteks bersama untuk semua agent (kepemilikan file, konvensi) |
+| [`CODE_STANDARDS.md`](CODE_STANDARDS.md)         | Standar kode & gate CI (beku)                                  |
+
+**Internal tim** (tidak dipublikasikan di repo ini — tersimpan di working tree tim):
+
+| Dokumen         | Isi                                                                         |
+| --------------- | --------------------------------------------------------------------------- |
+| SPEC.md         | Spesifikasi teknis (arsitektur, data model, domain, keamanan) — v1.0 FROZEN |
+| FSD.md          | Perilaku per layar (input, proses, output, validasi, error)                 |
+| DESIGN.md       | Arah visual                                                                 |
+| BRD.md / PRD.md | Kebutuhan bisnis & produk                                                   |
+| TASKS.md        | Rincian task per role                                                       |
+| DEPLOY.md       | Runbook deploy: lingkungan, env, migrasi, cron, rollback                    |
+
+> Dokumen internal hanya hidup di working tree tim — fresh clone tidak
+> memuatnya (kecuali `docs/api/openapi.yaml` yang di repo karena input
+> build). Kalau kamu baru clone dan butuh SPEC/FSD, minta salinannya ke
+> tim dulu.
 
 ## Deploy
 
 Lingkungan (preview / staging / produksi), variabel env, migrasi cron, dan
-prosedur rollback ada di **`docs/DEPLOY.md`** (working tree — lihat catatan
-disk-only di atas). Alurnya: merge ke `main` → Vercel build staging →
+prosedur rollback ada di runbook deploy internal tim (`DEPLOY.md` — lihat
+§Dokumen). Alurnya: merge ke `main` → Vercel build staging →
 `pnpm db:migrate` ke Neon branch `staging` → verifikasi → produksi lewat
 branch `release` setelah acceptance.
 
