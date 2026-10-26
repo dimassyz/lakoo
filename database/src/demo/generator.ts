@@ -359,19 +359,20 @@ interface StepDraft {
   shareText?: string;
 }
 
-function toStep(
-  draft: StepDraft,
-  stepNo: number,
-  outcome: GeneratedPlanStep["outcome"],
-  lastCost: number,
-  stock: number,
-  startedOn: string | null,
-  dueOn: string | null,
-  endedOn: string | null,
-): GeneratedPlanStep {
-  const profitPerUnit = draft.newPrice - lastCost;
+interface StepTiming {
+  stepNo: number;
+  outcome: GeneratedPlanStep["outcome"];
+  lastCost: number;
+  stock: number;
+  startedOn: string | null;
+  dueOn: string | null;
+  endedOn: string | null;
+}
+
+function toStep(draft: StepDraft, timing: StepTiming): GeneratedPlanStep {
+  const profitPerUnit = draft.newPrice - timing.lastCost;
   return {
-    stepNo,
+    stepNo: timing.stepNo,
     actionType: draft.actionType,
     title: draft.title,
     instructions: draft.instructions,
@@ -381,15 +382,66 @@ function toStep(
     belowCostPercent: draft.belowCostPercent ?? null,
     newPrice: draft.newPrice,
     profitPerUnit,
-    cashBackEstimate: draft.newPrice * Math.max(stock, 0),
+    cashBackEstimate: draft.newPrice * Math.max(timing.stock, 0),
     isLoss: profitPerUnit < 0,
     shareText: draft.shareText ?? null,
-    outcome,
-    startedOn,
-    dueOn,
-    endedOn,
+    outcome: timing.outcome,
+    startedOn: timing.startedOn,
+    dueOn: timing.dueOn,
+    endedOn: timing.endedOn,
   };
 }
+
+/** Teks tahap statis (SPEC §4.1: bebas digit); hanya harga yang dihitung per barang. */
+const ACTIVE_STEPS = {
+  discount: {
+    actionType: "discount",
+    title: "Turunkan harga",
+    instructions:
+      "Pasang harga promo di rak depan dan beri tanda diskon supaya pembeli langsung melihatnya.",
+    successCriteria: "Barang laku lagi sebelum tenggat.",
+    durationDays: 7,
+    discountPercent: 15,
+    shareText: SHARE_TEXT,
+  },
+  sellAtCost: {
+    actionType: "sell_at_cost",
+    title: "Jual seharga kulakan",
+    instructions:
+      "Jual tanpa ambil untung supaya uang yang terkunci kembali ke kas.",
+    successCriteria: "Sisa stok berkurang sebelum tenggat.",
+    durationDays: 7,
+    shareText: SHARE_TEXT,
+  },
+  clearance: {
+    actionType: "clearance",
+    title: "Obral rugi terakhir",
+    instructions:
+      "Obral sisa stok dengan harga di bawah kulakan supaya rak kosong dan uang pulih.",
+    successCriteria: "Tidak ada sisa stok di rak.",
+    durationDays: 7,
+    belowCostPercent: 20,
+    shareText: SHARE_TEXT,
+  },
+} satisfies Record<string, Omit<StepDraft, "newPrice">>;
+
+const COMPLETED_STEP = {
+  actionType: "display_move",
+  title: "Pindahkan ke rak depan",
+  instructions: "Taruh dekat kasir supaya pembeli melihatnya saat membayar.",
+  successCriteria: "Barang laku lagi sebelum tenggat.",
+  durationDays: 7,
+} satisfies Omit<StepDraft, "newPrice">;
+
+const SKIPPED_STEP = {
+  actionType: "discount",
+  title: "Turunkan harga",
+  instructions:
+    "Cadangan bila tahap pertama belum cukup menggerakkan penjualan.",
+  successCriteria: "Barang laku lagi sebelum tenggat.",
+  durationDays: 7,
+  discountPercent: 10,
+} satisfies Omit<StepDraft, "newPrice">;
 
 /** Rencana `active` pada barang mati yang mulai laku lagi (SPEC §10.2). */
 function buildActivePlan(
@@ -398,69 +450,36 @@ function buildActivePlan(
 ): GeneratedPlan {
   const startedOn = shiftIsoDate(asOf, -10);
   const stock = Math.max(stockOn(product, startedOn), 1);
-  const sell = product.sellPrice;
-  const cost = product.lastCost;
-  const stepOneDue = shiftIsoDate(startedOn, 7);
-  const stepTwoDue = shiftIsoDate(stepOneDue, 7);
+  const { sellPrice: sell, lastCost: cost } = product;
+  const dueOne = shiftIsoDate(startedOn, 7);
+  const dueTwo = shiftIsoDate(dueOne, 7);
+  const timing = (
+    stepNo: number,
+    outcome: GeneratedPlanStep["outcome"],
+    from: string | null,
+    due: string | null,
+    ended: string | null,
+  ): StepTiming => ({
+    stepNo,
+    outcome,
+    lastCost: cost,
+    stock,
+    startedOn: from,
+    dueOn: due,
+    endedOn: ended,
+  });
 
   const stepOne = toStep(
-    {
-      actionType: "discount",
-      title: "Turunkan harga",
-      instructions:
-        "Pasang harga promo di rak depan dan beri tanda diskon supaya pembeli langsung melihatnya.",
-      successCriteria: "Barang laku lagi sebelum tenggat.",
-      durationDays: 7,
-      discountPercent: 15,
-      newPrice: round100(sell * 0.85),
-      shareText: SHARE_TEXT,
-    },
-    1,
-    "succeeded",
-    cost,
-    stock,
-    startedOn,
-    stepOneDue,
-    stepOneDue,
+    { ...ACTIVE_STEPS.discount, newPrice: round100(sell * 0.85) },
+    timing(1, "succeeded", startedOn, dueOne, dueOne),
   );
   const stepTwo = toStep(
-    {
-      actionType: "sell_at_cost",
-      title: "Jual seharga kulakan",
-      instructions:
-        "Jual tanpa ambil untung supaya uang yang terkunci kembali ke kas.",
-      successCriteria: "Sisa stok berkurang sebelum tenggat.",
-      durationDays: 7,
-      newPrice: Math.max(cost, 100),
-      shareText: SHARE_TEXT,
-    },
-    2,
-    "in_progress",
-    cost,
-    stock,
-    stepOneDue,
-    stepTwoDue,
-    null,
+    { ...ACTIVE_STEPS.sellAtCost, newPrice: Math.max(cost, 100) },
+    timing(2, "in_progress", dueOne, dueTwo, null),
   );
   const stepThree = toStep(
-    {
-      actionType: "clearance",
-      title: "Obral rugi terakhir",
-      instructions:
-        "Obral sisa stok dengan harga di bawah kulakan supaya rak kosong dan uang pulih.",
-      successCriteria: "Tidak ada sisa stok di rak.",
-      durationDays: 7,
-      belowCostPercent: 20,
-      newPrice: round100(cost * 0.8),
-      shareText: SHARE_TEXT,
-    },
-    3,
-    "pending",
-    cost,
-    stock,
-    null,
-    null,
-    null,
+    { ...ACTIVE_STEPS.clearance, newPrice: round100(cost * 0.8) },
+    timing(3, "pending", null, null, null),
   );
 
   return {
@@ -488,42 +507,29 @@ function buildCompletedPlan(
   const cost = product.lastCost;
 
   const stepOne = toStep(
+    { ...COMPLETED_STEP, newPrice: product.sellPrice },
     {
-      actionType: "display_move",
-      title: "Pindahkan ke rak depan",
-      instructions:
-        "Taruh dekat kasir supaya pembeli melihatnya saat membayar.",
-      successCriteria: "Barang laku lagi sebelum tenggat.",
-      durationDays: 7,
-      newPrice: product.sellPrice,
+      stepNo: 1,
+      outcome: "succeeded",
+      lastCost: cost,
+      stock,
+      startedOn,
+      dueOn: endedOn,
+      endedOn,
     },
-    1,
-    "succeeded",
-    cost,
-    stock,
-    startedOn,
-    endedOn,
-    endedOn,
   );
   const skipped = (stepNo: number): GeneratedPlanStep =>
     toStep(
+      { ...SKIPPED_STEP, newPrice: round100(product.sellPrice * 0.9) },
       {
-        actionType: "discount",
-        title: "Turunkan harga",
-        instructions:
-          "Cadangan bila tahap pertama belum cukup menggerakkan penjualan.",
-        successCriteria: "Barang laku lagi sebelum tenggat.",
-        durationDays: 7,
-        discountPercent: 10,
-        newPrice: round100(product.sellPrice * 0.9),
+        stepNo,
+        outcome: "skipped",
+        lastCost: cost,
+        stock,
+        startedOn: null,
+        dueOn: null,
+        endedOn: null,
       },
-      stepNo,
-      "skipped",
-      cost,
-      stock,
-      null,
-      null,
-      null,
     );
 
   return {
