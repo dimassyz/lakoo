@@ -58,7 +58,13 @@ export interface GeneratedProduct {
 
 export interface GeneratedPlanStep {
   stepNo: number;
-  actionType: "display_move" | "bundle" | "discount" | "promo_wa" | "sell_at_cost" | "clearance";
+  actionType:
+    | "display_move"
+    | "bundle"
+    | "discount"
+    | "promo_wa"
+    | "sell_at_cost"
+    | "clearance";
   title: string;
   instructions: string;
   successCriteria: string;
@@ -79,8 +85,10 @@ export interface GeneratedPlanStep {
 export interface GeneratedPlan {
   productName: string;
   source: "ai" | "template";
-  state: "suggested" | "active" | "completed" | "exhausted" | "stopped" | "sold_out";
-  productStatusAtGeneration: "sehat" | "waspada" | "sekarat" | "mati" | "stok_habis";
+  state:
+    "suggested" | "active" | "completed" | "exhausted" | "stopped" | "sold_out";
+  productStatusAtGeneration:
+    "sehat" | "waspada" | "sekarat" | "mati" | "stok_habis";
   rationale: string;
   startedOn: string | null;
   endedOn: string | null;
@@ -137,7 +145,8 @@ function weeklyTotals(role: CatalogItem["role"], rng: Rng): number[] {
   const base = randInt(rng, 2, role === "sehat" ? 26 : 18);
   for (let week = 1; week <= 13; week += 1) {
     // Minggu 1..4 dibuat tidak pernah menurun tegas, supaya tidak jadi waspada.
-    totals[week] = week <= 4 ? base + (4 - week) : Math.max(1, base + randInt(rng, -1, 2));
+    totals[week] =
+      week <= 4 ? base + (4 - week) : Math.max(1, base + randInt(rng, -1, 2));
   }
   return totals;
 }
@@ -156,8 +165,14 @@ function weekToDays(week: number): number[] {
   return days;
 }
 
-function spreadWeek(total: number, days: readonly number[], asOf: string): Map<number, number> {
-  const weights = days.map((day) => WEEKDAY_WEIGHT[weekdayOf(dateOfDay(asOf, day))] ?? 1);
+function spreadWeek(
+  total: number,
+  days: readonly number[],
+  asOf: string,
+): Map<number, number> {
+  const weights = days.map(
+    (day) => WEEKDAY_WEIGHT[weekdayOf(dateOfDay(asOf, day))] ?? 1,
+  );
   const parts = distribute(total, weights);
   const result = new Map<number, number>();
   days.forEach((day, index) => {
@@ -167,7 +182,11 @@ function spreadWeek(total: number, days: readonly number[], asOf: string): Map<n
   return result;
 }
 
-function buildSales(item: CatalogItem, rng: Rng, asOf: string): Map<number, number> {
+function buildSales(
+  item: CatalogItem,
+  rng: Rng,
+  asOf: string,
+): Map<number, number> {
   if (item.neverSold) return new Map();
 
   const totals = weeklyTotals(item.role, rng);
@@ -183,7 +202,11 @@ function buildSales(item: CatalogItem, rng: Rng, asOf: string): Map<number, numb
 }
 
 /** Buang penjualan di luar jendela yang dibutuhkan peran (SPEC §5.1). */
-function trimSales(item: CatalogItem, sales: Map<number, number>, rng: Rng): Map<number, number> {
+function trimSales(
+  item: CatalogItem,
+  sales: Map<number, number>,
+  rng: Rng,
+): Map<number, number> {
   const keep = (day: number): boolean => {
     if (item.revived) return day <= 10;
     switch (item.role) {
@@ -234,7 +257,11 @@ function restockDays(role: CatalogItem["role"], rng: Rng): number[] {
   return days;
 }
 
-function salesInRange(sales: Map<number, number>, fromDay: number, toDay: number): number {
+function salesInRange(
+  sales: Map<number, number>,
+  fromDay: number,
+  toDay: number,
+): number {
   let total = 0;
   for (const [day, qty] of sales) {
     if (day >= fromDay && day <= toDay) total += qty;
@@ -257,7 +284,8 @@ function buildStockIns(
   return events.map((day, index) => {
     const nextDay = events[index + 1];
     const rangeLow = nextDay === undefined ? 1 : nextDay + 1;
-    const qty = salesInRange(sales, rangeLow, day) + (index === 0 ? endStock : 0);
+    const qty =
+      salesInRange(sales, rangeLow, day) + (index === 0 ? endStock : 0);
     return {
       receivedOn: dateOfDay(asOf, day),
       qty,
@@ -273,7 +301,11 @@ function jitterCost(lastCost: number, isNewest: boolean, rng: Rng): number {
   return Math.max(100, Math.round((lastCost * factor) / 50) * 50);
 }
 
-function buildProduct(item: CatalogItem, rng: Rng, asOf: string): GeneratedProduct {
+function buildProduct(
+  item: CatalogItem,
+  rng: Rng,
+  asOf: string,
+): GeneratedProduct {
   const sales = buildSales(item, rng, asOf);
   return {
     name: item.name,
@@ -286,7 +318,7 @@ function buildProduct(item: CatalogItem, rng: Rng, asOf: string): GeneratedProdu
     complementaryMaxStock: item.complementaryMaxStock ?? null,
     stockIns: buildStockIns(item, sales, rng, asOf),
     sales: [...sales.entries()]
-      .sort((a, b) => a[0] - b[0])
+      .sort((a, b) => b[0] - a[0])
       .map(([day, qty]) => ({
         saleDate: dateOfDay(asOf, day),
         qty,
@@ -360,7 +392,10 @@ function toStep(
 }
 
 /** Rencana `active` pada barang mati yang mulai laku lagi (SPEC §10.2). */
-function buildActivePlan(product: GeneratedProduct, asOf: string): GeneratedPlan {
+function buildActivePlan(
+  product: GeneratedProduct,
+  asOf: string,
+): GeneratedPlan {
   const startedOn = shiftIsoDate(asOf, -10);
   const stock = Math.max(stockOn(product, startedOn), 1);
   const sell = product.sellPrice;
@@ -392,7 +427,8 @@ function buildActivePlan(product: GeneratedProduct, asOf: string): GeneratedPlan
     {
       actionType: "sell_at_cost",
       title: "Jual seharga kulakan",
-      instructions: "Jual tanpa ambil untung supaya uang yang terkunci kembali ke kas.",
+      instructions:
+        "Jual tanpa ambil untung supaya uang yang terkunci kembali ke kas.",
       successCriteria: "Sisa stok berkurang sebelum tenggat.",
       durationDays: 7,
       newPrice: Math.max(cost, 100),
@@ -410,7 +446,8 @@ function buildActivePlan(product: GeneratedProduct, asOf: string): GeneratedPlan
     {
       actionType: "clearance",
       title: "Obral rugi terakhir",
-      instructions: "Obral sisa stok dengan harga di bawah kulakan supaya rak kosong dan uang pulih.",
+      instructions:
+        "Obral sisa stok dengan harga di bawah kulakan supaya rak kosong dan uang pulih.",
       successCriteria: "Tidak ada sisa stok di rak.",
       durationDays: 7,
       belowCostPercent: 20,
@@ -441,7 +478,10 @@ function buildActivePlan(product: GeneratedProduct, asOf: string): GeneratedPlan
 }
 
 /** Rencana `completed` yang berhasil di tahap pertama (SPEC §10.2). */
-function buildCompletedPlan(product: GeneratedProduct, asOf: string): GeneratedPlan {
+function buildCompletedPlan(
+  product: GeneratedProduct,
+  asOf: string,
+): GeneratedPlan {
   const startedOn = shiftIsoDate(asOf, -25);
   const endedOn = shiftIsoDate(startedOn, 7);
   const stock = Math.max(stockOn(product, startedOn), 1);
@@ -451,7 +491,8 @@ function buildCompletedPlan(product: GeneratedProduct, asOf: string): GeneratedP
     {
       actionType: "display_move",
       title: "Pindahkan ke rak depan",
-      instructions: "Taruh dekat kasir supaya pembeli melihatnya saat membayar.",
+      instructions:
+        "Taruh dekat kasir supaya pembeli melihatnya saat membayar.",
       successCriteria: "Barang laku lagi sebelum tenggat.",
       durationDays: 7,
       newPrice: product.sellPrice,
@@ -469,7 +510,8 @@ function buildCompletedPlan(product: GeneratedProduct, asOf: string): GeneratedP
       {
         actionType: "discount",
         title: "Turunkan harga",
-        instructions: "Cadangan bila tahap pertama belum cukup menggerakkan penjualan.",
+        instructions:
+          "Cadangan bila tahap pertama belum cukup menggerakkan penjualan.",
         successCriteria: "Barang laku lagi sebelum tenggat.",
         durationDays: 7,
         discountPercent: 10,
@@ -498,20 +540,30 @@ function buildCompletedPlan(product: GeneratedProduct, asOf: string): GeneratedP
   };
 }
 
-function requireProduct(products: GeneratedProduct[], name: string): GeneratedProduct {
+function requireProduct(
+  products: GeneratedProduct[],
+  name: string,
+): GeneratedProduct {
   const found = products.find((product) => product.name === name);
-  if (found === undefined) throw new Error(`Katalog demo tidak memuat "${name}"`);
+  if (found === undefined)
+    throw new Error(`Katalog demo tidak memuat "${name}"`);
   return found;
 }
 
-function buildPlans(products: GeneratedProduct[], asOf: string): GeneratedPlan[] {
+function buildPlans(
+  products: GeneratedProduct[],
+  asOf: string,
+): GeneratedPlan[] {
   const revived = requireProduct(products, "Sabun Mandi Batang");
   const healthy = requireProduct(products, "Biskuit Kelapa");
   return [buildActivePlan(revived, asOf), buildCompletedPlan(healthy, asOf)];
 }
 
 /** Data demo deterministik (SPEC §10.2). */
-export function generateDemo(asOf: string = todayWib(), seed: number = DEMO_SEED): DemoData {
+export function generateDemo(
+  asOf: string = todayWib(),
+  seed: number = DEMO_SEED,
+): DemoData {
   const rng = createRng(seed);
   const products = CATALOG.map((item) => buildProduct(item, rng, asOf));
   return {

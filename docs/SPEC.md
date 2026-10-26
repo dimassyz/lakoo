@@ -521,7 +521,7 @@ IP diambil dari `x-forwarded-for` (entri pertama, di-set Vercel). Respons 429 me
 
 Kata sandi, token sesi / cookie / header `Authorization`, `GEMINI_API_KEY` atau rahasia lain, body request endpoint auth, prompt dan respons mentah AI di produksi, email utuh (log versi masked `a***@domain.com`). Yang **boleh** dicatat: request id, route, status, durasi, store_id, kode error, hasil AI (`ai_ok` / `ai_timeout` / `ai_invalid_output` / `ai_quota`), dan jumlah token.
 
-### 8.6 Header keamanan (di `frontend/next.config.ts`)
+### 8.6 Header keamanan (di `next.config.ts`, root repo)
 
 - `Content-Security-Policy`: `default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'` (nonce bila sempat); `connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`
 - `X-Content-Type-Options: nosniff`

@@ -185,7 +185,8 @@ CREATE TABLE "weekly_summaries" (
 	"store_id" uuid NOT NULL,
 	"week_start" date NOT NULL,
 	"sentences" text[] NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "weekly_summaries_sentences_len" CHECK (array_length("weekly_summaries"."sentences", 1) = 3)
 );
 --> statement-breakpoint
 ALTER TABLE "action_plans" ADD CONSTRAINT "action_plans_store_id_stores_id_fk" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

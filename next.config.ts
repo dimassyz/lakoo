@@ -13,6 +13,17 @@ const contentSecurityPolicy = [
   "form-action 'self'",
 ].join("; ");
 
+// SPEC §8.6 + docs/SECURITY.md Findings 1-2 (LOW, wajib ditutup):
+// Permissions-Policy di semua rute; X-Robots-Tag di rute non-publik
+// (defense-in-depth indexing, robots.txt saja tidak cukup).
+const noindexRoutes = [
+  "/toko/:path*",
+  "/masuk",
+  "/daftar",
+  "/mulai",
+  "/api/:path*",
+];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
@@ -23,8 +34,16 @@ const nextConfig: NextConfig = {
           { key: "Content-Security-Policy", value: contentSecurityPolicy },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
         ],
       },
+      ...noindexRoutes.map((source) => ({
+        source,
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      })),
     ];
   },
 };

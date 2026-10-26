@@ -1,5 +1,5 @@
 {
-  "id": "48c36a5c-d08e-4b73-946b-26d24249baa6",
+  "id": "a50a1eec-8a03-43d7-8ff9-1a8792a4fd16",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1509,7 +1509,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "weekly_summaries_sentences_len": {
+          "name": "weekly_summaries_sentences_len",
+          "value": "array_length(\"weekly_summaries\".\"sentences\", 1) = 3"
+        }
+      },
       "isRLSEnabled": false
     }
   },

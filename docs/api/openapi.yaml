@@ -16,6 +16,10 @@ info:
       yang diizinkan; bila tidak → `403 bad_origin`.
     - Resource milik toko lain selalu → `404 not_found` (jangan bocorkan keberadaan).
     - Body request dengan field tak dikenal → `400 validation_error`.
+    - Rate limit umum: **300 permintaan/menit per toko** untuk semua endpoint
+      terautentikasi (SPEC §8.4). Endpoint dengan limit khusus (auth, imports,
+      plans) mendokumentasikannya di deskripsi masing-masing; respons
+      `429 rate_limited` + header `Retry-After`.
     - Logika & rumus: lihat `docs/SPEC.md` §5 (status, skor, harga, kas pulih).
 
     ## Kode error (`error.code`)

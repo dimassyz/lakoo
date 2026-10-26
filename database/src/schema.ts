@@ -53,7 +53,11 @@ export const customerType = pgEnum("customer_type", [
 
 export const stockInKind = pgEnum("stock_in_kind", ["opening", "purchase"]);
 
-export const saleSource = pgEnum("sale_source", ["quantity", "opname", "import"]);
+export const saleSource = pgEnum("sale_source", [
+  "quantity",
+  "opname",
+  "import",
+]);
 
 export const adjustmentReason = pgEnum("adjustment_reason", ["correction"]);
 
@@ -94,25 +98,38 @@ export const stepOutcome = pgEnum("step_outcome", [
   "skipped",
 ]);
 
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: citext("email").notNull(),
-  passwordHash: text("password_hash"),
-  isDemo: boolean("is_demo").notNull().default(false),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [uniqueIndex("users_email_key").on(t.email)]);
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    email: citext("email").notNull(),
+    passwordHash: text("password_hash"),
+    isDemo: boolean("is_demo").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [uniqueIndex("users_email_key").on(t.email)],
+);
 
 export const stores = pgTable(
   "stores",
   {
-    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     ownerUserId: uuid("owner_user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     storeType: storeType("store_type").notNull(),
     location: text("location"),
-    customerTypes: customerType("customer_types").array().notNull().default(sql`'{}'::customer_type[]`),
+    customerTypes: customerType("customer_types")
+      .array()
+      .notNull()
+      .default(sql`'{}'::customer_type[]`),
     healthyDays: integer("healthy_days").notNull().default(14),
     deadDays: integer("dead_days").notNull().default(45),
     warningWeeks: integer("warning_weeks").notNull().default(3),
@@ -120,13 +137,18 @@ export const stores = pgTable(
     onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
     isDemoTemplate: boolean("is_demo_template").notNull().default(false),
     demoExpiresAt: timestamp("demo_expires_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => [
     uniqueIndex("stores_owner_user_id_key").on(t.ownerUserId),
     index("stores_demo_expires_at_idx").on(t.demoExpiresAt),
     check("stores_name_len", sql`char_length(${t.name}) between 1 and 60`),
-    check("stores_location_len", sql`${t.location} is null or char_length(${t.location}) <= 80`),
+    check(
+      "stores_location_len",
+      sql`${t.location} is null or char_length(${t.location}) <= 80`,
+    ),
     check("stores_thresholds", sql`${t.healthyDays} < ${t.deadDays}`),
     check("stores_healthy_days_range", sql`${t.healthyDays} between 7 and 60`),
     check("stores_dead_days_range", sql`${t.deadDays} between 15 and 180`),
@@ -137,14 +159,20 @@ export const stores = pgTable(
 export const sessions = pgTable(
   "sessions",
   {
-    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     tokenHash: bytea("token_hash").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => [
     uniqueIndex("sessions_token_hash_key").on(t.tokenHash),
@@ -155,7 +183,9 @@ export const sessions = pgTable(
 export const products = pgTable(
   "products",
   {
-    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     storeId: uuid("store_id")
       .notNull()
       .references(() => stores.id, { onDelete: "cascade" }),
@@ -167,8 +197,12 @@ export const products = pgTable(
     isComplementary: boolean("is_complementary").notNull().default(false),
     complementaryMaxStock: integer("complementary_max_stock"),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => [
     // Partial: nama unik hanya di antara barang yang belum diarsipkan (SPEC §4.1).
@@ -177,7 +211,10 @@ export const products = pgTable(
       .where(sql`${t.archivedAt} is null`),
     check("products_name_len", sql`char_length(${t.name}) between 1 and 80`),
     check("products_unit_len", sql`char_length(${t.unit}) <= 16`),
-    check("products_category_len", sql`${t.category} is null or char_length(${t.category}) <= 40`),
+    check(
+      "products_category_len",
+      sql`${t.category} is null or char_length(${t.category}) <= 40`,
+    ),
     check("products_sell_price_nonneg", sql`${t.sellPrice} >= 0`),
     check(
       "products_complementary_max_stock_nonneg",
@@ -189,7 +226,9 @@ export const products = pgTable(
 export const stockIns = pgTable(
   "stock_ins",
   {
-    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     storeId: uuid("store_id")
       .notNull()
       .references(() => stores.id, { onDelete: "cascade" }),
@@ -201,10 +240,16 @@ export const stockIns = pgTable(
     unitCost: integer("unit_cost").notNull(),
     kind: stockInKind("kind").notNull(),
     batchId: uuid("batch_id").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => [
-    index("stock_ins_store_product_received_idx").on(t.storeId, t.productId, t.receivedOn),
+    index("stock_ins_store_product_received_idx").on(
+      t.storeId,
+      t.productId,
+      t.receivedOn,
+    ),
     check("stock_ins_qty_nonneg", sql`${t.qty} >= 0`),
     check("stock_ins_unit_cost_nonneg", sql`${t.unitCost} >= 0`),
   ],
@@ -213,7 +258,9 @@ export const stockIns = pgTable(
 export const dailySales = pgTable(
   "daily_sales",
   {
-    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     storeId: uuid("store_id")
       .notNull()
       .references(() => stores.id, { onDelete: "cascade" }),
@@ -224,11 +271,18 @@ export const dailySales = pgTable(
     qty: integer("qty").notNull(),
     unitPrice: integer("unit_price").notNull(),
     source: saleSource("source").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => [
-    uniqueIndex("daily_sales_product_id_sale_date_key").on(t.productId, t.saleDate),
+    uniqueIndex("daily_sales_product_id_sale_date_key").on(
+      t.productId,
+      t.saleDate,
+    ),
     index("daily_sales_store_id_sale_date_idx").on(t.storeId, t.saleDate),
     check("daily_sales_qty_pos", sql`${t.qty} > 0`),
     check("daily_sales_unit_price_nonneg", sql`${t.unitPrice} >= 0`),
@@ -238,7 +292,9 @@ export const dailySales = pgTable(
 export const stockAdjustments = pgTable(
   "stock_adjustments",
   {
-    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     storeId: uuid("store_id")
       .notNull()
       .references(() => stores.id, { onDelete: "cascade" }),
@@ -248,7 +304,9 @@ export const stockAdjustments = pgTable(
     adjustedOn: date("adjusted_on").notNull(),
     qtyDelta: integer("qty_delta").notNull(),
     reason: adjustmentReason("reason").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => [
     index("stock_adjustments_store_product_idx").on(t.storeId, t.productId),
@@ -259,7 +317,9 @@ export const stockAdjustments = pgTable(
 export const actionPlans = pgTable(
   "action_plans",
   {
-    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     storeId: uuid("store_id")
       .notNull()
       .references(() => stores.id, { onDelete: "cascade" }),
@@ -268,9 +328,13 @@ export const actionPlans = pgTable(
       .references(() => products.id, { onDelete: "cascade" }),
     source: planSource("source").notNull(),
     state: planState("state").notNull(),
-    productStatusAtGeneration: productStatus("product_status_at_generation").notNull(),
+    productStatusAtGeneration: productStatus(
+      "product_status_at_generation",
+    ).notNull(),
     rationale: text("rationale").notNull(),
-    generatedAt: timestamp("generated_at", { withTimezone: true }).notNull().defaultNow(),
+    generatedAt: timestamp("generated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     aiModel: text("ai_model"),
     startedOn: date("started_on"),
     endedOn: date("ended_on"),
@@ -283,7 +347,10 @@ export const actionPlans = pgTable(
     uniqueIndex("action_plans_product_live_key")
       .on(t.productId)
       .where(sql`${t.state} in ('suggested', 'active')`),
-    check("action_plans_rationale_len", sql`char_length(${t.rationale}) <= 200`),
+    check(
+      "action_plans_rationale_len",
+      sql`char_length(${t.rationale}) <= 200`,
+    ),
     check(
       "action_plans_current_step_range",
       sql`${t.currentStep} is null or ${t.currentStep} between 1 and 3`,
@@ -294,7 +361,9 @@ export const actionPlans = pgTable(
 export const planSteps = pgTable(
   "plan_steps",
   {
-    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     planId: uuid("plan_id")
       .notNull()
       .references(() => actionPlans.id, { onDelete: "cascade" }),
@@ -323,10 +392,22 @@ export const planSteps = pgTable(
     uniqueIndex("plan_steps_plan_id_step_no_key").on(t.planId, t.stepNo),
     check("plan_steps_step_no_range", sql`${t.stepNo} between 1 and 3`),
     check("plan_steps_title_len", sql`char_length(${t.title}) <= 60`),
-    check("plan_steps_instructions_len", sql`char_length(${t.instructions}) <= 300`),
-    check("plan_steps_success_criteria_len", sql`char_length(${t.successCriteria}) <= 120`),
-    check("plan_steps_duration_days_range", sql`${t.durationDays} between 3 and 21`),
-    check("plan_steps_share_text_len", sql`${t.shareText} is null or char_length(${t.shareText}) <= 500`),
+    check(
+      "plan_steps_instructions_len",
+      sql`char_length(${t.instructions}) <= 300`,
+    ),
+    check(
+      "plan_steps_success_criteria_len",
+      sql`char_length(${t.successCriteria}) <= 120`,
+    ),
+    check(
+      "plan_steps_duration_days_range",
+      sql`${t.durationDays} between 3 and 21`,
+    ),
+    check(
+      "plan_steps_share_text_len",
+      sql`${t.shareText} is null or char_length(${t.shareText}) <= 500`,
+    ),
     check(
       "plan_steps_discount_percent_range",
       sql`${t.discountPercent} is null or ${t.discountPercent} between 0 and 50`,
@@ -341,15 +422,28 @@ export const planSteps = pgTable(
 export const weeklySummaries = pgTable(
   "weekly_summaries",
   {
-    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     storeId: uuid("store_id")
       .notNull()
       .references(() => stores.id, { onDelete: "cascade" }),
     weekStart: date("week_start").notNull(),
     sentences: text("sentences").array().notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
-  (t) => [uniqueIndex("weekly_summaries_store_id_week_start_key").on(t.storeId, t.weekStart)],
+  (t) => [
+    uniqueIndex("weekly_summaries_store_id_week_start_key").on(
+      t.storeId,
+      t.weekStart,
+    ),
+    check(
+      "weekly_summaries_sentences_len",
+      sql`array_length(${t.sentences}, 1) = 3`,
+    ),
+  ],
 );
 
 export const idempotencyKeys = pgTable(
@@ -362,7 +456,9 @@ export const idempotencyKeys = pgTable(
     endpoint: text("endpoint").notNull(),
     statusCode: integer("status_code").notNull(),
     responseBody: jsonb("response_body").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => [
     primaryKey({ columns: [t.storeId, t.key] }),
@@ -380,5 +476,7 @@ export const aiUsageDaily = pgTable("ai_usage_daily", {
   usageDate: date("usage_date").primaryKey(),
   calls: integer("calls").notNull().default(0),
   inputTokens: bigint("input_tokens", { mode: "number" }).notNull().default(0),
-  outputTokens: bigint("output_tokens", { mode: "number" }).notNull().default(0),
+  outputTokens: bigint("output_tokens", { mode: "number" })
+    .notNull()
+    .default(0),
 });

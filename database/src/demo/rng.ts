@@ -30,7 +30,10 @@ export function pick<T>(rng: Rng, items: readonly T[]): T {
  * Bagi `total` menjadi bilangan bulat sebanding `weights` dengan metode
  * sisa-terbesar, supaya jumlahnya tetap persis `total`.
  */
-export function distribute(total: number, weights: readonly number[]): number[] {
+export function distribute(
+  total: number,
+  weights: readonly number[],
+): number[] {
   const sum = weights.reduce((acc, w) => acc + w, 0);
   if (sum <= 0 || total <= 0) return weights.map(() => 0);
   const exact = weights.map((w) => (total * w) / sum);

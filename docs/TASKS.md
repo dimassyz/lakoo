@@ -105,6 +105,44 @@ Setiap task punya:
 
 ---
 
+## Status & urutan kanonik (diperbarui 26 Okt 2026, tech-lead)
+
+**Daftar task sah = T-1 sampai T-13 di atas. Tidak ada T-14+.** Pesan delegasi
+bernomor T-14..T-29 yang pernah terkirim adalah kesalahan tech-lead — abaikan.
+
+**Urutan eksekusi (dependensi):**
+
+```
+T-1 (bootstrap) ─┬─> T-2 (pipeline) ──────────────────────────────┐
+                 └─> T-3..T-8 (frontend, paralel berurutan) ──────┤
+T-9 (backend API, CRITICAL PATH) ─> T-10 (cron) ─> T-11 (QA) ─> T-12 (security full) ─> T-13 (deploy)
+```
+
+| Task | Status 26 Okt 2026 | Catatan |
+|---|---|---|
+| T-1 | SEBAGIAN | CODE_STANDARDS.md + .gitignore landed; AGENTS.md landed di working tree, belum di-commit |
+| T-2 | SEBAGIAN | package.json, pnpm-lock, CI, vercel.json, .env.example, tsconfig, eslint/prettier/vitest config landed; typecheck/test/build PASS lokal |
+| T-3 | PERLU VERIFIKASI | frontend-dev lapor DONE tapi file yang diklaim tidak ada di working tree — menunggu konfirmasi |
+| T-4 | REQUEST_CHANGES | rekap.tsx adalah form kas masuk/keluar, bukan rekap penjualan FSD §7; tulis ulang |
+| T-5 | REQUEST_CHANGES | barang-masuk.tsx hanya textarea; form FSD §8 (tanggal, baris nota, riwayat) belum ada |
+| T-6 | REQUEST_CHANGES | 2 dari 3 write gagal; barang.tsx tanpa filter/chip/state, detail.tsx tanpa section rencana, WeekChart pakai Math.random() |
+| T-7 | BELUM DIBUKA | menunggu T-3..T-6 lolos review |
+| T-8 | BELUM DIBUKA | menunggu T-7 |
+| T-9 | BELUM MULAI | **critical path** — backend-dev mulai setelah 3 keputusan T-10 dijawab (sudah dijawab tech-lead 26 Okt) |
+| T-10 | SEBAGIAN | database/ landed (schema, migrasi, productStats, generator demo, 18 test lulus); cron nunggu T-9; TS5097 nunggu patch tsconfig oleh devops |
+| T-11 | SIAP TEST PLAN | qa-engineer boleh menulis test plan dari dokumen sekarang; eksekusi nunggu staging URL |
+| T-12 | TERBUKA | review surface saat ini selesai (2 LOW, 0 must-fix); full review nunggu T-9 + staging |
+| T-13 | BLOKIR | PR #1 landing ada (chore/landing-1.0, d65600a) TAPI gate merah → REQUEST_CHANGES; merge nunggu APPROVE + QA ALL GREEN + SECURE; deploy staging nunggu aplikasi landing + aksi akun (Vercel connect, env §8.3, Neon branch) |
+
+**Keputusan tech-lead 26 Okt 2026 (menggantungkan agen):**
+1. `allowImportingTsExtensions: true` di tsconfig.json — DISETUJUI, dieksekusi devops-engineer.
+2. Cron T-10: T-9 dulu; dead code tidak diterima (CODE_STANDARDS §1).
+3. `weekly_summaries` tidak di-seed; jalur lazy §5.9.
+4. PR #1: REQUEST_CHANGES, opsi A (update PR setelah merah diperbaiki), bukan merge sekarang.
+5. 2 LOW security findings (next.config.ts) → devops patch; kontrak (rate limit di openapi.info, path SPEC §8.6) → tech-lead, SUDAH diperbaiki.
+
+---
+
 **Catatan untuk builder:**
 - Semua task harus pakai `Idempotency-Key` di endpoint yang wajib.
 - Semua perubahan kontrak harus lewat openapi.yaml (tech-lead yang update).

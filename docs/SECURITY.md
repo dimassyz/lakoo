@@ -167,6 +167,24 @@ saat reachability terbukti.
 
 ---
 
+## TINDAK LANJUT TECH-LEAD (26 Okt 2026)
+
+1. **2 LOW findings** (`next.config.ts`) → di-assign ke devops-engineer,
+   patch bersama PR #1. **Re-verify dijadwalkan** setelah PR #1 diupdate
+   (tech-lead kirim notifikasi). Yang akan diverifikasi: header
+   `Permissions-Policy: camera=(), microphone=(), geolocation=()` dan
+   `X-Robots-Tag: noindex, nofollow` untuk `/toko/*`, `/masuk`, `/daftar`,
+   `/mulai`, `/api/*`; patch tidak merusak CSP/header lain yang sudah lolos.
+2. **2 catatan kontrak** (rate limit 300/menit di `openapi.info`; path
+   `frontend/next.config.ts` di SPEC §8.6) → diperbaiki tech-lead sebagai
+   pemilik kontrak.
+3. **Backlog 12 poin** → diteruskan ke backend-dev sebagai input wajib
+   sebelum T-9 mulai.
+4. **Staging URL** → akan dikirim tech-lead saat T-13 deploy jalan.
+   Black-box pass dieksekusi begitu URL tersedia.
+
+---
+
 ## VERDICT
 
 **FINDINGS — Lakoo T-12: 2 LOW (tidak blocking), 0 must-fix.**

@@ -10,3 +10,13 @@ Catatan keputusan proses, persetujuan, dan penerimaan risiko. Diurutkan berdasar
 | 26 Okt 2026 | **Penerimaan risiko — uji penerimaan requester** di staging dilakukan tech-lead atas nama Dimas, memakai alur demo BRD §11 + KS-1..KS-8 | Dimas (lewat delegasi) | Gate QA dan security review **tidak** dilewati; keduanya tetap wajib |
 | 26 Okt 2026 | Anggaran AI ≤ Rp100.000/bulan sudah disetujui di tahap WHAT | Dimas | Tidak ada pengeluaran lain yang disetujui. Hosting dan database wajib tingkat gratis |
 | 26 Okt 2026 | Pertimbangan yang tetap dieskalasi ke Dimas walau ada delegasi | tech-lead | Biaya baru di luar anggaran di atas, penghapusan data produksi, dan perubahan tenggat 10 Nov |
+| 26 Okt 2026 | Delegasi T-1..T-13 ke tim; tech-lead memegang wewenang delegasi penuh tanpa tanya Dimas per task | Dimas (lewat delegasi) | Dimas: "untuk pembagian delegasi task seperti ini adalah wewenangmu... biarkan tim bekerja secara paralel" |
+| 26 Okt 2026 | Commit pertama docs (225c599) di-push devops-engineer, terverifikasi di GitHub | devops-engineer | 4 file: brief-lakoo.md (dipindah), KEBUTUHAN.md, BRD.md, PRD.md |
+| 26 Okt 2026 | **Kesalahan tech-lead: delegasi bernomor T-14..T-29** yang tidak ada di TASKS.md (dokumen hanya T-1..T-13) | tech-lead | Dikoreksi ke semua agen; TASKS.md §Status & urutan kanonik jadi acuan tunggal |
+| 26 Okt 2026 | T-10 keputusan 1: `allowImportingTsExtensions: true` di tsconfig.json — disetujui, dieksekusi devops | tech-lead | Config change per CODE_STANDARDS §5; noEmit sudah aktif, gate tidak dilemahkan |
+| 26 Okt 2026 | T-10 keputusan 2: cron setelah T-9; dead code tidak diterima | tech-lead | CODE_STANDARDS §1 |
+| 26 Okt 2026 | T-10 keputusan 3: `weekly_summaries` tidak di-seed, jalur lazy §5.9 | tech-lead | Kalimat butuh domain backend milik T-9 |
+| 26 Okt 2026 | PR #1 (chore/landing-1.0, d65600a): **REQUEST_CHANGES** — gate merah, tidak di-merge | tech-lead | Opsi A: update PR setelah merah diperbaiki; merge butuh APPROVE + QA ALL GREEN + SECURE |
+| 26 Okt 2026 | 2 LOW security findings (next.config.ts: Permissions-Policy, X-Robots-Tag) → devops patch | tech-lead | docs/SECURITY.md §Findings; re-verify security-reviewer setelah PR update |
+| 26 Okt 2026 | Kontrak diperbaiki: rate limit 300/menit ditambahkan ke openapi.info; SPEC §8.6 path `frontend/next.config.ts` → `next.config.ts` root | tech-lead | Pemilik kontrak; temuan dari security-reviewer |
+| 26 Okt 2026 | Frontend T-3 perlu verifikasi: file yang dilaporkan DONE tidak ada di working tree | tech-lead | Menunggu konfirmasi frontend-dev |
