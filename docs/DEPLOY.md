@@ -99,22 +99,32 @@ demo kedaluwarsa (maks 150 aktif) → bersihkan `idempotency_keys` > 7 hari,
 
 Gejala: gate gagal sebelum kode dieksekusi — `vitest` `ERR_MODULE_NOT_FOUND`
 (paket seperti `magic-string`/`sourcemap-codec`), eslint `MODULE_NOT_FOUND`,
-isi direktori paket di `node_modules/.pnpm/...` kosong. Penyebab: install
-pnpm terputus di tengah (dua install paralel pada satu `node_modules`, atau
-proses mati separuh jalan).
+isi direktori paket di `node_modules/.pnpm/...` kosong. Penyebab terkonfirmasi:
+**dua install berjalan bersamaan** di repo yang sama (satu disk, semua agen)
+— paket terputus setengah jalan, direktori ada tapi isi kosong.
 
-Penting: `pnpm install --frozen-lockfile` TIDAK memulihkan ini — pnpm
-melaporkan "Already up to date" karena tidak memverifikasi ISI paket, hanya
-keberadaannya.
+**Aturan (a): satu install pada satu waktu.** Kalau butuh install,
+koordinasikan lewat @devops-engineer dulu — devops yang memegang antrean
+install di working copy bersama. Jangan jalankan install paralel.
 
-Recovery (satu working copy, satu install — jangan jalankan bersamaan dengan
-install orang lain):
+**Recovery (b), dua varian yang terbukti (sama-sama jalan):**
 
 ```bash
+# varian 1: buang entri .pnpm yang kosong, lalu install paksa
+rm -rf node_modules/.pnpm/<paket-yang-kosong>   # atau seluruh .pnpm kalau ragu
+pnpm install --frozen-lockfile --force
+
+# varian 2: install paksa via npx (lebih aman, satu perintah)
 npx pnpm@10.34.9 install --force --frozen-lockfile
 ```
 
-Catatan mesin ini: shim `pnpm` di PATH rusak sejak awal (corepack resolve
-salah path MSYS), jadi `npx pnpm@<versi>` adalah cara BENAR, bukan
-workaround. `package.json` + `pnpm-lock.yaml` tidak berubah oleh insiden
-ini — tidak ada commit yang perlu dibuat untuk recovery itu sendiri.
+Catatan mesin ini: shim `pnpm` di PATH rusak (corepack resolve salah path MSYS
+— `C:\c\Program Files\...`). Jalankan via `npx pnpm@<versi>` (cara BENAR, bukan
+workaround) atau full path:
+`node "C:/Program Files/nodejs/node_modules/corepack/dist/pnpm.js"`.
+
+Penting: `pnpm install --frozen-lockfile` TANPA `--force` TIDAK memulihkan —
+pnpm melaporkan "Already up to date" karena tidak memverifikasi ISI paket,
+hanya keberadaannya. `package.json` + `pnpm-lock.yaml` tidak berubah oleh
+insiden maupun recovery — tidak ada commit yang perlu dibuat untuk insidennya
+sendiri.
