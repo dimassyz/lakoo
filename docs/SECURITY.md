@@ -39,7 +39,7 @@ SPEC §8, konfigurasi header keamanan, CI secret-scan, `.env.example`,
 
 ## FINDINGS
 
-### 1. [next.config.ts:18-29] (LOW) — Header keamanan: `Permissions-Policy` tidak diimplementasikan [white-box]
+### 1. [next.config.ts:18-29] (LOW) — Header keamanan: `Permissions-Policy` tidak diimplementasikan [white-box] — **CLOSED (re-verify e706f99, 26 Okt 2026)**
 
 - **Rubric item:** Secrets & config / hardening (SPEC §8.6).
 - **Attack path:** browser → request ke route apapun (`/(.*)`) →
@@ -53,8 +53,13 @@ SPEC §8, konfigurasi header keamanan, CI secret-scan, `.env.example`,
 - **Fix:** tambahkan
   `{ key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" }`
   ke rule `/(.*)`.
+- **Verifikasi penutupan (commit e706f99):** header
+  `Permissions-Policy: camera=(), microphone=(), geolocation=()` hadir di
+  rule `/(.*)` (`next.config.ts:37-40`), nilai persis sesuai SPEC §8.6.
+  Working tree identik dengan e706f99 (`git diff` kosong) — tidak ada
+  regresi.
 
-### 2. [next.config.ts:18-29] (LOW) — `X-Robots-Tag: noindex, nofollow` tidak diimplementasikan [white-box]
+### 2. [next.config.ts:18-29] (LOW) — `X-Robots-Tag: noindex, nofollow` tidak diimplementasikan [white-box] — **CLOSED (re-verify e706f99, 26 Okt 2026)**
 
 - **Rubric item:** hardening / information exposure (SPEC §8.6).
 - **Attack path:** crawler → URL `/toko/*`, `/masuk`, `/daftar`, `/mulai`,
@@ -65,8 +70,15 @@ SPEC §8, konfigurasi header keamanan, CI secret-scan, `.env.example`,
 - **Fix:** tambahkan rule header dengan `source` per pola rute
   (`/toko/:path*`, `/masuk`, `/daftar`, `/mulai`, `/api/:path*`) berisi
   `X-Robots-Tag: noindex, nofollow`.
+- **Verifikasi penutupan (commit e706f99):** kelima pola rute hadir via
+  `noindexRoutes` (`next.config.ts:19-25`) dan masing-masing dipetakan ke
+  rule header `X-Robots-Tag: noindex, nofollow`
+  (`next.config.ts:42-46`). Persis sesuai SPEC §8.6.
 
-**Tidak ada temuan HIGH/CRITICAL pada surface yang bisa direview.**
+**Regresi check (e706f99):** CSP (8 direktif, tidak berubah),
+`X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
+`poweredByHeader: false` — semua utuh. Tidak ada temuan baru di
+`next.config.ts`.
 
 ---
 
@@ -187,7 +199,12 @@ saat reachability terbukti.
 
 ## VERDICT
 
-**FINDINGS — Lakoo T-12: 2 LOW (tidak blocking), 0 must-fix.**
+**RE-VERIFY e706f99 (26 Okt 2026): SECURE** untuk surface yang di-review —
+2 LOW findings CLOSED (Permissions-Policy + X-Robots-Tag hadir dengan nilai
+persis SPEC §8.6), tanpa regresi pada CSP/X-Content-Type-Options/
+Referrer-Policy, tanpa temuan baru di `next.config.ts`.
+
+**FINDINGS — Lakoo T-12: 0 terbuka, 2 LOW sudah ditutup.**
 **T-12 TIDAK BISA ditutup:** acceptance "semua gate security lolos"
 mensyaratkan review backend (T-9) yang belum ada + black-box pass yang
 belum mungkin. Re-review penuh dijadwalkan ulang setelah T-9
