@@ -120,7 +120,7 @@ export function ringkasan(data: SalesRecap | null, mode: Mode, nilai: Nilai) {
   return { jumlah, total, estimasi };
 }
 
-const PESAN_JARINGAN = "Belum terkirim — akan dikirim otomatis saat ada sinyal";
+const PESAN_JARINGAN = "Belum terkirim — akan dicoba lagi otomatis";
 
 function petaBaris(
   error: unknown,
