@@ -244,7 +244,7 @@ Satu halaman dengan 3 pertanyaan, bukan wizard. Target selesai ≤ 30 dtk.
 
 - **Tanggal:** default "Hari ini". Tombol ‹ › untuk geser per hari, dan pemilih tanggal yang hanya mengizinkan ≤ hari ini dan ≥ 365 hari lalu.
 - Bila `hasRecord`: label "Sudah ada rekap untuk tanggal ini — perubahan akan mengganti" (US-06.1 AC-7).
-- **Tab mode:** **Jumlah terjual** (bawaan) | **Hitung sisa stok (opname)**. Pilihan terakhir disimpan di localStorage.
+- **Tab mode:** **Jumlah terjual** (bawaan) | **Hitung sisa stok (opname)**. Mode selalu mulai dari bawaan setiap layar dibuka — preferensi tidak dipersistensi (larangan localStorage; amendemen 26 Okt 2026).
 - **Kolom cari** nama barang (filter lokal).
 
 **Mode Jumlah terjual (F-06)**
