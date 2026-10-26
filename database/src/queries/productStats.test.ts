@@ -215,9 +215,10 @@ describe("rencana demo tersimpan", () => {
 });
 
 describe("kinerja query stats (SPEC §4.2: ≤ 300 ms untuk 500 barang × 365 hari)", () => {
-  // TANPA `retry` — sengaja. Retry bisa melaporkan hijau pada attempt ke-2
-  // (mis. 305 ms lalu 295 ms) padahal query TEPAT di ambang: hijau yang tidak
-  // mengukur apa yang diklaim. Ambang 300 ms adalah klaim, bukan target acak.
+  // CATATAN UNTUK PEMBACA: tes di bawah SENGAJA tanpa opsi retry. Retry bisa
+  // melaporkan hijau pada attempt ke-2 (mis. 305 ms lalu 295 ms) padahal query
+  // TEPAT di ambang — hijau yang tidak mengukur apa yang diklaim. Ambang 300 ms
+  // adalah klaim, bukan target acak. Jangan tambahkan retry kembali.
   it("tetap di bawah 300 ms", { timeout: 300_000 }, async () => {
     await ctx.client.exec(`
       INSERT INTO users (email) VALUES ('perf@lakoo.local');

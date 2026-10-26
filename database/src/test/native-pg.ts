@@ -1,12 +1,10 @@
+import { createTestDb } from "./pglite.ts";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { PGlite } from "@electric-sql/pglite";
-import { citext } from "@electric-sql/pglite/contrib/citext";
-import { drizzle } from "drizzle-orm/pglite";
 import { Pool } from "pg";
 import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
-import type { AnyDb } from "../db.ts";
 import * as schema from "../schema.ts";
+import type { AnyDb } from "../db.ts";
 
 /** Test selalu dijalankan dari root repo (`pnpm test`). */
 const MIGRATIONS_DIR = resolve(process.cwd(), "database/drizzle");
@@ -41,20 +39,20 @@ export async function createPerfDb(): Promise<TestDb> {
   const url = process.env.PERF_DATABASE_URL;
   if (url === undefined || url === "") return createTestDb();
 
-  // `search_path` disetel per-KONEKSI (bukan sekali di client migrasi): kalau
-  // tidak, query drizzle berikutnya mencari tabel di `public` yang kosong dan
-  // semua tes gagal "relation does not exist" padahal migrasi sukses.
+  // TANPA skema custom dan TANPA `search_path` — migrasi drizzle sudah
+  // berkualifikasi `"public".` (25 kemunculan di 0000_init.sql), sementara
+  // kolom mereferensikan tipe TANPA kualifikasi. Skema `perf` + search_path
+  // membuat resolusi nama tak-berkualifikasi mencari di skema yang kosong →
+  // "type plan_source does not exist" (terverifikasi di CI run pertama PR #8).
+  // Container DB sekali-pakai dan fresh tiap run, jadi isolasi skema nol
+  // manfaat — apply apa adanya di `public`, search_path default.
   const pool = new Pool({
     connectionString: url,
     max: 1,
-    options: "-c search_path=perf",
   });
   try {
-    // Skema terpisah supaya tidak menabrak apa pun yang sudah ada di database itu.
     const client = await pool.connect();
     try {
-      await client.query(`CREATE SCHEMA IF NOT EXISTS perf`);
-      await client.query(`SET search_path TO perf`);
       for (const file of migrationFiles()) {
         await client.query(readMigration(file));
       }
@@ -96,23 +94,4 @@ function readMigration(file: string): string {
     "--> statement-breakpoint",
     "",
   );
-}
-
-/**
- * Postgres in-process untuk test (SPEC §3.3 — tanpa Docker, jalan di Windows).
- * Migrasi yang sama dengan produksi yang diterapkan, supaya constraint dan
- * partial index ikut teruji.
- */
-export async function createTestDb(): Promise<TestDb> {
-  const client = new PGlite({ extensions: { citext } });
-  for (const file of migrationFiles()) {
-    await client.exec(readMigration(file));
-  }
-  return {
-    client: {
-      close: () => client.close(),
-      exec: (q: string) => client.exec(q),
-    },
-    db: drizzle(client, { schema }),
-  };
 }
