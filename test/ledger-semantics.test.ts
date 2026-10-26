@@ -14,6 +14,13 @@ import {
  *   stok(asOf) = Σ stock_ins.qty(received_on ≤ asOf)
  *              − Σ daily_sales.qty(sale_date ≤ asOf)
  *              + Σ stock_adjustments.qty_delta(adjusted_on ≤ asOf)
+ *
+ * CATATAN KONTRAK (26 Okt 2026): `week_qty` = **7 jendela × 7 hari**
+ * (SPEC §4.2 `week_qty[1..7]`, FSD "Grafik 7 minggu", kontrak
+ * minItems/maxItems 7). Permintaan mengubah guard jadi 8 nilai DIBATALKAN
+ * tech-lead 26 Okt 2026 (instruksi 8-jendela basi); kalau muncul lagi,
+ * tolak dan lapor ke tech-lead. Selama kode backend masih di state 8,
+ * guard ini MERAH dengan benar — itu memang tugasnya.
  */
 
 const AS_OF = "2026-11-09";
@@ -219,9 +226,10 @@ describe("ledger stok pada satu produk (SPEC §4.2)", () => {
     expect(statOf(stats, "Mie Instan").lastCost).toBe(4_000);
   });
 
-  it("week_qty[0] = asOf−6..asOf (3+2=5); week_qty[1] = asOf−13..asOf−7 (4); jendela 4 & 5 memuat sale asOf−27/−28", async () => {
+  it("week_qty[1..7]: [0]=asOf−6..asOf (5), [1]=asOf−13..asOf−7 (4), [3]/[4] memuat sale asOf−27/−28", async () => {
     const stats = await productStats(ctx.db, storeId, AS_OF);
-    // week_qty[3] = asOf−27..asOf−21 (5); week_qty[4] = asOf−34..asOf−28 (7).
+    // Jendela k = [asOf−(7k+6), asOf−7k]: [3]=asOf−27..asOf−21 (5),
+    // [4]=asOf−34..asOf−28 (7). Lihat CATATAN KONTRAK di header file.
     expect(statOf(stats, "Mie Instan").weekQty).toEqual([5, 4, 0, 5, 7, 0, 0]);
   });
 

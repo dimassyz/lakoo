@@ -70,13 +70,20 @@ function weekArray(): SQL[] {
   );
 }
 
+/**
+ * `COUNT(sale_date)` (bukan `COUNT(DISTINCT sale_date)`): ekuivalen karena
+ * unique index `daily_sales_product_id_sale_date_key` pada (product_id,
+ * sale_date) — dalam satu grup produk tiap tanggal muncul paling banyak sekali.
+ * Bentuk DISTINCT memaksa Postgres mengurutkan 182.500 baris untuk
+ * men-de-duplikasi yang sudah unik; itu 320–336 ms dari total 335–359 ms.
+ */
 function salesCte(storeId: string): SQL {
   return sql`sales AS (
       SELECT product_id,
         SUM(qty) AS sold,
         MAX(sale_date) AS last_sale_date,
         SUM(qty) FILTER (WHERE sale_date >= as_of.d - 27) AS sold_28,
-        COUNT(DISTINCT sale_date) FILTER (WHERE sale_date >= as_of.d - 27) AS sale_days_28,
+        COUNT(sale_date) FILTER (WHERE sale_date >= as_of.d - 27) AS sale_days_28,
         SUM(qty) FILTER (WHERE sale_date >= as_of.d - 89) AS sold_90,
         ${sql.join(weekColumns(), sql`, `)}
       FROM daily_sales, as_of

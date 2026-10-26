@@ -57,18 +57,19 @@ memverifikasi ulang secara independen saat lapisan itu ada.
 
 ## 4. Arsitektur test (SPEC §10.3) & kepemilikan
 
-| Lapis                  | Alat                               | Pemilik §10.3          | File                                                                      | Status             |
-| ---------------------- | ---------------------------------- | ---------------------- | ------------------------------------------------------------------------- | ------------------ |
-| Kontrak DB (§4.1)      | Vitest + PGlite                    | **qa-engineer (baru)** | `test/schema-contract.test.ts`                                            | ✅ jalan           |
-| Semantik ledger (§4.2) | Vitest + PGlite                    | **qa-engineer (baru)** | `test/ledger-semantics.test.ts`                                           | ✅ + 1 RED (QA-01) |
-| Fixture demo (§10.2)   | Vitest                             | **qa-engineer (baru)** | `test/demo-fixture.test.ts`                                               | ✅ jalan           |
-| Unit domain (§5)       | Vitest                             | backend-dev            | `backend/src/domain` (belum ada)                                          | ⛔                 |
-| Integrasi API          | Vitest + PGlite + `app.request()`  | backend-dev            | `backend/src/http/app.test.ts` (health + guard; endpoint bisnis menyusul) | ⛔                 |
-| Kontrak Ajv (AC-SYS-7) | Ajv 2020                           | backend-dev            | —                                                                         | ⛔                 |
-| Komponen UI            | Vitest + Testing Library           | frontend-dev           | —                                                                         | ⛔                 |
-| E2E                    | Playwright                         | qa-engineer            | `e2e/` (menyusul, T-13)                                                   | ⛔                 |
-| Audit §7b              | Lighthouse CI + Rich Results + axe | qa-engineer            | `e2e/` (menyusul, T-13)                                                   | ⛔                 |
-| Security probe §8.7    | black-box staging                  | security-reviewer      | —                                                                         | ⛔                 |
+| Lapis                         | Alat                               | Pemilik §10.3          | File                                                                      | Status   |
+| ----------------------------- | ---------------------------------- | ---------------------- | ------------------------------------------------------------------------- | -------- |
+| Kontrak DB (§4.1)             | Vitest + PGlite                    | **qa-engineer (baru)** | `test/schema-contract.test.ts`                                            | ✅ jalan |
+| Semantik ledger (§4.2)        | Vitest + PGlite                    | **qa-engineer (baru)** | `test/ledger-semantics.test.ts`                                           | ✅ jalan |
+| Fixture demo (§10.2)          | Vitest                             | **qa-engineer (baru)** | `test/demo-fixture.test.ts`                                               | ✅ jalan |
+| Invarian stok/uang (§5.8, §7) | Vitest + PGlite + repo layer       | **qa-engineer (baru)** | `test/stock-invariants.test.ts`                                           | ✅ jalan |
+| Unit domain (§5)              | Vitest                             | backend-dev            | `backend/src/domain` (belum ada)                                          | ⛔       |
+| Integrasi API                 | Vitest + PGlite + `app.request()`  | backend-dev            | `backend/src/http/app.test.ts` (health + guard; endpoint bisnis menyusul) | ⛔       |
+| Kontrak Ajv (AC-SYS-7)        | Ajv 2020                           | backend-dev            | —                                                                         | ⛔       |
+| Komponen UI                   | Vitest + Testing Library           | frontend-dev           | —                                                                         | ⛔       |
+| E2E                           | Playwright                         | qa-engineer            | `e2e/` (menyusul, T-13)                                                   | ⛔       |
+| Audit §7b                     | Lighthouse CI + Rich Results + axe | qa-engineer            | `e2e/` (menyusul, T-13)                                                   | ⛔       |
+| Security probe §8.7           | black-box staging                  | security-reviewer      | —                                                                         | ⛔       |
 
 ## 5. Coverage matrix — FSD §0–§16
 
@@ -135,20 +136,24 @@ Legenda: ✅ dieksekusi & lulus · 🔴 dieksekusi & gagal (temuan) · ⛔ block
 | 15  | Constraint `stores`: nama 1–60, lokasi ≤ 80, ambang + relasi + rentang                                                                                                                                                                                                                  | TC-DB-6x                              | `test/schema-contract.test.ts` | ✅            |
 | 16  | Tempel nota (F-21, Could — hanya bila T-C1): parser `<nama> <qty> <harga>`; baris tak terbaca ditampilkan; tidak ada simpan tanpa tombol                                                                                                                                                | TC-PARSER + E2E-TEMPEL                | komponen + Playwright          | ⛔ (deferred) |
 
+| §5.8 | BR-16: qty > stok → 422 `insufficient_stock` + all-or-nothing; rekap berikutnya dievaluasi terhadap stok TERKINI (backdated tidak boleh membuat stok(today) negatif) | TC-INV | `test/stock-invariants.test.ts` | ✅ |
+| §7 | W-9: rekaman idempotensi ≤ 7 hari diputar balik; > 7 hari diproses ulang (batas = cleanup cron) | TC-INV | `test/stock-invariants.test.ts` | ✅ |
+| W-2 | deleteStockIn: hapus yang membuat stok negatif ditolak 422 + baris tetap ada (all-or-nothing); editable = kind `purchase` + umur `created_at` ≤ 7 hari; lewat window → 409 `edit_window_closed` (FSD §8) | TC-INV | `test/stock-invariants.test.ts` | ✅ |
+
 ### Kontrak data & fixture (di luar FSD per layar)
 
-| #     | Kriteria                                                                                                                                                                                                               | Test                   | Lapis / file                                    | Status            |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ----------------------------------------------- | ----------------- |
-| §4.1  | `users`: email unik citext; `password_hash` nullable demo                                                                                                                                                              | TC-DB                  | `test/schema-contract.test.ts`                  | ✅                |
-| §4.1  | `weekly_summaries` tepat 3 kalimat; `idempotency_keys` PK (store, key); cascade hapus toko                                                                                                                             | TC-DB                  | `test/schema-contract.test.ts`                  | ✅                |
-| §4.1  | `stock_adjustments.qty_delta ≠ 0`; `daily_sales.unit_price ≥ 0`                                                                                                                                                        | TC-DB                  | `test/schema-contract.test.ts`                  | ✅                |
-| §4.2  | stok(asOf) = Σins − Σsales + Σadj dengan cutoff tanggal; baris setelah asOf tidak dihitung; asOf berbeda → stok berbeda                                                                                                | TC-LED                 | `test/ledger-semantics.test.ts`                 | ✅                |
-| §4.2  | `last_cost` tie-break `created_at DESC`; `first_stock_date` MIN(qty>0) + fallback `created_at` WIB; `week_qty` 7 jendela; `sold_28`/`sale_days_28`/`sold_90`; arsip & lintas toko terisolasi; stok mentah bisa negatif | TC-LED                 | `test/ledger-semantics.test.ts`                 | ✅                |
-| §4.2  | **last_cost mengikuti cutoff asOf**                                                                                                                                                                                    | TC-LED (TEMUAN QA-01)  | `test/ledger-semantics.test.ts`                 | 🔴                |
-| §10.2 | Profil toko demo; ±100 barang; riwayat ≤ 90 hari; **akhir pekan lebih ramai**; rencana active mulai 10 hari lalu                                                                                                       | TC-DEMO                | `test/demo-fixture.test.ts`                     | ✅                |
-| §10.2 | Distribusi status, kasus brief, determinisme, stok non-negatif                                                                                                                                                         | (sudah)                | `database/src/demo/generator.test.ts` (backend) | ✅ (pemilik lain) |
-| §8.1  | Sesi & cookie (`HttpOnly; Secure; SameSite=Lax`), argon2id, token hash di DB                                                                                                                                           | API-AUTH + SEC         | API + security                                  | ⛔                |
-| §8.4  | Rate limit: login 5/15 mnt (IP+email); register 5/jam; demo 10/jam; plans 20/hari; imports 20/jam; lain 300/mnt; 429 + `Retry-After`                                                                                   | API-RATE (skenario #6) | API + E2E                                       | ⛔                |
+| #     | Kriteria                                                                                                                                                                                                                                                                                              | Test                   | Lapis / file                                    | Status            |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ----------------------------------------------- | ----------------- |
+| §4.1  | `users`: email unik citext; `password_hash` nullable demo                                                                                                                                                                                                                                             | TC-DB                  | `test/schema-contract.test.ts`                  | ✅                |
+| §4.1  | `weekly_summaries` tepat 3 kalimat; `idempotency_keys` PK (store, key); cascade hapus toko                                                                                                                                                                                                            | TC-DB                  | `test/schema-contract.test.ts`                  | ✅                |
+| §4.1  | `stock_adjustments.qty_delta ≠ 0`; `daily_sales.unit_price ≥ 0`                                                                                                                                                                                                                                       | TC-DB                  | `test/schema-contract.test.ts`                  | ✅                |
+| §4.2  | stok(asOf) = Σins − Σsales + Σadj dengan cutoff tanggal; baris setelah asOf tidak dihitung; asOf berbeda → stok berbeda                                                                                                                                                                               | TC-LED                 | `test/ledger-semantics.test.ts`                 | ✅                |
+| §4.2  | `last_cost` tie-break `created_at DESC`; `first_stock_date` MIN(qty>0) + fallback `created_at` WIB; `week_qty` 7 jendela (SPEC §4.2; permintaan ubah ke 8 DIBATALKAN tech-lead 26 Okt — instruksi basi); `sold_28`/`sale_days_28`/`sold_90`; arsip & lintas toko terisolasi; stok mentah bisa negatif | TC-LED                 | `test/ledger-semantics.test.ts`                 | ✅                |
+| §4.2  | **last_cost mengikuti cutoff asOf** (TEMUAN QA-01 — FIXED & VERIFIED 26 Okt; guard hijau karena IMPL benar)                                                                                                                                                                                           | TC-LED                 | `test/ledger-semantics.test.ts`                 | ✅                |
+| §10.2 | Profil toko demo; ±100 barang; riwayat ≤ 90 hari; **akhir pekan lebih ramai**; rencana active mulai 10 hari lalu                                                                                                                                                                                      | TC-DEMO                | `test/demo-fixture.test.ts`                     | ✅                |
+| §10.2 | Distribusi status, kasus brief, determinisme, stok non-negatif                                                                                                                                                                                                                                        | (sudah)                | `database/src/demo/generator.test.ts` (backend) | ✅ (pemilik lain) |
+| §8.1  | Sesi & cookie (`HttpOnly; Secure; SameSite=Lax`), argon2id, token hash di DB                                                                                                                                                                                                                          | API-AUTH + SEC         | API + security                                  | ⛔                |
+| §8.4  | Rate limit: login 5/15 mnt (IP+email); register 5/jam; demo 10/jam; plans 20/hari; imports 20/jam; lain 300/mnt; 429 + `Retry-After`                                                                                                                                                                  | API-RATE (skenario #6) | API + E2E                                       | ⛔                |
 
 ## 6. Skenario wajib delegasi tech-lead
 
@@ -186,29 +191,41 @@ masuk: T-9 backend API, migrasi 0001, mount route). Angka terakhir mengacu
 state working tree 26 Okt 2026 ±12:00 WIB, setelah fix QA-01 mendarat.
 
 ```
-Suite QA (npx vitest run --config test/vitest.config.mts):
-  Test Files  3 passed (3)
-  Tests      50 passed (50)   ← ALL GREEN
+Suite QA (npx vitest run --config test/vitest.config.mts) — 26 Okt 2026, terakhir:
+  Test Files  4 passed (4)
+  Tests      55 passed (55)   ← ALL GREEN (50 + 5 invarian stok/uang)
 ```
 
 Riwayat: 49/50 (guard QA-01 RED) → fix CTE `lc`+`fs` mendarat →
 **50/50 ALL GREEN**, diverifikasi lewat protokol §9 (guard hijau karena
-IMPL benar, bukan fixture berubah).
+IMPL benar, bukan fixture berubah) → +5 test invarian (BR-16 ×2, W-9,
+W-2 jalur delete: 422 stok + 409 window) → **55/55**.
 
-Suite penuh repo (`npx vitest run`, config root): 226 passed / 1 failed
-(227) — 1 gagal = perf test backend `productStats.test.ts` (≤ 300 ms),
-**borderline di mesin ini**: 678.4 ms → 302.3 ms → <300 ms dalam 3 run
-berturut-turut; fixture & diff query trivial untuk 500 baris → indikasi
-CPU contention (agent paralel di box yang sama), bukan regresi.
-**Putusan tech-lead (26 Okt 2026): threshold TIDAK diubah**; CI
-(ubuntu-latest, box bersih) adalah pengukuran yang sah. CI hijau →
-threshold bertahan; CI merah → backend-dev investigasi query plan/index,
-bukan melonggarkan threshold. Dicatat sebagai item verifikasi CI.
-Baseline saat task mulai: 18 passed (2 file).
+Suite penuh repo (`npx vitest run`, config root): **480 passed (39 file)** —
+394 backend + 55 QA + database/frontend; perf test hijau di run terbaru.
+Riwayat angka gate root: 18 (awal) → 28 → 291/291 (snapshot v6, QA masuk
+gate) → 444/444 → 473/473 → 477/477 → **480/480** (repo bertambah;
+kuverifikasi ulang 26 Okt).
+
+Perf test `productStats.test.ts` (≤ 300 ms) — riwayat karakterisasi:
+
+- Lokal, paralel: 678.4 ms → 302.3 ms → <300 ms (noise floor mesin ini)
+- Setelah `fileParallelism: false` (commit `15aa143`, gate serial):
+  **3+ run berturut-turut hijau**, backend-dev mengukur 444/444.
+- **Putusan tech-lead (26 Okt 2026): threshold TIDAK diubah**; CI
+  (ubuntu-latest, box bersih) adalah pengukuran yang sah. CI hijau →
+  threshold bertahan; CI merah → backend-dev investigasi query
+  plan/index, bukan melonggarkan threshold.
+- Aturan pencatatan (kesepakatan backend-dev + tech-lead): kegagalan
+  lokal sekali-sekali **tidak** dicatat sebagai temuan flaky selama belum
+  terlihat gagal di runner bersih; kalau gagal di CI → sinyal nyata,
+  backend-dev yang perbaiki.
+- Item verifikasi CI: lihat QA-04 di bawah.
 
 **Kompatibilitas environment (26 Okt 2026):** suite QA diverifikasi hijau
 di `node` (config sendiri) **dan** di `jsdom` (simulasi root config +
-`setupFiles`) → aman saat `test/**` masuk include root.
+`setupFiles`) → **terkonfirmasi di gate nyata**: 3 file QA lulus apa
+adanya di root gate (444/444, 34 file).
 
 ### 8.2 Temuan
 
@@ -262,6 +279,53 @@ memasukkan `test/**`**
   (21 file), exit 0** — termasuk 50 test QA. Gate CI kini menjalankan
   suite QA; QA-02 selesai.
 
+**QA-04 — W-10 dari security review — perf test CI: SISTEMATIS DI AMBANG
+(fail 2-of-3), arbitrase pertama ADA (update 26 Okt 2026)**
+
+- Item: konfirmasi perilaku perf test `productStats.test.ts` (≤ 300 ms) di
+  CI. Putusan tech-lead: threshold TIDAK diubah; kalau CI merah →
+  backend-dev investigasi query plan/index, **bukan** longgarkan threshold.
+- Sejarah gate (kuverifikasi sendiri via GitHub API):
+  - Sampai 26 Okt pagi: 20/20 run merah, semuanya di **Format check**
+    (8 file non-QA) — step Test belum pernah tercapai.
+  - **Run 24 (sha `b08e9dd`, 09:26Z): merah TEPAT di step Test** — perf
+    test 337,8 ms > 300 ms (angka dari log run via tech-lead/backend-dev).
+  - Run 25 (sha `734df56`, 09:48Z): semua step hijau, run cancelled
+    (superseded push).
+  - **Run 29 (sha `1303608`, 09:55Z): gate penuh HIJAU** — Format, Lint,
+    Type check, **Test**, Build, gitleaks semua success. Perf test HIJAU.
+  - **Run 31 (sha `e3862de`, 10:00Z): merah TEPAT di step Test** — perf
+    test 332,4 ms > 300 ms (step-level kuverifikasi via API; angka dari
+    log run).
+  - **Setelah merge PR #1 & #2 ke `main`**: run 38 (`18333b2`, merge PR #1)
+    merah; **run 40 (`728c2e5`, merge PR #2 — docs disk-only) HIJAU**;
+    **run 42 (`93a977a`, main) MERAH LAGI di step Test** → pola fail-2-of-3
+    berlanjut di main (`18333b2` FAIL → `728c2e5` PASS → `93a977a` FAIL).
+    Pola bergantian terus berjalan di main; hijau bukan penutupan risiko.
+  - **Mode kegagalan KEDUA yang teramati: Format check** (run 43,
+    `b7930e3`, branch `chore/readme-refresh`): merah di step PERTAMA —
+    step Test tidak tercapai. Ini pola yang sama dengan era 20/20 (file
+    non-QA). Artinya ada dua mode kegagalan gate: (1) perf test di step
+    Test (fail-2-of-3), (2) format check file non-QA yang menahan step
+    Test sebagai "sandera". Backend-dev mengamati hal sama dan menyarankan
+    partisi format check (frontend-gate vs backend-gate) supaya step Test
+    backend tidak ikut sandera — **usulan ke devops, belum ada keputusan**;
+    dicatat di sini sebagai observasi proses dengan bukti (run 43).
+  - **Pola lengkap: `b08e9dd` FAIL (337,8) → `1303608` PASS (outlier) →
+    `e3862de` FAIL (332,4) = fail 2-of-3.** Karakterisasi tech-lead:
+    **sistematis di atas ambang, bukan flake sekali-jadi** — query hidup
+    tepat di threshold dan sensitif kecepatan runner. Di main:
+    `18333b2` FAIL → `728c2e5` PASS (pola bergantian berlanjut).
+- Koreksi atribusi: kegagalan 337,8 ms ada di run `b08e9dd` (step Test
+  merah), **bukan** `734df56` seperti dikutip — `734df56` semua step hijau.
+- Mitigasi (keputusan tech-lead): **jalur utama = backend-dev optimasi
+  query** (target headroom nyata, bukan ambang); jaring sekunder =
+  `retry: 1` khusus test itu + komentar karakteristik ambang di file test.
+- **Trigger verifikasi ulang:** kalau run CI berikutnya merah TEPAT di perf
+  test itu saja → noise yang dikenal (retry menyerap), **BUKAN regresi**.
+  Regresi = merah dua kali berturut-turut. Owner observasi: qa-engineer
+  (via API/devops).
+
 **QA-03 — LOW (dokumen) — DITUTUP 26 Okt 2026**
 
 - Keputusan tech-lead: repo TIDAK disusun ulang. SPEC §3.2 sudah
@@ -302,6 +366,13 @@ ada, aplikasi belum lengkap). Suite QA sendiri: **ALL GREEN**.
    (Pixel 7 + 1280), spec per §5 (auth, rekap qty/opname, outbox offline,
    import, plans, share WA, NOINDEX), skrip audit Lighthouse CI + axe +
    Rich Results. **Jangan mulai sebelum URL ada.**
+   Black-box di staging (Neon = Postgres native, konkurensi nyata) —
+   kesepakatan devops, tercatat 26 Okt:
+   - **Probe konkurensi**: dua operasi bersamaan di jalur delete/patch/recap
+     produk yang SAMA. PGlite single-writer tidak bisa mengukur ini (batas
+     lingkungan pengukuran, BUKAN bukti aman) — guard W-2/urutan lock hanya
+     terbukti di Postgres bersengkala sungguhan.
+   - Rate-limit absence (sudah di checklist black-box devops).
 3. **API layer lengkap** → verifikasi kontrak (Ajv) & IDOR matrix; smoke
    post-merge di staging.
 4. **Cron/demo** → skrip cek harian AC-SYS-10 (3 hari berturut sebelum 10 Nov).

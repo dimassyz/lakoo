@@ -304,13 +304,25 @@ function fail(code: ErrorCode, lines: ErrorLine[]): never {
   throw new ApiError(422, code, "Ada baris yang perlu dicek.", { lines });
 }
 
+/**
+ * Urutan lock yang deterministik. Dua transaksi yang menyentuh barang yang sama
+ * harus meminta lock dalam urutan yang sama, kalau tidak mereka bisa saling
+ * menunggu (deadlock). Urutan input tidak bisa diandalkan — ia datang dari klien,
+ * jadi satu PUT boleh menyentuh [A,B] sementara yang lain [B,A].
+ */
+export function lockOrder(ids: readonly string[]): string[] {
+  return [...new Set(ids)].sort();
+}
+
 /** W-2: serialisasi per barang sebelum cek stok, supaya BR-16 tidak bisa di-race. */
 async function lockAll(
   db: AnyDb,
   storeId: string,
   applied: { row: { productId: string } }[],
 ): Promise<void> {
-  for (const { row } of applied) await lockProduct(db, storeId, row.productId);
+  for (const id of lockOrder(applied.map(({ row }) => row.productId))) {
+    await lockProduct(db, storeId, id);
+  }
 }
 
 export async function saveRecap(
