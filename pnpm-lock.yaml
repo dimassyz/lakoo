@@ -69,6 +69,9 @@ importers:
       '@lhci/cli':
         specifier: ^0.15.1
         version: 0.15.1
+      '@next/eslint-plugin-next':
+        specifier: 15.5.28
+        version: 15.5.28
       '@playwright/test':
         specifier: ^1.64.1
         version: 1.64.1
