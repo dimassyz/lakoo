@@ -46,3 +46,12 @@ Thumbs.db
 # temp files
 .hermes-tmp*
 *.tmp
+
+# --- docs: disk-only (perencanaan internal), KECUALI kontrak API ---
+# docs/api/openapi.yaml = input build (pnpm api:types), CI butuh -> tetap tracked.
+# File docs lain TETAP ADA di working tree, tapi tidak di-commit.
+# PERINGATAN: jangan git clean / fresh clone dan harap docs ada - docs sekarang disk-only.
+docs/*
+!docs/api/
+docs/api/*
+!docs/api/openapi.yaml
