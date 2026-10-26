@@ -22,3 +22,5 @@ export type StockInBatchCreate = components["schemas"]["StockInBatchCreate"];
 export type Plan = components["schemas"]["Plan"];
 export type PlanStep = components["schemas"]["PlanStep"];
 export type Results = components["schemas"]["Results"];
+export type ProductCreate = components["schemas"]["ProductCreate"];
+export type ProductPatch = components["schemas"]["ProductPatch"];
