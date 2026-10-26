@@ -14,12 +14,13 @@ Pengguna yang paling jarang menggunakan HP akan tetap merasa nyaman karena semua
 
 ## 2. Palette (max 3 core + 1 accent, setiap satu dengan 1 alasan)
 
-| Warna                           | Hex    | Alasan                                                                                           |
-| ------------------------------- | ------ | ------------------------------------------------------------------------------------------------ |
-| **Gading putih** (#F8F7F4)      | Core   | Latar paling bersih dan nyaman untuk mata pemilik warung yang sudah 8 jam melihat barang di rak. |
-| **Hitam pekat** (#1F1F1F)       | Core   | Untuk nama barang dan angka penting — sangat mudah dibaca meski HP di bawah cahaya terang.       |
-| **Abu-abu lembut** (#6B7280)    | Core   | Untuk label status (Sehat/Waspada/Sekarat/Mati) dan teks bantu.                                  |
-| **Hijau keselamatan** (#10B981) | Accent | Hanya dipakai untuk status Sehat dan tombol utama.                                               |
+| Warna                           | Hex      | Alasan                                                                                                                                                                                                                                                                |
+| ------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Gading putih** (#F8F7F4)      | Core     | Latar paling bersih dan nyaman untuk mata pemilik warung yang sudah 8 jam melihat barang di rak.                                                                                                                                                                      |
+| **Hitam pekat** (#1F1F1F)       | Core     | Untuk nama barang dan angka penting — sangat mudah dibaca meski HP di bawah cahaya terang.                                                                                                                                                                            |
+| **Abu-abu lembut** (#6B7280)    | Core     | Untuk label status (Sehat/Waspada/Sekarat/Mati) dan teks bantu.                                                                                                                                                                                                       |
+| **Hijau keselamatan** (#10B981) | Accent   | Hanya dipakai untuk status Sehat dan tombol utama.                                                                                                                                                                                                                    |
+| **Merah peringatan** (#DC2626)  | Semantic | Status Mati + tanda error/validasi (FSD §0.3 "tanda merah"). Tidak untuk dekorasi. _Amendemen 26 Okt 2026 — palette §2 tidak memuat merah padahal §4 MOTION menyebut ramp hijau→kuning→merah dan FSD §0.3 meminta tanda merah; satu warna semantik menutup keduanya._ |
 
 ## 3. Typography
 
