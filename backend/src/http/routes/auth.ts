@@ -11,9 +11,17 @@ import {
 } from "../../repo/auth.ts";
 import { emailTaken, invalidCredentials } from "../errors.ts";
 import { hashPassword, verifyPassword } from "../password.ts";
-import { LOGIN_RULE, REGISTER_RULE, consumeRateLimit } from "../rate-limit.ts";
-import { toMe } from "../serialize.ts";
 import {
+  AUTH_BUDGET_RULE,
+  DEMO_RULE,
+  LOGIN_RULE,
+  REGISTER_RULE,
+  consumeRateLimit,
+} from "../rate-limit.ts";
+import { toMe } from "../serialize.ts";
+import { cloneDemoTemplate } from "../../repo/demo.ts";
+import {
+  DEMO_TTL_SECONDS,
   SESSION_TTL_SECONDS,
   clearedSessionCookie,
   generateToken,
@@ -131,10 +139,28 @@ async function handleLogout(c: Context, deps: AuthDeps) {
   return c.body(null, 204);
 }
 
+/** Akun demo: klon toko template + sesi 24 jam (SPEC §10.2, ADR-004). */
+async function handleDemo(c: Context, deps: AuthDeps) {
+  await consumeRateLimit(deps.db, DEMO_RULE, clientIp(c), deps.now());
+  const { user, store } = await cloneDemoTemplate(deps.db, deps.now());
+  const token = await startSession(deps, user.id);
+  c.header("Set-Cookie", sessionCookie(token, DEMO_TTL_SECONDS));
+  return c.json(toMe(user, store), 201);
+}
+
 export function authRoutes(deps: AuthDeps) {
   const app = new Hono();
+  // Anggaran global `/auth/*` per IP (SPEC §8.4 amendemen), di luar limit per-endpoint.
+  // SPEC §8.4 amendemen: `POST /auth/logout` dikecualikan — pengguna yang
+  // menghabiskan anggaran justru bisa gagal keluar.
+  app.use("*", async (c, next) => {
+    if (c.req.path.endsWith("/auth/logout")) return next();
+    await consumeRateLimit(deps.db, AUTH_BUDGET_RULE, clientIp(c), deps.now());
+    await next();
+  });
   app.post("/register", (c) => handleRegister(c, deps));
   app.post("/login", (c) => handleLogin(c, deps));
   app.post("/logout", (c) => handleLogout(c, deps));
+  app.post("/demo", (c) => handleDemo(c, deps));
   return app;
 }

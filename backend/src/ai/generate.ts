@@ -40,7 +40,7 @@ export interface QuotaState {
   storeCallsToday: number;
 }
 
-/** Empat dari lima syarat §6.1 #3; syarat kelima (GEMINI_API_KEY) ada di `enabled`. */
+/** Kelima syarat §6.1 #3: AI_ENABLED, GEMINI_API_KEY, aiEnabled toko, kuota global, kuota toko. */
 export function aiAllowed(settings: AiSettings, quota: QuotaState): boolean {
   if (!settings.enabled || settings.apiKey === "") return false;
   if (!quota.storeAiEnabled) return false;

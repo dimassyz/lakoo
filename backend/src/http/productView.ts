@@ -2,7 +2,13 @@ import type { AnyDb } from "../../../database/src/db.ts";
 import { DEFAULT_THRESHOLDS } from "../domain/product.ts";
 import { prioritize } from "../domain/score.ts";
 import { listProductStats, livePlanStates } from "../repo/products.ts";
-import { toProductSummary, type ProductSummary } from "./serialize.ts";
+import type { ProductStat } from "../../../database/src/queries/productStats.ts";
+import {
+  toProductDetail,
+  toProductSummary,
+  type ProductDetail,
+  type ProductSummary,
+} from "./serialize.ts";
 
 /** Skor §5.3 butuh seluruh himpunan (max_locked), jadi dihitung sekali per respons. */
 function applyScores(items: ProductSummary[]): void {
@@ -29,12 +35,12 @@ function applyScores(items: ProductSummary[]): void {
 }
 
 /** Satu-satunya tempat `ProductSummary` dibentuk — dipakai /products dan /dashboard. */
-export async function loadProductSummaries(
+export async function loadProducts(
   db: AnyDb,
   storeId: string,
   asOf: string,
   includeArchived = false,
-): Promise<ProductSummary[]> {
+): Promise<{ stats: ProductStat[]; items: ProductSummary[] }> {
   const stats = await listProductStats(db, storeId, asOf, includeArchived);
   const planStates = await livePlanStates(db, storeId);
   const items = stats.map((stat) =>
@@ -46,5 +52,30 @@ export async function loadProductSummaries(
     ),
   );
   applyScores(items);
-  return items;
+  return { stats, items };
+}
+
+export async function loadProductSummaries(
+  db: AnyDb,
+  storeId: string,
+  asOf: string,
+  includeArchived = false,
+): Promise<ProductSummary[]> {
+  return (await loadProducts(db, storeId, asOf, includeArchived)).items;
+}
+
+/** `ProductDetail` satu barang (kontrak POST /products 201). */
+export async function loadProductDetail(
+  db: AnyDb,
+  storeId: string,
+  productId: string,
+  asOf: string,
+  createdAt: Date,
+): Promise<ProductDetail | undefined> {
+  // Detail harus tetap terbaca untuk barang terarsip (kontrak hanya 404 bila tidak ada).
+  const { stats, items } = await loadProducts(db, storeId, asOf, true);
+  const stat = stats.find((row) => row.productId === productId);
+  const summary = items.find((row) => row.id === productId);
+  if (stat === undefined || summary === undefined) return undefined;
+  return toProductDetail(summary, stat, createdAt);
 }

@@ -2,15 +2,19 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { z } from "zod";
 import type { AnyDb } from "../../../../database/src/db.ts";
-import { nameKeyOf } from "../../../../database/src/demo/generator.ts";
+import { nameKeyOf } from "../../../../database/src/nameKey.ts";
 import { currentSession } from "../auth-context.ts";
-import { ApiError, validationError } from "../errors.ts";
-import { loadProductSummaries } from "../productView.ts";
+import { ApiError, notFound, validationError } from "../errors.ts";
+import { loadProductDetail, loadProductSummaries } from "../productView.ts";
 import type { ProductSummary } from "../serialize.ts";
 import { readJson } from "../validate.ts";
 import {
+  adjustStock,
+  findProduct,
   createProduct,
   findLiveProductByNameKey,
+  setArchived,
+  updateProduct,
 } from "../../repo/products.ts";
 
 export interface ProductsDeps {
@@ -42,9 +46,11 @@ const createBody = z
   })
   .strict();
 
-/** `asOf` selalu tanggal UTC hari ini, supaya jendela §5.1 tidak bergeser per jam. */
+/** `asOf` selalu tanggal WIB hari ini, supaya jendela §5.1 tidak bergeser per jam. */
 export function todayIso(now: Date): string {
-  return now.toISOString().slice(0, 10);
+  // WIB = UTC+7 tanpa DST. `toISOString()` polos akan salah tanggal antara
+  // 00:00–07:00 WIB (masih hari sebelumnya di UTC).
+  return new Date(now.getTime() + 7 * 3_600_000).toISOString().slice(0, 10);
 }
 
 function byPriority(a: ProductSummary, b: ProductSummary): number {
@@ -138,26 +144,114 @@ async function handleCreate(c: Context, deps: ProductsDeps) {
     isComplementary: body.isComplementary ?? false,
     openingStock: body.openingStock,
     receivedOn: todayIso(deps.now()),
+    createdAt: deps.now(),
   });
 
-  return c.json(
-    {
-      id: product.id,
-      name: product.name,
-      unit: product.unit,
-      category: product.category,
-      sellPrice: product.sellPrice,
-      lastCost: body.costPrice,
-      stock: body.openingStock,
-      isComplementary: product.isComplementary,
-    },
-    201,
+  // Kontrak: 201 → ProductDetail lengkap, bukan potongan ProductSummary.
+  const detail = await loadProductDetail(
+    deps.db,
+    store.id,
+    product.id,
+    todayIso(deps.now()),
+    product.createdAt,
   );
+  if (detail === undefined) {
+    throw new Error("barang baru tidak muncul di productStats");
+  }
+  return c.json(detail, 201);
+}
+
+const patchBody = z
+  .object({
+    name: z.string().min(1).max(80).optional(),
+    unit: z.string().min(1).max(16).optional(),
+    category: z.string().max(40).nullable().optional(),
+    sellPrice: z.number().int().min(0).max(1_000_000_000).optional(),
+    isComplementary: z.boolean().optional(),
+    complementaryMaxStock: z
+      .number()
+      .int()
+      .min(1)
+      .max(100_000)
+      .nullable()
+      .optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "minimal satu field",
+  });
+
+const archiveBody = z.object({ archived: z.boolean() }).strict();
+
+const adjustmentBody = z
+  .object({ countedStock: z.number().int().min(0).max(100_000) })
+  .strict();
+
+/** `ProductDetail` segar untuk satu barang; 404 bila tidak ada di toko ini. */
+async function detailOf(
+  c: Context,
+  deps: ProductsDeps,
+  storeId: string,
+  productId: string,
+) {
+  const product = await findProduct(deps.db, storeId, productId);
+  const detail = await loadProductDetail(
+    deps.db,
+    storeId,
+    productId,
+    todayIso(deps.now()),
+    product.createdAt,
+  );
+  if (detail === undefined) throw notFound();
+  return c.json(detail);
+}
+
+async function handleDetail(c: Context, deps: ProductsDeps) {
+  const { store } = await currentSession(c, deps);
+  const productId = c.req.param("productId") ?? "";
+  return detailOf(c, deps, store.id, productId);
+}
+
+async function handlePatch(c: Context, deps: ProductsDeps) {
+  const { store } = await currentSession(c, deps);
+  const productId = c.req.param("productId") ?? "";
+  const body = await readJson(c, patchBody);
+  await updateProduct(deps.db, store.id, productId, body, deps.now());
+  return detailOf(c, deps, store.id, productId);
+}
+
+async function handleArchive(c: Context, deps: ProductsDeps) {
+  const { store } = await currentSession(c, deps);
+  const productId = c.req.param("productId") ?? "";
+  const body = await readJson(c, archiveBody);
+  await setArchived(deps.db, store.id, productId, body.archived, deps.now());
+  return detailOf(c, deps, store.id, productId);
+}
+
+async function handleAdjustStock(c: Context, deps: ProductsDeps) {
+  const { store } = await currentSession(c, deps);
+  const productId = c.req.param("productId") ?? "";
+  const body = await readJson(c, adjustmentBody);
+  await adjustStock(
+    deps.db,
+    store.id,
+    productId,
+    body.countedStock,
+    todayIso(deps.now()),
+    deps.now(),
+  );
+  return detailOf(c, deps, store.id, productId);
 }
 
 export function productRoutes(deps: ProductsDeps) {
   const app = new Hono();
   app.get("/products", (c) => handleList(c, deps));
   app.post("/products", (c) => handleCreate(c, deps));
+  app.get("/products/:productId", (c) => handleDetail(c, deps));
+  app.patch("/products/:productId", (c) => handlePatch(c, deps));
+  app.post("/products/:productId/archive", (c) => handleArchive(c, deps));
+  app.post("/products/:productId/stock-adjustments", (c) =>
+    handleAdjustStock(c, deps),
+  );
   return app;
 }

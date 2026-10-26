@@ -95,9 +95,15 @@ export interface DepletionEstimate {
   restockSoon: boolean;
 }
 
-/** Perkiraan habis — hanya bermakna untuk status sehat/waspada (SPEC §5.2). */
+/**
+ * Perkiraan habis (SPEC §5.2 + amendemen 26 Okt 2026).
+ * Berlaku untuk sehat/waspada/stok_habis. Rak kosong yang masih laku cepat
+ * (≥ 3 hari ada penjualan dalam 28 hari) harus muncul di "Segera kulakan" —
+ * tanpa ini pemilik melewatkan barang paling menguntungkan.
+ */
 export function depletionEstimate(facts: ProductFacts): DepletionEstimate {
   if (facts.saleDays28 < 3) return { daysUntilEmpty: null, restockSoon: false };
+  if (facts.stock <= 0) return { daysUntilEmpty: 0, restockSoon: true };
   const avgPerDay = facts.sold28 / 28;
   if (avgPerDay <= 0) return { daysUntilEmpty: null, restockSoon: false };
   const daysUntilEmpty = Math.floor(Math.max(facts.stock, 0) / avgPerDay);

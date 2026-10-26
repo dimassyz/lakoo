@@ -60,7 +60,9 @@ export function toProductSummary(
     sold90: stat.sold90,
   };
   const status = productStatus(facts, thresholds, asOf);
-  const depleting = status === "sehat" || status === "waspada";
+  // Amendemen §5.2: stok_habis ikut diperkirakan habis (rak kosong, barang laku cepat).
+  const depleting =
+    status === "sehat" || status === "waspada" || status === "stok_habis";
   const depletion = depleting
     ? depletionEstimate(facts)
     : { daysUntilEmpty: null, restockSoon: false };
@@ -115,4 +117,31 @@ export interface ProductSummary {
   reason: string | null;
   planState: string | null;
   archived: boolean;
+}
+
+/** Kontrak: `weekQty` selalu 7 angka, indeks 0 = 7 hari terakhir (SPEC §4.2). */
+
+export interface ProductDetail extends ProductSummary {
+  complementaryMaxStock: number | null;
+  weekQty: number[];
+  firstStockDate: string | null;
+  createdAt: string;
+}
+
+/**
+ * `ProductDetail` = `ProductSummary` + empat field. `summary` harus sudah
+ * melewati `prioritize()` supaya `priorityScore`/`reason` terisi.
+ */
+export function toProductDetail(
+  summary: ProductSummary,
+  stat: ProductStat,
+  createdAt: Date,
+): ProductDetail {
+  return {
+    ...summary,
+    complementaryMaxStock: stat.complementaryMaxStock,
+    weekQty: stat.weekQty,
+    firstStockDate: stat.firstStockDate ?? null,
+    createdAt: createdAt.toISOString(),
+  };
 }

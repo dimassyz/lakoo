@@ -3,33 +3,20 @@ import type { Context } from "hono";
 import type { AnyDb } from "../../../../database/src/db.ts";
 import { shiftIsoDate } from "../../../../database/src/demo/generator.ts";
 import { currentSession } from "../auth-context.ts";
-import {
-  buildWeeklySentences,
-  lastCompleteWeek,
-  shouldShowWeeklySummary,
-} from "../../domain/weeklySummary.ts";
+import { shouldShowWeeklySummary } from "../../domain/weeklySummary.ts";
+import { loadWeeklySummary } from "../weeklySummaryView.ts";
 import { loadProductSummaries } from "../productView.ts";
 import { toMe, type ProductSummary } from "../serialize.ts";
 import { todayIso } from "./products.ts";
-import {
-  completedPlansInWeek,
-  dueSteps,
-  findWeeklySummary,
-  recoveredInWeek,
-  saveWeeklySummary,
-  weeklySales,
-} from "../../repo/dashboard.ts";
+import { dueSteps } from "../../repo/dashboard.ts";
 
 export interface DashboardDeps {
   db: AnyDb;
   now: () => Date;
 }
 
-const STATUSES = ["sehat", "waspada", "sekarat", "mati", "stok_habis"] as const;
 const PROBLEM = new Set(["waspada", "sekarat", "mati"]);
-
-const sumLocked = (items: readonly ProductSummary[]): number =>
-  items.reduce((total, item) => total + item.lockedValue, 0);
+const STATUSES = ["sehat", "waspada", "sekarat", "mati", "stok_habis"] as const;
 
 function totalsOf(items: readonly ProductSummary[]) {
   const byStatus = Object.fromEntries(
@@ -76,46 +63,9 @@ async function weeklySummaryFor(
   storeId: string,
   today: string,
 ) {
+  // Gerbang tampil §5.9: ringkasan hanya muncul pada hari yang diizinkan.
   if (!shouldShowWeeklySummary(today)) return null;
-  const { weekStart, weekEnd } = lastCompleteWeek(today);
-
-  const saved = await findWeeklySummary(deps.db, storeId, weekStart);
-  if (saved !== undefined)
-    return { weekStart, weekEnd, sentences: saved.sentences };
-
-  const sales = await weeklySales(deps.db, storeId, weekStart, weekEnd);
-  const atEnd = await loadProductSummaries(deps.db, storeId, weekEnd);
-  const atStart = await loadProductSummaries(
-    deps.db,
-    storeId,
-    shiftIsoDate(weekStart, -1),
-  );
-  const startStatus = new Map(atStart.map((item) => [item.id, item.status]));
-
-  // "Memburuk" = bermasalah di akhir minggu DAN statusnya berbeda dari awal minggu.
-  const worsened = atEnd
-    .filter((item) => {
-      if (!PROBLEM.has(item.status) || item.isComplementary) return false;
-      return startStatus.get(item.id) !== item.status;
-    })
-    .map((item) => item.name);
-
-  const sentences = buildWeeklySentences({
-    salesTotal: sales.salesTotal,
-    productsSold: sales.productsSold,
-    lockedStart: sumLocked(atStart),
-    lockedEnd: sumLocked(atEnd),
-    worsened,
-    completedPlans: await completedPlansInWeek(
-      deps.db,
-      storeId,
-      weekStart,
-      weekEnd,
-    ),
-    recovered: await recoveredInWeek(deps.db, storeId, weekStart, weekEnd),
-  });
-  await saveWeeklySummary(deps.db, storeId, weekStart, sentences);
-  return { weekStart, weekEnd, sentences };
+  return loadWeeklySummary(deps.db, storeId, today);
 }
 
 async function handleDashboard(c: Context, deps: DashboardDeps) {

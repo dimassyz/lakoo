@@ -120,10 +120,8 @@ export function weekdayOf(iso: string): number {
   return new Date(`${iso}T00:00:00Z`).getUTCDay();
 }
 
-/** `name_key` = lower + trim + spasi tunggal (SPEC §4.1). */
-export function nameKeyOf(name: string): string {
-  return name.trim().toLowerCase().replace(/\s+/g, " ");
-}
+export { nameKeyOf };
+import { nameKeyOf } from "../nameKey.ts";
 
 /** Tanggal penjualan: nomor hari `d` berarti `asOf - d` (d=1 = kemarin). */
 function dateOfDay(asOf: string, day: number): string {

@@ -1307,10 +1307,10 @@ components:
             complementaryMaxStock: { type: [integer, "null"] }
             weekQty:
               type: array
-              minItems: 8
-              maxItems: 8
+              minItems: 7
+              maxItems: 7
               items: { type: integer }
-              description: Terjual per jendela 7 hari; indeks 0 = 7 hari terakhir (SPEC §4.2).
+              description: Terjual per jendela 7 hari; indeks 0 = 7 hari terakhir (SPEC §4.2 — week_qty[1..7]).
             firstStockDate: { type: [string, "null"], format: date }
             createdAt: { type: string, format: date-time }
       unevaluatedProperties: false

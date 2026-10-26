@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createTestDb } from "../../../../database/src/test/pglite.ts";
 import type { AnyDb } from "../../../../database/src/db.ts";
 import { createApp } from "../app.ts";
+import { todayIso } from "./products.ts";
 
 const ORIGIN = "https://lakoo.test";
 const NOW = new Date("2026-11-09T03:00:00Z");
@@ -96,6 +97,73 @@ describe("POST /products", () => {
       sellPrice: 20_000,
     });
     expect(body.id).toMatch(/^[0-9a-f-]{36}$/);
+  });
+});
+
+describe("POST /products — bentuk respons 201 (ProductDetail)", () => {
+  it("mengembalikan ProductDetail lengkap, bukan potongan ProductSummary", async () => {
+    const res = await post(
+      "/products",
+      {
+        name: "Sambal Botol",
+        costPrice: 9_000,
+        sellPrice: 15_000,
+        openingStock: 4,
+      },
+      { cookie },
+    );
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as Summary & {
+      complementaryMaxStock: number | null;
+      weekQty: number[];
+      firstStockDate: string | null;
+      createdAt: string;
+    };
+
+    // weekQty kontrak: tepat 7 angka (SPEC §4.2), barang baru semuanya 0.
+    expect(body.weekQty).toHaveLength(7);
+    expect(body.weekQty.every((qty) => qty === 0)).toBe(true);
+    expect(body.complementaryMaxStock).toBeNull();
+    expect(body.firstStockDate).toBe("2026-11-09");
+    expect(body.createdAt).toMatch(/^2026-11-0\dT/);
+    // Field ProductBase tetap ada semua.
+    expect(body).toMatchObject({
+      stock: 4,
+      lastCost: 9_000,
+      lockedValue: 36_000,
+    });
+  });
+
+  it("openingStock 0 tetap mencatat harga beli terakhir", async () => {
+    const res = await post(
+      "/products",
+      {
+        name: "Gas LPG 3kg",
+        costPrice: 18_000,
+        sellPrice: 22_000,
+        openingStock: 0,
+      },
+      { cookie },
+    );
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as Summary & {
+      firstStockDate: string | null;
+    };
+    // Tanpa baris stock_ins qty 0, lastCost akan 0 dan "terakhir Rp…" bohong.
+    expect(body.lastCost).toBe(18_000);
+    expect(body.stock).toBe(0);
+    expect(body.firstStockDate).toBe("2026-11-09");
+  });
+});
+
+describe("todayIso — tanggal bisnis WIB (Asia/Jakarta)", () => {
+  it("01.00 WIB (18.00 UTC hari sebelumnya) sudah tanggal WIB hari ini", () => {
+    // 2026-11-08T18:00Z = 2026-11-09T01:00 WIB.
+    expect(todayIso(new Date("2026-11-08T18:00:00Z"))).toBe("2026-11-09");
+    // 2026-11-09T16:59Z = 2026-11-09T23:59 WIB → masih tanggal 9.
+    expect(todayIso(new Date("2026-11-09T16:59:00Z"))).toBe("2026-11-09");
+    // 2026-11-09T17:00Z = 2026-11-10T00:00 WIB → sudah tanggal 10.
+    expect(todayIso(new Date("2026-11-09T17:00:00Z"))).toBe("2026-11-10");
   });
 });
 

@@ -12,7 +12,13 @@ import {
 import { authRoutes } from "./routes/auth.ts";
 import { meRoutes } from "./routes/me.ts";
 import { dashboardRoutes } from "./routes/dashboard.ts";
+import { planRoutes } from "./routes/plans.ts";
+import { resultRoutes } from "./routes/results.ts";
+import { importRoutes } from "./routes/imports.ts";
+import { cronRoutes } from "./routes/cron.ts";
 import { productRoutes } from "./routes/products.ts";
+import { salesRoutes } from "./routes/sales.ts";
+import { stockInRoutes } from "./routes/stockIns.ts";
 import { storeRoutes } from "./routes/store.ts";
 
 export interface AppDeps {
@@ -20,6 +26,26 @@ export interface AppDeps {
   /** Origin yang boleh mengirim method non-GET (SPEC §8.1). */
   allowedOrigins: readonly string[];
   now?: () => Date;
+  /** Env untuk pembacaan setelan AI; bawaan `process.env`. */
+  env?: Record<string, string | undefined>;
+  /** Injeksi `fetch` untuk test adapter AI. */
+  fetchImpl?: typeof fetch;
+}
+
+/** Semua grup route, satu tempat — `createApp` tinggal memasang guard & health. */
+function mountRoutes(app: Hono, deps: AppDeps, now: () => Date): void {
+  const ai = { db: deps.db, now, env: deps.env, fetchImpl: deps.fetchImpl };
+  app.route("/auth", authRoutes({ db: deps.db, now }));
+  app.route("/", meRoutes({ db: deps.db, now }));
+  app.route("/", productRoutes({ db: deps.db, now }));
+  app.route("/", dashboardRoutes({ db: deps.db, now }));
+  app.route("/", storeRoutes({ db: deps.db, now }));
+  app.route("/", salesRoutes({ db: deps.db, now }));
+  app.route("/", stockInRoutes({ db: deps.db, now }));
+  app.route("/", planRoutes(ai));
+  app.route("/", resultRoutes({ db: deps.db, now }));
+  app.route("/", importRoutes({ db: deps.db, now }));
+  app.route("/", cronRoutes(ai));
 }
 
 /**
@@ -44,11 +70,7 @@ export function createApp(deps: AppDeps) {
     return next();
   });
 
-  app.route("/auth", authRoutes({ db: deps.db, now }));
-  app.route("/", meRoutes({ db: deps.db, now }));
-  app.route("/", productRoutes({ db: deps.db, now }));
-  app.route("/", dashboardRoutes({ db: deps.db, now }));
-  app.route("/", storeRoutes({ db: deps.db, now }));
+  mountRoutes(app, deps, now);
 
   app.get("/health", async (c) => {
     try {

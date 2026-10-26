@@ -363,7 +363,7 @@ Satu halaman dengan 3 pertanyaan, bukan wizard. Target selesai ≤ 30 dtk.
 ### 11.1 Ringkasan barang
 
 - Isi: nama, label status + kalimat bantu (§0.6), uang terkunci (besar), stok, harga beli terakhir, harga jual, margin per unit, dan terakhir laku ("{tanggal} · {d} hari lalu" atau "Belum pernah laku").
-- **Grafik 8 minggu:** batang sederhana dari `weekQty` (kiri = terlama), tanpa sumbu berlebihan, dengan label angka di atas batang.
+- **Grafik 7 minggu:** batang sederhana dari `weekQty` (kiri = terlama), tanpa sumbu berlebihan, dengan label angka di atas batang.
 - **Aksi:**
   - **Ubah**
   - **Perbaiki stok** (bottom sheet, sama dengan §7)

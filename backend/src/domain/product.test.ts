@@ -192,6 +192,32 @@ describe("depletionEstimate (SPEC §5.2)", () => {
   });
 });
 
+describe("depletionEstimate — amendemen §5.2 (stok_habis)", () => {
+  it("rak kosong yang masih laku cepat → 0 hari, restockSoon true", () => {
+    expect(
+      depletionEstimate(facts({ stock: 0, sold28: 28, saleDays28: 10 })),
+    ).toEqual({ daysUntilEmpty: 0, restockSoon: true });
+  });
+
+  it("rak kosong yang jarang laku tetap tidak diusulkan kulakan", () => {
+    expect(
+      depletionEstimate(facts({ stock: 0, sold28: 2, saleDays28: 2 })),
+    ).toEqual({ daysUntilEmpty: null, restockSoon: false });
+  });
+
+  it("stok negatif diperlakukan sama seperti nol", () => {
+    expect(
+      depletionEstimate(facts({ stock: -4, sold28: 28, saleDays28: 10 })),
+    ).toEqual({ daysUntilEmpty: 0, restockSoon: true });
+  });
+
+  it("ambang tepat 3 hari penjualan sudah memenuhi syarat", () => {
+    expect(
+      depletionEstimate(facts({ stock: 0, sold28: 3, saleDays28: 3 })),
+    ).toEqual({ daysUntilEmpty: 0, restockSoon: true });
+  });
+});
+
 describe("complementaryOverstock (SPEC §5.2)", () => {
   it("memakai complementary_max_stock bila diisi", () => {
     const check = complementaryOverstock(

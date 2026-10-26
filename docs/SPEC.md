@@ -409,7 +409,7 @@ Instruksi sistem (versi final ditulis backend-dev, isi wajib):
 Konteks (JSON di pesan user):
 
 - `store`: `name, store_type, location, customer_types[]`
-- `product`: `id, name, category, unit, sell_price, last_cost, stock, status, days_since_last_sale, week_qty[1..8], margin_percent`
+- `product`: `id, name, category, unit, sell_price, last_cost, stock, status, days_since_last_sale, week_qty[1..7], margin_percent`
 - `bundle_candidates`: ≤ 15 barang sehat teratas `{id, name, category, sell_price, sold_28}`
 - `allowed_actions`: enum + rentang parameter sesuai status (§5.5 #4)
 - `today`: tanggal + nama hari

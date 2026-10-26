@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import type { AnyDb } from "../../../database/src/db.ts";
 import { unauthenticated } from "./errors.ts";
+import { GLOBAL_RULE, consumeRateLimit } from "./rate-limit.ts";
 import type { SessionContext } from "../repo/auth.ts";
 import {
   deleteSessionByHash,
@@ -43,11 +44,21 @@ export async function currentSession(
 
   // Sesi demo tidak pernah diperpanjang: berakhir tepat di demo_expires_at (SPEC §8.1).
   const isDemo = found.store.demoExpiresAt !== null;
-  if (!isDemo && shouldRenew(found.session.expiresAt, now)) {
+  if (isDemo) {
+    // SPEC §8.1: sesi demo berakhir TEPAT pada demo_expires_at, bukan TTL 30 hari.
+    if (found.store.demoExpiresAt!.getTime() <= now.getTime()) {
+      await deleteSessionByHash(deps.db, tokenHash);
+      throw unauthenticated();
+    }
+  } else if (shouldRenew(found.session.expiresAt, now)) {
     const expiresAt = new Date(now.getTime() + SESSION_TTL_SECONDS * 1000);
     await renewSession(deps.db, found.session.id, expiresAt, now);
     c.header("Set-Cookie", sessionCookie(token, SESSION_TTL_SECONDS));
   }
+
+  // SPEC §8.4: 300 / menit per store untuk semua endpoint terautentikasi.
+  // Satu choke point — setiap handler terautentikasi lewat sini.
+  await consumeRateLimit(deps.db, GLOBAL_RULE, found.store.id, now);
 
   return found;
 }

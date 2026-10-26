@@ -20,6 +20,41 @@ export const REGISTER_RULE: RateLimitRule = {
   limit: 5,
   windowSeconds: 60 * 60,
 };
+/** SPEC §8.4: 10 / jam per IP. */
+export const DEMO_RULE: RateLimitRule = {
+  name: "demo",
+  limit: 10,
+  windowSeconds: 60 * 60,
+};
+/**
+ * SPEC §8.4 (amendemen 26 Okt 2026): anggaran global 30 / 15 menit per IP untuk
+ * semua endpoint `/auth/*`, di luar limit per-endpoint. Menahan pemutar kunci
+ * IP:email dengan mengganti email tiap percobaan.
+ */
+export const AUTH_BUDGET_RULE: RateLimitRule = {
+  name: "auth_budget",
+  limit: 30,
+  windowSeconds: 15 * 60,
+};
+
+/** SPEC §8.4: 20 / hari per store untuk generate rencana (kuota AI terpisah §6.1). */
+export const PLAN_GENERATE_RULE: RateLimitRule = {
+  name: "plan_generate",
+  limit: 20,
+  windowSeconds: 24 * 60 * 60,
+};
+/** SPEC §8.4: 20 / jam per store untuk semua `POST /imports/*`. */
+export const IMPORT_RULE: RateLimitRule = {
+  name: "import",
+  limit: 20,
+  windowSeconds: 60 * 60,
+};
+/** SPEC §8.4: 300 / menit per store untuk semua endpoint lain. */
+export const GLOBAL_RULE: RateLimitRule = {
+  name: "global",
+  limit: 300,
+  windowSeconds: 60,
+};
 
 /**
  * Fixed window di tabel `rate_limits`, satu statement atomik supaya dua request
