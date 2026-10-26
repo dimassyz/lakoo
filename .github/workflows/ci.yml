@@ -11,8 +11,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  gate:
-    name: Gate (format → lint → typecheck → test → build)
+  # Dua job paralel: frontend-gate (build + unit test frontend + gitleaks) dan
+  # backend-gate (suite database/backend/QA). Pisah SINYAL, bukan lemahkan gate —
+  # merge butuh KEDUA job hijau, setiap lapis tetap blocking. Mencegah build
+  # frontend + test frontend tersembunyi di belakang perf test database
+  # (sebelumnya satu job sekuensial fail-fast). Keputusan tech-lead.
+  frontend-gate:
+    name: Frontend gate (format → lint → typecheck → build → unit → secrets)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (full history untuk secret scan)
@@ -36,20 +41,67 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
-      - name: Lint
-        run: pnpm lint
+      # Lint: semua path KECUALI area backend (backend punya lint-nya di backend-gate).
+      # Partisi terverifikasi: job ini 33 file, backend-gate 93 file, total 126 = eslint .
+      - name: Lint (frontend + root)
+        run: >-
+          pnpm exec eslint . --max-warnings=0
+          --ignore-pattern "backend/**"
+          --ignore-pattern "database/**"
+          --ignore-pattern "test/**"
+          --ignore-pattern "src/pages/api/**"
 
+      # Typecheck project-wide by nature (satu tsconfig) — type error di mana pun
+      # gagalkan job ini; build butuh types OK (next build juga type-check).
       - name: Type check
         run: pnpm typecheck
-
-      - name: Test
-        run: pnpm test
 
       - name: Build
         run: pnpm build
 
-      # Secret scan (SPEC §11) — blocking.
+      # Unit test frontend (src/lib) — job ini self-contained untuk perubahan
+      # frontend. Duplikasi dengan backend-gate (pnpm test menjalankan suite
+      # penuh) diterima: kebersihan sinyal lebih murah daripada beberapa detik.
+      - name: Test (frontend unit)
+        run: pnpm exec vitest run src/lib
+
+      # Secret scan (SPEC §11) — blocking, repo-wide, sekali saja (di job ini).
       - name: Secret scan (gitleaks)
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  backend-gate:
+    name: Backend gate (format → lint → typecheck → test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm (versi dari packageManager)
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      # Lint: hanya area backend (database/, backend/, test/, mount API).
+      - name: Lint (backend)
+        run: pnpm exec eslint database/ backend/ test/ src/pages/api --max-warnings=0
+
+      - name: Type check
+        run: pnpm typecheck
+
+      # Test: suite database + backend + QA (test/** sudah di root vitest include).
+      # Perf test (§4.2 ≤300ms) tinggal di sini — kalau merah, yang skip hanya
+      # lapis setelahnya di job ini (tidak ada); frontend-gate tetap jalan penuh.
+      - name: Test
+        run: pnpm test
