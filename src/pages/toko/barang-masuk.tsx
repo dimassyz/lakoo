@@ -1,7 +1,9 @@
 import Head from "next/head";
 import Link from "next/link";
+import { useState } from "react";
 import { AppShell } from "@/components/NavBar";
 import { BarisNota, BarisRiwayat } from "@/components/BarisMasuk";
+import { NotaTempel } from "@/components/NotaTempel";
 import {
   kelompokRiwayat,
   useLayarMasuk,
@@ -14,7 +16,7 @@ const tombolUtama =
 const tombolGaris = "rounded-card border-muted border px-4 py-3 font-semibold";
 
 /** FSD §8 — tanggal nota: bawaan hari ini, boleh mundur sampai 365 hari. */
-function KepalaNota({ l }: { l: LayarMasuk }) {
+function KepalaNota({ l, onTempel }: { l: LayarMasuk; onTempel: () => void }) {
   const { min, max } = batasTanggal();
 
   return (
@@ -34,6 +36,9 @@ function KepalaNota({ l }: { l: LayarMasuk }) {
           className="rounded-card border-muted border px-3 py-2"
         />
       </div>
+      <button type="button" onClick={onTempel} className={tombolGaris}>
+        Tempel dari nota
+      </button>
       {l.toast ? (
         <p
           role="status"
@@ -170,6 +175,7 @@ function RiwayatMasuk({ l }: { l: LayarMasuk }) {
 
 export default function BarangMasukPage() {
   const l = useLayarMasuk();
+  const [tempel, setTempel] = useState(false);
 
   return (
     <>
@@ -178,7 +184,17 @@ export default function BarangMasukPage() {
       </Head>
       <AppShell>
         <div className="space-y-4">
-          <KepalaNota l={l} />
+          <KepalaNota l={l} onTempel={() => setTempel(true)} />
+          {tempel ? (
+            <NotaTempel
+              produk={l.produk.items}
+              onIsi={(daftar) => {
+                l.form.isi(daftar);
+                setTempel(false);
+              }}
+              onTutup={() => setTempel(false)}
+            />
+          ) : null}
           <DaftarNota l={l} />
           <FooterNota l={l} />
           <RiwayatMasuk l={l} />

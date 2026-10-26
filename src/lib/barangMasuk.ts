@@ -119,11 +119,49 @@ export function useFormMasuk() {
     );
   }, []);
   const reset = useCallback(() => setDaftar([barisKosong()]), []);
+  const isi = useCallback((baru: BarisMasuk[]) => {
+    setDaftar(baru.length > 0 ? baru : [barisKosong()]);
+  }, []);
 
-  return { tanggal, setTanggal, daftar, ubah, tambah, buang, reset };
+  return { tanggal, setTanggal, daftar, ubah, tambah, buang, reset, isi };
 }
 
 const OPSI_BARU = /^\+ Tambah '(.*)' sebagai barang baru$/;
+
+/** FSD §16 — pola `<nama> <qty> <harga>` per baris, tanpa AI dan tanpa API baru. */
+const POLA_NOTA = /^\s*(.+?)\s+(\d+)\s+(?:Rp\.?\s*)?([\d.]+)\s*$/i;
+
+/**
+ * Baris yang tidak cocok polanya tetap dikembalikan (hanya nama terisi)
+ * supaya tidak ada teks yang hilang — pengguna mengetik sisanya manual.
+ */
+export function parseNota(
+  teks: string,
+  produk: ProductSummary[],
+): BarisMasuk[] {
+  const hasil: BarisMasuk[] = [];
+
+  for (const baris of teks.split(/\r?\n/)) {
+    if (!baris.trim()) continue;
+    const cocok = POLA_NOTA.exec(baris);
+    if (!cocok) {
+      hasil.push({ ...barisKosong(), nama: baris.trim() });
+      continue;
+    }
+
+    const nama = (cocok[1] ?? "").trim();
+    const p = produk.find((x) => x.name.toLowerCase() === nama.toLowerCase());
+    hasil.push({
+      ...barisKosong(),
+      nama,
+      productId: p?.id ?? null,
+      qty: String(Number(cocok[2])),
+      unitCost: String(angkaDari(cocok[3] ?? "0")),
+    });
+  }
+
+  return hasil;
+}
 
 /** FSD §8 — pilih barang dari saran, atau opsi terakhir "Tambah ... sebagai barang baru". */
 export function pilihBarang(
