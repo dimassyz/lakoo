@@ -251,6 +251,14 @@ describe("kinerja query stats (SPEC §4.2: ≤ 300 ms untuk 500 barang × 365 ha
       samples.push(performance.now() - startedAt);
     }
     const bestMs = Math.min(...samples);
+    // Angka biaya query sudah diukur; cetak juga saat LOLOS supaya margin
+    // terhadap ambang 300 ms terlihat (bukan cuma muncul di pesan kegagalan).
+    // Ini durasi QUERY (min dari 3 sampel), BUKAN durasi test — durasi test
+    // mengandung seed 182.500 baris dan karena itu tidak bermakna untuk ambang.
+    process.stdout.write(
+      `perf query stats: ${bestMs.toFixed(1)} ms (min dari ${samples.length} sampel) ` +
+        `— ambang 300 ms, margin ${(300 - bestMs).toFixed(1)} ms\n`,
+    );
     expect(rows).toHaveLength(500);
     expect(
       bestMs,
