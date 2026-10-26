@@ -205,11 +205,14 @@ Suite penuh repo (`npx vitest run`, config root): **480 passed (39 file)**
 — diukur di branch lokal `1a49232` (tree saat verifikasi §9 fast-follow).
 **State FINAL canonical (devops-verified, PR #7): 484/484 (40 file)** —
 termasuk `lockProbe.test.ts`; eslint 0, tsc 0, prettier bersih. Dua angka
-berbeda karena dua tree berbeda; canonical = state final.
+berbeda karena dua tree berbeda; canonical = state final. **Pasca-merge
+PR #8 → main `6a96295`** (PR #8 squash-merged `146e911` + og.png PR #11):
+CI main kedua job hijau dengan step perf native aktif — angka test tidak
+berubah (harness nol test baru; perf test sudah dihitung).
 Riwayat angka gate root: 18 (awal) → 28 → 291/291 (snapshot v6, QA masuk
 gate) → 444/444 → 473/473 → 477/477 → 480/480 (branch verifikasi §9) →
-**484/484 (state final, PR #7)** (repo bertambah; kuverifikasi ulang
-26 Okt).
+**484/484 (state final, PR #7)** → merge PR #8/og.png → main `6a96295`
+hijau (repo bertambah; kuverifikasi ulang 26 Okt).
 
 Perf test `productStats.test.ts` (≤ 300 ms) — riwayat karakterisasi:
 
@@ -394,9 +397,73 @@ memasukkan `test/**`**
     - Fix dalam perjalanan (buang skema perf; container sekali-pakai tak
       butuh isolasi). **Angka native pertama** (setelah force-push + re-run)
       = pemisah atribusi kandidat 2 yang benar: satu variabel per run.
-    - **§9 untuk harness: DITAHAN** sampai versi yang benar-benar mengukur
-      native mendarat (menurut instruksi devops) — verifikasi di versi yang
-      gagal-setup tidak ada artinya.
+    - **§9 untuk harness: LULUS di SHA final `a4f360d`** (26 Okt 2026) —
+      verifikasi di tree TER-COMMIT via git worktree (working tree tak
+      disentuh): (a) fixture guard 5 file test/ SHA-identik main↔branch,
+      (b) diff = 9 file (8 harness + TEST_PLAN), kontrak nol-fallback NYATA
+      (migrasi produksi sama; gagal → lempar error), `retry:1` dibuang dengan
+      alasan jujur, (c) suite **40 file / 484 test hijau** di tree
+      ter-commit, CI run 60 kedua job SUKSES. **PR #8 squash-merged → main
+      `146e911`** (CI main hijau, step perf native aktif); og.png ikut
+      mendarat (PR #11 → main `6a96295`, hijau). Merge gate lengkap:
+      APPROVE tech-lead + §9 LULUS + white-box SECURE + CI 2/2 hijau.
+    - **Koreksi artefak di verdict-ku (supaya record tak membawa klaim
+      salah):** pasangan token frontend (`--color-warn` + `text-warn`) yang
+      terlihat di diff PR #8 @ `5622689` BUKAN penghapusan yang disengaja
+      PR #8 — itu artefak base basi (branch di-cut dari `1ac6102`, SEBELUM
+      PR #9 menambahkan token ke main). Setelah rebase ke `a4f360d`,
+      file-file itu resolve ke versi main dan keluar dari delta (9 file, nol
+      frontend). Di main sekarang keduanya KOEKSIS (terverifikasi:
+      `--color-warn: #f59e0b` ada di globals.css main, `text-warn` ada di
+      FormBarang.tsx main) — nol token hilang, nol konsumen rusak.
+    - **PENUTUP AKHIR QA-04 — KOREKSI ATRIBUSI KEDUA (26 Okt 2026, ini
+      yang berlaku):**
+      - Run 59/60 (`5622689`/`a4f360d`): hijau, **nol ms tercetak** (by
+        design — test cetak timing hanya saat gagal)
+      - Run 61 (`9d2c26b`, branch `chore/og-placeholder`): **MERAH — 303,7 ms
+        tercepat dari [304,7, 303,7, 303,9]** vs ambang beku 300 — TAPI
+        **ini PGLITE, BUKAN NATIVE**. Kuverifikasi mekanis: branch og TIDAK
+        membawa `native-pg.ts` ("exists on disk, but not in '9d2c26b'"),
+        `productStats.test.ts` @ 9d2c26b import `createTestDb` dari
+        `"../test/pglite.ts"` (baris 5), dan og di-cut dari `dfdc2b5` —
+        SEBELUM harness merge (`146e911`). Step bernama "Perf test (Postgres
+        native)" di branch itu **aspirasional** — persis jebakan run 55.
+        (Klaim lamaku "303,7 = angka native, harness ride-along di branch
+        og" SALAH — koreksi resmi pertamaku ke tech-lead menarik klaim itu;
+        asalnya: framing devops yang kuserahkan, kuverifikasi level step
+        (API) tapi TIDAK level kode — pelajaran lihat di bawah)
+      - **Run native sejauh ini: `5622689`, `a4f360d`, main `146e911`,
+        `6a96295`, PR #11 `7ea39c8` — 5/5 HIJAU, nol ms tercetak** →
+        **angka native yang MERAH: NOL. Angka native yang tercetak: NOL.**
+        Margin native = TIDAK DIKETAHUI.
+      - **Konsekuensi jujur:** pertanyaan "berapa ms dari gap = lingkungan
+        vs query" **MASIH TERBUKA** — justru itu yang native jawab nanti.
+        Klaim "plafon WASM pals" = **BELUM TERBUKTI** (perbandingannya
+        PGlite-vs-PGlite, tidak menyinggung WASM sama sekali).
+      - **Kerangka keputusan: cabang BELUM BISA DIPILIH** (margin nyata vs
+        295–305) karena angka native belum ada. **Re-adjudikasi tech-lead
+        SELESAI (26 Okt 2026): kandidat 1 KONDISIONAL** — ditentukan angka
+        native; bukti PGlite (query sistematis 302–307 ms, tepat ambang,
+        pola coin flip) adalah alasan MENGAPA margin native perlu diukur,
+        BUKAN dasar keputusan. Kalau angka native jatuh 290-an → kandidat 1
+        ditutup dengan data (keputusan berbasis bukti, bukan kegagalan
+        optimasi). Log-timing-saat-sukses = prioritas pertama.
+      - **Status klaim perf: TIDAK TUTUP** (tetap) — nol klaim tutup sampai
+        ada angka native yang lolos dengan margin > variance antar-run
+        (~4 ms). Follow-up kritis: **log-timing-saat-sukses** (backend-dev)
+        — sumber data native pertama yang akan menjawab semuanya.
+      - **PELAJARAN BERDIRING (dicatat sebagai aturan):** nama step CI itu
+        ASPIRASIONAL — yang menentukan pengukuran adalah KODE di commit
+        itu (apakah commit membawa harness + apakah test membaca env). Aku
+        menerapkan ini benar untuk run 55, lalu GAGAL menerapkannya untuk
+        run 61 (percaya framing + verifikasi level step). Aturan: setiap
+        klaim "angka X diukur di lingkungan Y" wajib diverifikasi level
+        KODE (commit-nya membawa jalur ukur Y?), bukan level step.
+        **DIRATIFIKASI tech-lead sebagai protokol permanen (26 Okt 2026):**
+        step bernama "Perf test (Postgres native)" tidak membuktikan
+        native — yang membuktikan: harness ada di commit yang diukur
+        (`git show`), jalur import benar (pglite vs native-pg), dan log
+        membawa jejak lingkungan (`PERF_DATABASE_URL`).
   - **Pola lengkap: `b08e9dd` FAIL (337,8) → `1303608` PASS (outlier) →
     `e3862de` FAIL (332,4) = fail 2-of-3.** Karakterisasi tech-lead:
     **sistematis di atas ambang, bukan flake sekali-jadi** — query hidup
