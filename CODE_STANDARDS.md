@@ -7,6 +7,9 @@
 > beku = keputusan tech-lead (devops memasang wiring CI-nya; developer
 > tidak melemahkan aturan demi lolos).
 
+> Catatan: `docs/` disk-only kecuali `docs/api/openapi.yaml` (input build) —
+> SPEC.md dibaca dari working tree, bukan dari fresh clone.
+
 ## 0. Prinsip penegakan
 
 - Formatter adalah sumber kebenaran untuk format. Manusia tidak

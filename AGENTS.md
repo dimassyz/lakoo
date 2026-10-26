@@ -14,6 +14,11 @@
     (branch `main` = produksi, branch `staging`)
   - `e2e/` — Playwright, Lighthouse CI, skrip uji offline
   - `docs/` — spesifikasi & kontrak; `.github/` + konfigurasi Vercel — CI/CD
+
+> CATATAN: `docs/` bersifat DISK-ONLY kecuali `docs/api/openapi.yaml` (input
+> build). Fresh clone tidak memuat SPEC/FSD/PROJECT_LOG — salin dari working
+> tree mesin pengembang dulu.
+
 - Language & toolchain: **TypeScript (strict) di semua paket**; pnpm
   workspaces; Vitest + PGlite (unit/integrasi, tanpa Docker), Playwright
   (E2E), Lighthouse CI (rute publik).
