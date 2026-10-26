@@ -529,46 +529,6 @@ export async function recordStepOutcome(
   });
 }
 
-/** Harga tahap ini belum dipakai; `null` bila sudah sama dengan harga sekarang. */
-export async function stepPriceToApply(
-  db: AnyDb,
-  storeId: string,
-  planId: string,
-  stepNo: number,
-): Promise<{ productId: string; newPrice: number }> {
-  const plan = await db
-    .select()
-    .from(actionPlans)
-    .where(and(eq(actionPlans.storeId, storeId), eq(actionPlans.id, planId)))
-    .limit(1);
-  if (plan[0] === undefined)
-    throw new ApiError(404, "not_found", "Rencana tidak ditemukan.");
-  if (plan[0].state !== "active") {
-    throw new ApiError(
-      409,
-      "plan_invalid_state",
-      "Rencana ini tidak sedang berjalan.",
-    );
-  }
-  const step = await requireRunningStep(db, planId, stepNo);
-
-  const product = await db
-    .select()
-    .from(products)
-    .where(eq(products.id, plan[0].productId))
-    .limit(1);
-  if (product[0] === undefined)
-    throw new ApiError(404, "not_found", "Barang tidak ditemukan.");
-  if (product[0].sellPrice === step.newPrice) {
-    throw new ApiError(
-      409,
-      "step_invalid_state",
-      "Harga jual sudah sama dengan harga tahap ini.",
-    );
-  }
-  return { productId: plan[0].productId, newPrice: step.newPrice };
-}
-
 /** `active` → `stopped`; tahap yang sedang berjalan jadi `skipped`. */
 export async function stopPlan(
   db: AnyDb,

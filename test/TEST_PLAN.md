@@ -307,17 +307,66 @@ memasukkan `test/**`**
     berlanjut di main (`18333b2` FAIL → `728c2e5` PASS → `93a977a` FAIL).
     Pola bergantian terus berjalan di main; hijau bukan penutupan risiko.
   - **PENUTUP (26 Okt 2026, kuverifikasi via API):** PR #6 (`f973f03` —
-    perf test pindah ke **Postgres service container native** di CI, bukan
-    PGlite) dan PR #5 (`9efe586` — W-2 lock + W-4 + **perf kandidat 2**
-    `COUNT(sale_date)`) mendarat di main → **run 46 PASS, run 47 PASS —
-    dua hijau berturut-turut**. Pola fail-2-of-3 berhenti setelah kedua
-    perbaikan.
-  - **Atribusi CONFOUNDED (catatan jujur):** query optimization DAN
-    lingkungan pengukuran berubah bersamaan (PGlite → native PG), jadi
-    "berapa ms headroom yang datang dari COUNT(sale_date) saja" TIDAK
-    separable dari data ini. Yang bisa dikatakan: kombinasi keduanya
-    menghijaukan gate dua run berturut-turut. Klaim "kandidat 2 memberi
-    headroom X ms" butuh pengukuran terpisah (satu variabel per run).
+    menambah `postgres:16` **service container** ke workflow CI) dan PR #5
+    (`9efe586` — W-2 lock + W-4 + **perf kandidat 2** `COUNT(sale_date)`)
+    mendarat di main → **run 46 PASS, run 47 PASS — dua hijau
+    berturut-turut**. Pola fail-2-of-3 berhenti setelah kedua perbaikan.
+  - **KOREKSI ATRIBUSI (26 Okt 2026, hasil tantangan backend-dev — BENAR,
+    catatan lamaku salah):** perf test di main **masih PGlite**, BUKAN
+    native. Kuverifikasi di `origin/main`: `productStats.test.ts` import
+    `createTestDb` dari `../test/pglite.ts`, dan `git grep PERF_DATABASE_URL`
+    di `database/`+`backend/` = **nol pembaca**. Service container PR #6
+    JALAN TAPI IDLE — lingkungan disiapkan, pengukuran belum pindah (harness
+    switch = PR backend-dev menyusul). **Jadi tidak ada confound lingkungan:
+    run 46 & 47 dua-duanya PGlite, sama seperti run merah.**
+  - **Konsekuensi jujur untuk klaim kandidat 2:** run 46 hijau **SEBELUM**
+    kandidat 2 mendarat (di PGlite) → salah satu hijau itu explainable sebagai
+    coin flip pola fail-2-of-3. Bukti efek kandidat 2 = n=1 (run 47), dan
+    dengan prior fail-2-of-3, dua hijau berturut-turut BELUM jadi bukti
+    kuat query-nya diberi headroom. Yang bisa dikatakan: pola berhenti;
+    angka headroom kandidat 2 menunggu pengukuran satu-variabel atau angka
+    native pertama dari harness PR. Kalau perf merah setelah harness merge,
+    kandidat tersangka pertama = jalur native yang belum pernah dijalankan
+    (bukan query) — sesuai keputusan ownership backend-dev.
+  - **SERI PGlITE DI CI (dari log run, via devops — 26 Okt 2026):**
+    **361,9 ms (sebelum kandidat 2) → 307,1 ms (PR #5) → 302,4 ms (run 55,
+    tercepat dari [303,6, 302,8, 302,4])**. Tiga sampel variance ketat
+    (±1 ms) dan dua sampel terakhir konsisten 2–7 ms DI ATAS ambang.
+  - **Konsekuensi untuk karakterisasi (memperbaiki catatan "n=1" di atas):**
+    efek kandidat 2 **TERUKUR** di lingkungan yang sama (PGlite): 361,9 →
+    307,1 ≈ **−55 ms**. Jadi "bukti efek = n=1" sudah BASI — datanya ada
+    tiga sampel. Tapi threshold 300 ms TETAP tidak lolos konsisten
+    (302–307 ms di run bersih) → ini bukan coin flip murni: query hidup
+    2–7 ms di atas ambang, dan beban runner yang mendorong ke 332–337 ms.
+    Yang native akan jawab: berapa ms dari gap sisa itu lingkungan
+    (WASM/runner) vs query — satu variabel per run.
+  - **KERANGKA KEPUTUSAN PASCA-ANGKA NATIVE (kesepakatan devops, 26 Okt):**
+    - Native datang dengan **margin nyata** (mis. 200-an ms) → gap 2–7 ms
+      murni lingkungan (WASM/runner) → **kandidat 2 cukup, kandidat 1
+      tidak perlu**
+    - Native datang **295–305 ms** (masih di ambang) → **kandidat 1
+      (−3% ≈ 9 ms) naik ke meja dengan data sah**
+    - Tugas QA saat angka datang: catat angka CI apa adanya (step +
+      konklusi, bukan tebakan lokal), bandingkan terhadap dua skenario ini,
+      dan verifikasi §9 harness di tree ter-commit yang benar-benar mengukur
+      native.
+  - **PENUTUPAN ITEM "PENGUKURAN SATU-VARIABEL" (26 Okt 2026) — TERTUTUP
+    STRUKTURAL, bukan dengan run CI.** Backend-dev menutupnya dengan bukti
+    logis (bukan timing); kuverifikasi sendiri di disk:
+    1. `schema.ts:284` — `uniqueIndex("daily_sales_product_id_sale_date_key").on(t.productId, t.saleDate)` ✓
+    2. CTE `sales`: `FROM daily_sales, as_of ... GROUP BY product_id` ✓
+    3. `WITH as_of AS (SELECT ${asOf}::date AS d)` — SELECT literal tanpa
+       FROM = tepat 1 baris → join tidak menggandakan baris ✓
+       → dalam setiap grup `product_id`, `sale_date` sudah unik → untuk
+       **setiap baris yang mungkin**, `COUNT(DISTINCT sale_date)` ≡
+       `COUNT(sale_date)`. Bukan "terukur cepat", tapi "tidak bisa berbeda";
+       cross-check test (`sold_28, sale_days_28, sold_90 cocok`) hijau sebagai
+       jaring. **Konsekuensi:** angka headroom kandidat 2 BUKAN item terbuka
+       yang menggantung — justifikasi kandidat 2 = ekuivalensi + biaya lebih
+       murah (sudah dibuktikan), bukan kecepatan. Kalau native nanti merah,
+       itu BUKAN bukti kandidat 2 salah; kandidat 2 tidak mengubah hasil,
+       hanya biaya. Yang native jawab tetap satu: berapa ms dari gap sisa itu
+       lingkungan (WASM/runner) vs query.
   - **Mode kegagalan KEDUA yang teramati: Format check** (run 43,
     `b7930e3`, branch `chore/readme-refresh`): merah di step PERTAMA —
     step Test tidak tercapai. Ini pola yang sama dengan era 20/20 (file
@@ -327,6 +376,27 @@ memasukkan `test/**`**
     partisi format check (frontend-gate vs backend-gate) supaya step Test
     backend tidak ikut sandera — **usulan ke devops, belum ada keputusan**;
     dicatat di sini sebagai observasi proses dengan bukti (run 43).
+  - **ERA HARNESS NATIVE (26 Okt 2026, kuverifikasi via API):**
+    - **Run 55 (`1ac6102`, main): merah di step "Perf test (Postgres
+      native)"** — TAPI di main tanpa harness (`native-pg.ts` tidak ada,
+      `PERF_DATABASE_URL` nol pembaca), step itu **tetap mengukur PGlite**;
+      nama step-nya aspirasional. Pesan error-nya belum kubaca (perlu log
+      via devops); kandidat penyebab = pola PGlite yang sama. Bukan
+      kegagalan native.
+    - **Run 56 (`3171343`, PR #8 `fix/perf-native-harness`): merah di step
+      native — DAN ini merah yang membuktikan desain.** Dengan harness:
+      env terbaca → koneksi native di-attempt → gagal setup (`type
+"plan_source" does not exist` — skema `perf` vs migrasi drizzle yang
+      berkualifikasi `"public"`) → **error dilempar, NOL fallback ke
+      PGlite**. Acceptance criteria tech-lead (tidak ada fallback senyap)
+      terverifikasi di CI nyata. Penyebab = jalur setup native yang belum
+      pernah dijalankan (kandidat pertama yang dicatat), BUKAN query.
+    - Fix dalam perjalanan (buang skema perf; container sekali-pakai tak
+      butuh isolasi). **Angka native pertama** (setelah force-push + re-run)
+      = pemisah atribusi kandidat 2 yang benar: satu variabel per run.
+    - **§9 untuk harness: DITAHAN** sampai versi yang benar-benar mengukur
+      native mendarat (menurut instruksi devops) — verifikasi di versi yang
+      gagal-setup tidak ada artinya.
   - **Pola lengkap: `b08e9dd` FAIL (337,8) → `1303608` PASS (outlier) →
     `e3862de` FAIL (332,4) = fail 2-of-3.** Karakterisasi tech-lead:
     **sistematis di atas ambang, bukan flake sekali-jadi** — query hidup

@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import type { AnyDb } from "../../../database/src/db.ts";
-import { actionPlans, weeklySummaries } from "../../../database/src/schema.ts";
+import { weeklySummaries } from "../../../database/src/schema.ts";
 
 export interface WeeklySales {
   salesTotal: number;
@@ -155,24 +155,4 @@ export async function saveWeeklySummary(
     .insert(weeklySummaries)
     .values({ storeId, weekStart, sentences: [...sentences] })
     .onConflictDoNothing();
-}
-
-/** Rencana aktif milik produk (dipakai dashboard untuk `planState`). */
-export async function hasActivePlan(
-  db: AnyDb,
-  storeId: string,
-  productId: string,
-): Promise<boolean> {
-  const rows = await db
-    .select({ id: actionPlans.id })
-    .from(actionPlans)
-    .where(
-      and(
-        eq(actionPlans.storeId, storeId),
-        eq(actionPlans.productId, productId),
-        eq(actionPlans.state, "active"),
-      ),
-    )
-    .limit(1);
-  return rows.length > 0;
 }
