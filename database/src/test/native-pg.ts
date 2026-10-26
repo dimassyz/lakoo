@@ -35,17 +35,20 @@ export interface TestDb {
  *   daripada gate merah yang jujur
  * - seed tidak diukur; hanya query-nya
  */
+/**
+ * CATATAN DESAIN — JANGAN hidupkan kembali skema custom atau opsi search_path
+ * pada Pool di bawah. Migrasi drizzle berkualifikasi `"public".` (25 kemunculan
+ * di 0000_init.sql) sementara kolom mereferensikan tipe TANPA kualifikasi;
+ * skema terpisah membuat resolusi nama tak-berkualifikasi mencari di skema
+ * kosong → "type plan_source does not exist" (terverifikasi di CI run #1 PR #8).
+ * Container sekali-pakai dan fresh tiap run, jadi isolasi skema nol manfaat.
+ * KONSEKUENSI: migrasi tanpa `IF NOT EXISTS`/`DROP`, jadi run KEDUA ke database
+ * yang sama gagal "type already exists". Di CI aman; lokal pakai DB baru.
+ */
 export async function createPerfDb(): Promise<TestDb> {
   const url = process.env.PERF_DATABASE_URL;
   if (url === undefined || url === "") return createTestDb();
 
-  // TANPA skema custom dan TANPA `search_path` — migrasi drizzle sudah
-  // berkualifikasi `"public".` (25 kemunculan di 0000_init.sql), sementara
-  // kolom mereferensikan tipe TANPA kualifikasi. Skema `perf` + search_path
-  // membuat resolusi nama tak-berkualifikasi mencari di skema yang kosong →
-  // "type plan_source does not exist" (terverifikasi di CI run pertama PR #8).
-  // Container DB sekali-pakai dan fresh tiap run, jadi isolasi skema nol
-  // manfaat — apply apa adanya di `public`, search_path default.
   const pool = new Pool({
     connectionString: url,
     max: 1,
