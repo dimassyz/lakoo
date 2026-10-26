@@ -72,7 +72,7 @@ export function BarisQuantity({
 
   return (
     <li
-      className={`rounded-card border p-3 ${error ? "border-ink" : "border-muted"}`}
+      className={`rounded-card border p-3 ${error ? "border-danger" : "border-muted"}`}
     >
       <div className="flex items-baseline justify-between">
         <p className="font-semibold">{baris.name}</p>
@@ -83,7 +83,7 @@ export function BarisQuantity({
       <p className="text-muted text-[15px]">stok {baris.currentStock}</p>
       <Stepper nama={baris.name} nilai={nilai} maks={maks} onUbah={onUbah} />
       {error ? (
-        <p className="mt-2 text-[15px]">
+        <p className="text-danger mt-2 text-[15px]">
           {error}{" "}
           <button type="button" onClick={onPerbaiki} className="underline">
             Perbaiki stok
@@ -115,7 +115,7 @@ export function BarisOpname({
 
   return (
     <li
-      className={`rounded-card border p-3 ${error ? "border-ink" : "border-muted"}`}
+      className={`rounded-card border p-3 ${error ? "border-danger" : "border-muted"}`}
     >
       <p className="font-semibold">{baris.name}</p>
       <p className="text-muted text-[15px]">
@@ -140,7 +140,7 @@ export function BarisOpname({
         <p className="mt-1 text-[15px]">terjual {sold}</p>
       )}
       {error ? (
-        <p className="mt-1 text-[15px]">
+        <p className="text-danger mt-1 text-[15px]">
           {error}{" "}
           <Link
             href={`/toko/barang-masuk?date=${tanggal}`}

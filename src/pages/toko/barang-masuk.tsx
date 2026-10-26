@@ -97,7 +97,7 @@ function FooterNota({ l }: { l: LayarMasuk }) {
         {l.angka.baris} baris · {rupiah(l.angka.total)}
       </p>
       {kurang > 0 ? (
-        <p role="alert" className="text-[15px] font-semibold">
+        <p role="alert" className="text-danger text-[15px] font-semibold">
           {kurang} baris perlu dicek
         </p>
       ) : null}

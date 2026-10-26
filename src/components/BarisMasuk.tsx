@@ -10,7 +10,7 @@ import { rupiah, tanggalPendek } from "@/lib/ui";
 
 const input = "rounded-card border-muted w-full border px-3 py-2";
 const label = "text-muted block text-[13px]";
-const teksError = "text-[13px] font-semibold";
+const teksError = "text-danger text-[13px] font-semibold";
 const tombolKecil =
   "rounded-card border-muted border px-3 py-1.5 text-[13px] font-semibold";
 
