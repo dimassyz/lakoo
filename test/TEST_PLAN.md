@@ -201,11 +201,15 @@ Riwayat: 49/50 (guard QA-01 RED) → fix CTE `lc`+`fs` mendarat →
 IMPL benar, bukan fixture berubah) → +5 test invarian (BR-16 ×2, W-9,
 W-2 jalur delete: 422 stok + 409 window) → **55/55**.
 
-Suite penuh repo (`npx vitest run`, config root): **480 passed (39 file)** —
-394 backend + 55 QA + database/frontend; perf test hijau di run terbaru.
+Suite penuh repo (`npx vitest run`, config root): **480 passed (39 file)**
+— diukur di branch lokal `1a49232` (tree saat verifikasi §9 fast-follow).
+**State FINAL canonical (devops-verified, PR #7): 484/484 (40 file)** —
+termasuk `lockProbe.test.ts`; eslint 0, tsc 0, prettier bersih. Dua angka
+berbeda karena dua tree berbeda; canonical = state final.
 Riwayat angka gate root: 18 (awal) → 28 → 291/291 (snapshot v6, QA masuk
-gate) → 444/444 → 473/473 → 477/477 → **480/480** (repo bertambah;
-kuverifikasi ulang 26 Okt).
+gate) → 444/444 → 473/473 → 477/477 → 480/480 (branch verifikasi §9) →
+**484/484 (state final, PR #7)** (repo bertambah; kuverifikasi ulang
+26 Okt).
 
 Perf test `productStats.test.ts` (≤ 300 ms) — riwayat karakterisasi:
 
@@ -302,6 +306,18 @@ memasukkan `test/**`**
     **run 42 (`93a977a`, main) MERAH LAGI di step Test** → pola fail-2-of-3
     berlanjut di main (`18333b2` FAIL → `728c2e5` PASS → `93a977a` FAIL).
     Pola bergantian terus berjalan di main; hijau bukan penutupan risiko.
+  - **PENUTUP (26 Okt 2026, kuverifikasi via API):** PR #6 (`f973f03` —
+    perf test pindah ke **Postgres service container native** di CI, bukan
+    PGlite) dan PR #5 (`9efe586` — W-2 lock + W-4 + **perf kandidat 2**
+    `COUNT(sale_date)`) mendarat di main → **run 46 PASS, run 47 PASS —
+    dua hijau berturut-turut**. Pola fail-2-of-3 berhenti setelah kedua
+    perbaikan.
+  - **Atribusi CONFOUNDED (catatan jujur):** query optimization DAN
+    lingkungan pengukuran berubah bersamaan (PGlite → native PG), jadi
+    "berapa ms headroom yang datang dari COUNT(sale_date) saja" TIDAK
+    separable dari data ini. Yang bisa dikatakan: kombinasi keduanya
+    menghijaukan gate dua run berturut-turut. Klaim "kandidat 2 memberi
+    headroom X ms" butuh pengukuran terpisah (satu variabel per run).
   - **Mode kegagalan KEDUA yang teramati: Format check** (run 43,
     `b7930e3`, branch `chore/readme-refresh`): merah di step PERTAMA —
     step Test tidak tercapai. Ini pola yang sama dengan era 20/20 (file
@@ -377,6 +393,23 @@ ada, aplikasi belum lengkap). Suite QA sendiri: **ALL GREEN**.
    post-merge di staging.
 4. **Cron/demo** → skrip cek harian AC-SYS-10 (3 hari berturut sebelum 10 Nov).
 5. Setiap temuan diperbaiki → QA verifikasi ulang (bukan Developer's test).
+6. **PROTOKOL WORKING TREE (tech-lead via devops, 26 Okt 2026) —
+   SELESAI:** sampai backend-dev kirim sinyal **STATE FINAL** untuk WIP
+   mereka, run suite/gate di window mid-edit menghasilkan artefak merah
+   palsu (insiden 19:43). **STATE FINAL sudah masuk** (PR #7 landed:
+   `lockProbe.test.ts` + komentar `productStats` final) → protokol
+   **terangkat**, run suite/gate boleh lagi. Verifikasi §9 fast-follow
+   tetap berlaku: snapshot (**PR #5, commit `b0e1b76` → squash-merge ke
+   main sebagai `9efe586`**; anchor verdict = **content**, terverifikasi di
+   main: `COUNT(sale_date)` ×2, lockProduct ×3, 6 file `test/` lengkap
+   dengan 5 test invarian). Catatan: branch lokal `chore/landing-1.0`
+   (`1a49232`) di belakang main; angka gate selalu ditulis dengan sebutan
+   tree-nya — canonical = `origin/main`.
+7. **Perf kandidat 3 (bentuk array) — syarat §9 eksplisit:** kalau mendarat,
+   ekuivalensi `week_qty` harus **DIBUKTIKAN**, bukan cuma "hijau":
+   batas jendela 7 hari per indeks (`[k] = [asOf−(7k+6), asOf−7k]`),
+   cutoff as-of, dan semantik join terhadap bentuk lama. Test pembanding
+   baru masuk cakupan §9 sebelum snapshot. Devops ping QA saat landing.
 
 ## 10. Cara menjalankan
 
