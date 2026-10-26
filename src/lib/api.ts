@@ -18,5 +18,6 @@ export type SalesRecap = components["schemas"]["SalesRecap"];
 export type SalesRecapPut = components["schemas"]["SalesRecapPut"];
 export type SalesRecapResult = components["schemas"]["SalesRecapResult"];
 export type StockIn = components["schemas"]["StockIn"];
+export type StockInBatchCreate = components["schemas"]["StockInBatchCreate"];
 export type Plan = components["schemas"]["Plan"];
 export type Results = components["schemas"]["Results"];

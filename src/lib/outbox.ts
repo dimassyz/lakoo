@@ -1,19 +1,21 @@
 import { del, set } from "idb-keyval";
-import type { SalesRecapPut } from "./api";
+import type { SalesRecapPut, StockInBatchCreate } from "./api";
 
 /**
  * FSD §0.4 — outbox di IndexedDB (bukan localStorage).
  * `id` sekaligus menjadi Idempotency-Key saat dikirim ulang.
  */
-export type OutboxItem = {
+type Dasar = {
   id: string;
-  kind: "recap";
   tanggal: string;
   baris: number;
   status: "pending" | "needs_review";
-  payload: SalesRecapPut;
   dibuat: string;
 };
+
+export type OutboxItem =
+  | (Dasar & { kind: "recap"; payload: SalesRecapPut })
+  | (Dasar & { kind: "stockin"; payload: StockInBatchCreate });
 
 const kunci = (id: string) => `outbox:${id}`;
 
