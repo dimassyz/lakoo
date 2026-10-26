@@ -2,12 +2,12 @@ import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { generateDemo, stockOn, type DemoData } from "../demo/generator.ts";
 import { seedDemoTemplate } from "../demo/seed.ts";
-import { createTestDb } from "../test/pglite.ts";
+import { createPerfDb } from "../test/native-pg.ts";
 import { productStats, type ProductStat } from "./productStats.ts";
 
 const AS_OF = "2026-11-09";
 
-let ctx: Awaited<ReturnType<typeof createTestDb>>;
+let ctx: Awaited<ReturnType<typeof createPerfDb>>;
 let data: DemoData;
 let stats: ProductStat[];
 
@@ -19,7 +19,10 @@ function daysBetween(earlier: string, later: string): number {
 }
 
 beforeAll(async () => {
-  ctx = await createTestDb();
+  // Perf test diukur di Postgres native bila `PERF_DATABASE_URL` disetel
+  // (SPEC §4.2). Tanpa env itu, jatuh ke PGlite — jalur cepat untuk run lokal.
+  // Gagal koneksi = error, BUKAN fallback diam-diam ke PGlite.
+  ctx = await createPerfDb();
   data = generateDemo(AS_OF);
   await seedDemoTemplate(ctx.db, data);
   stats = await productStats(ctx.db, (await firstStoreId()) as string, AS_OF);
@@ -212,11 +215,10 @@ describe("rencana demo tersimpan", () => {
 });
 
 describe("kinerja query stats (SPEC §4.2: ≤ 300 ms untuk 500 barang × 365 hari)", () => {
-  // `retry: 1` khusus test ini (bukan config global): gate ini mengukur waktu
-  // dinding, jadi sekali-sekali merah karena mesin sedang sibuk — 4 agen aktif
-  // di satu working copy. Kegagalan NYATA tetap gagal dua kali, jadi sinyal
-  // tidak hilang; hanya noise lingkungan yang terserap. Ambang 300 ms TIDAK naik.
-  it("tetap di bawah 300 ms", { retry: 1, timeout: 300_000 }, async () => {
+  // TANPA `retry` — sengaja. Retry bisa melaporkan hijau pada attempt ke-2
+  // (mis. 305 ms lalu 295 ms) padahal query TEPAT di ambang: hijau yang tidak
+  // mengukur apa yang diklaim. Ambang 300 ms adalah klaim, bukan target acak.
+  it("tetap di bawah 300 ms", { timeout: 300_000 }, async () => {
     await ctx.client.exec(`
       INSERT INTO users (email) VALUES ('perf@lakoo.local');
       INSERT INTO stores (owner_user_id, name, store_type)

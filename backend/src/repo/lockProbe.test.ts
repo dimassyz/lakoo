@@ -12,7 +12,7 @@
  * Yang diuji: perilaku LOCK-nya, bukan balap-nya.
  */
 import { beforeAll, describe, expect, it } from "vitest";
-import { writeFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { createTestDb } from "../../../database/src/test/pglite.ts";
 import type { AnyDb } from "../../../database/src/db.ts";
@@ -101,11 +101,13 @@ describe("FOR UPDATE di PGlite — apakah benar-benar mengunci?", () => {
     expect(inTx).toBeGreaterThan(before);
   }, 60_000);
 
-  it("menulis laporan", () => {
-    writeFileSync(
-      resolve(process.cwd(), "forupdate-probe.txt"),
-      report.join("\n") + "\n",
-    );
+  it("tidak menulis artefak ke disk", () => {
+    // Probe dulu menulis laporan ke process.cwd() — nyampah di git status dan
+    // bisa terbawa snapshot. Assertion di atas adalah check sebenarnya; laporan
+    // hanya scaffolding pembacaan saat development, jadi tidak ada yang ditulis.
     expect(report.length).toBeGreaterThan(0);
+    expect(existsSync(resolve(process.cwd(), "forupdate-probe.txt"))).toBe(
+      false,
+    );
   });
 });

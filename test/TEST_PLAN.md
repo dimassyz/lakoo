@@ -307,17 +307,27 @@ memasukkan `test/**`**
     berlanjut di main (`18333b2` FAIL → `728c2e5` PASS → `93a977a` FAIL).
     Pola bergantian terus berjalan di main; hijau bukan penutupan risiko.
   - **PENUTUP (26 Okt 2026, kuverifikasi via API):** PR #6 (`f973f03` —
-    perf test pindah ke **Postgres service container native** di CI, bukan
-    PGlite) dan PR #5 (`9efe586` — W-2 lock + W-4 + **perf kandidat 2**
-    `COUNT(sale_date)`) mendarat di main → **run 46 PASS, run 47 PASS —
-    dua hijau berturut-turut**. Pola fail-2-of-3 berhenti setelah kedua
-    perbaikan.
-  - **Atribusi CONFOUNDED (catatan jujur):** query optimization DAN
-    lingkungan pengukuran berubah bersamaan (PGlite → native PG), jadi
-    "berapa ms headroom yang datang dari COUNT(sale_date) saja" TIDAK
-    separable dari data ini. Yang bisa dikatakan: kombinasi keduanya
-    menghijaukan gate dua run berturut-turut. Klaim "kandidat 2 memberi
-    headroom X ms" butuh pengukuran terpisah (satu variabel per run).
+    menambah `postgres:16` **service container** ke workflow CI) dan PR #5
+    (`9efe586` — W-2 lock + W-4 + **perf kandidat 2** `COUNT(sale_date)`)
+    mendarat di main → **run 46 PASS, run 47 PASS — dua hijau
+    berturut-turut**. Pola fail-2-of-3 berhenti setelah kedua perbaikan.
+  - **KOREKSI ATRIBUSI (26 Okt 2026, hasil tantangan backend-dev — BENAR,
+    catatan lamaku salah):** perf test di main **masih PGlite**, BUKAN
+    native. Kuverifikasi di `origin/main`: `productStats.test.ts` import
+    `createTestDb` dari `../test/pglite.ts`, dan `git grep PERF_DATABASE_URL`
+    di `database/`+`backend/` = **nol pembaca**. Service container PR #6
+    JALAN TAPI IDLE — lingkungan disiapkan, pengukuran belum pindah (harness
+    switch = PR backend-dev menyusul). **Jadi tidak ada confound lingkungan:
+    run 46 & 47 dua-duanya PGlite, sama seperti run merah.**
+  - **Konsekuensi jujur untuk klaim kandidat 2:** run 46 hijau **SEBELUM**
+    kandidat 2 mendarat (di PGlite) → salah satu hijau itu explainable sebagai
+    coin flip pola fail-2-of-3. Bukti efek kandidat 2 = n=1 (run 47), dan
+    dengan prior fail-2-of-3, dua hijau berturut-turut BELUM jadi bukti
+    kuat query-nya diberi headroom. Yang bisa dikatakan: pola berhenti;
+    angka headroom kandidat 2 menunggu pengukuran satu-variabel atau angka
+    native pertama dari harness PR. Kalau perf merah setelah harness merge,
+    kandidat tersangka pertama = jalur native yang belum pernah dijalankan
+    (bukan query) — sesuai keputusan ownership backend-dev.
   - **Mode kegagalan KEDUA yang teramati: Format check** (run 43,
     `b7930e3`, branch `chore/readme-refresh`): merah di step PERTAMA —
     step Test tidak tercapai. Ini pola yang sama dengan era 20/20 (file
