@@ -25,7 +25,7 @@ export type KoreksiMasuk = {
   receivedOn?: string;
 };
 
-const PESAN_JARINGAN = "Belum terkirim — akan dikirim otomatis saat ada sinyal";
+const PESAN_JARINGAN = "Belum terkirim — isian tersimpan di HP ini";
 const PESAN_SESI = "Sesi berakhir, silakan masuk lagi";
 const PESAN_GANGGUAN = "Ada gangguan. Coba lagi sebentar.";
 
