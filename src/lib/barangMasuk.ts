@@ -25,7 +25,7 @@ export type KoreksiMasuk = {
   receivedOn?: string;
 };
 
-const PESAN_JARINGAN = "Belum terkirim — isian tersimpan di HP ini";
+const PESAN_JARINGAN = "Belum terkirim — akan dikirim otomatis saat ada sinyal";
 const PESAN_SESI = "Sesi berakhir, silakan masuk lagi";
 const PESAN_GANGGUAN = "Ada gangguan. Coba lagi sebentar.";
 
@@ -420,6 +420,17 @@ export function kelompokRiwayat(items: StockIn[]) {
   return [...peta].map(([tanggal, baris]) => ({ tanggal, baris }));
 }
 
+/** FSD §0.4 baris 81 — isian dibersihkan seolah tersimpan; kalau tidak,
+ * "Simpan" kedua membuat item outbox baru dan stok tercatat dua kali. */
+function gagalKirim(
+  pesan: string,
+  setToast: (s: string) => void,
+  reset: () => void,
+) {
+  setToast(pesan);
+  reset();
+}
+
 /** Perekat layar barang masuk. */
 export function useLayarMasuk() {
   const produk = useBarangAktif();
@@ -440,7 +451,12 @@ export function useLayarMasuk() {
     },
     [reset, muatRiwayat],
   );
-  const onGagal = useCallback((pesan: string) => setToast(pesan), []);
+  // FSD §0.4 baris 81 — isian dibersihkan seolah tersimpan; kalau tidak,
+  // "Simpan" kedua membuat item outbox baru dan stok tercatat dua kali.
+  const onGagal = useCallback(
+    (pesan: string) => gagalKirim(pesan, setToast, reset),
+    [reset],
+  );
   const on422 = useCallback((peta: Record<string, string>) => {
     setErrorKirim(peta);
     setToast(`${Object.keys(peta).length} baris perlu dicek`);

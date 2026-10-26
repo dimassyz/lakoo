@@ -120,7 +120,7 @@ export function ringkasan(data: SalesRecap | null, mode: Mode, nilai: Nilai) {
   return { jumlah, total, estimasi };
 }
 
-const PESAN_JARINGAN = "Belum terkirim — isian tersimpan di HP ini";
+const PESAN_JARINGAN = "Belum terkirim — akan dikirim otomatis saat ada sinyal";
 
 function petaBaris(
   error: unknown,
@@ -271,6 +271,7 @@ export function useRekapTampilan(awal?: {
     setCari,
     data,
     nilai,
+    setNilai,
     memuat,
     gagal,
     muat,
@@ -287,6 +288,7 @@ export function useRekapAksi(args: {
   mode: Mode;
   data: SalesRecap | null;
   nilai: Nilai;
+  setNilai: (n: Nilai) => void;
   muat: () => Promise<void>;
 }) {
   const [toast, setToast] = useState("");
@@ -302,7 +304,15 @@ export function useRekapAksi(args: {
     },
     [args],
   );
-  const onGagal = useCallback((pesan: string) => setToast(pesan), []);
+  // FSD §0.4 baris 81 — isian dibersihkan seolah tersimpan; kalau tidak,
+  // "Simpan" kedua membuat item outbox baru dan terkirim dua kali.
+  const onGagal = useCallback(
+    (pesan: string) => {
+      setToast(pesan);
+      args.setNilai({});
+    },
+    [args],
+  );
   const on422 = useCallback((peta: Record<string, string>) => {
     setErrorKirim(peta);
     setToast(`${Object.keys(peta).length} baris perlu dicek`);
@@ -330,6 +340,7 @@ export function useRekapLayar(awal?: {
     mode: tampilan.mode,
     data: tampilan.data,
     nilai: tampilan.nilai,
+    setNilai: tampilan.setNilai,
     muat: tampilan.muat,
   });
   const error = useMemo(
