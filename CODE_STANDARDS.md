@@ -108,3 +108,26 @@ Automation menangkap format & pelanggaran mekanis. Reviewer menilai:
 kejelasan nama domain, batas tanggung jawab modul, hotspot
 kompleksitas, duplikasi lintas file, dead code, dan keterbacaan test.
 Preferensi style yang tidak ada di file ini / config tool BUKAN temuan.
+
+## 7. Aturan jam (clock) — Lakoo, diturunkan dari audit 26 Okt 2026
+
+Tiga bug produksi berakar sama: kolom waktu dibandingkan lintas jam yang
+berbeda. Aturan:
+
+- **Jam aplikasi (`deps.now()`) WAJIB** ketika nilai dibandingkan dengan
+  tanggal/hari yang dihitung aplikasi: `editable` (created_at vs now),
+  batas rentang query (`minStockEver` `today`), fallback `first_stock_date`
+  dari `products.created_at`, `demo_expires_at`, `todayIso` (WIB).
+- **Biarkan DB mengisi (`DEFAULT now()`)** ketika nilai hanya dibandingkan
+  dengan nilai lain dari kolom yang sama — DB `transaction_timestamp()`
+  monotonik antar transaksi, sementara jam aplikasi bisa **seri** (dua
+  insert dalam milidetik sama; di test jam dibekukan jadi pasti seri).
+  Precedent: tie-break `lastCost` (`ORDER BY received_on DESC,
+  created_at DESC`) justru BENAR dengan jam DB — menyamakannya ke jam
+  aplikasi membuat `lastCost` salah (30.000 bukan 32.000).
+- Kolom waktu yang tidak dibaca query logika apa pun (mis.
+  `daily_sales.updated_at`) tidak perlu diubah — jangan perbaiki yang
+  tidak rusak.
+- Test pengunci: invarian "harga modal terakhir = baris terakhir yang
+  dicatat" ada di `productStats.test.ts` — merah kalau ada yang
+  menyamakan jam di jalur itu tanpa memikirkan tie-break.

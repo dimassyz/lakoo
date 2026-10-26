@@ -533,7 +533,7 @@ Field tak dikenal ditolak (`.strict()`). Semua query lewat Drizzle (parameterize
 
 IP diambil dari `x-forwarded-for` (entri pertama, di-set Vercel). Respons 429 menyertakan `Retry-After`.
 
-**Amendemen 26 Okt 2026 (tech-lead, temuan E-2 security-reviewer):** baris "semua endpoint `/auth/*` 30/15 menit per IP" adalah anggaran global di luar limit per-endpoint. Tanpa ini, penyerang memutar email menghindari limit login 5/15 menit per (IP+email) dari satu IP dan membakar CPU argon2 tanpa batas. Pertumbuhan tabel `rate_limits` ditangani cron harian (§10.1). Catatan verifikasi E-3: klaim "Vercel menimpa XFF" belum terverifikasi — black-box test di staging (6× login dari satu IP dengan XFF diputar; 429 pada percobaan ke-6 = aman). Kalau gagal, ganti ke entri terkanan atau `x-real-ip`.
+**Amendemen 26 Okt 2026 (tech-lead, temuan E-2 security-reviewer):** baris "semua endpoint `/auth/*` 30/15 menit per IP" adalah anggaran global di luar limit per-endpoint. Tanpa ini, penyerang memutar email menghindari limit login 5/15 menit per (IP+email) dari satu IP dan membakar CPU argon2 tanpa batas. Pertumbuhan tabel `rate_limits` ditangani cron harian (§10.1). **Pengecualian: `POST /auth/logout` TIDAK ikut anggaran ini** (amendemen 26 Okt 2026) — logout tidak memproses kredensial sehingga tidak ada serangan tebak-sandi yang dicegah dengan membatasinya, sementara pengguna yang menghabiskan anggaran justru bisa gagal keluar. Catatan verifikasi E-3: klaim "Vercel menimpa XFF" belum terverifikasi — black-box test di staging (6× login dari satu IP dengan XFF diputar; 429 pada percobaan ke-6 = aman). Kalau gagal, ganti ke entri terkanan atau `x-real-ip`.
 
 ### 8.5 Tidak boleh dicatat di log
 
