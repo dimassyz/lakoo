@@ -7,6 +7,7 @@
   --color-muted: #6b7280;
   --color-safe: #10b981;
   --color-danger: #dc2626;
+  --color-warn: #f59e0b;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --radius-card: 8px;
 }

@@ -149,7 +149,7 @@ function IsianUtama({
         onUbah={(v) => onUbah({ jual: v })}
       />
       {peringatan ? (
-        <p className={`${teksError} text-[15px]`}>{peringatan}</p>
+        <p className="text-warn text-[15px] font-semibold">{peringatan}</p>
       ) : null}
 
       {baru ? (
