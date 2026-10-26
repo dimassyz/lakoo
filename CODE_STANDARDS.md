@@ -123,7 +123,7 @@ berbeda. Aturan:
   monotonik antar transaksi, sementara jam aplikasi bisa **seri** (dua
   insert dalam milidetik sama; di test jam dibekukan jadi pasti seri).
   Precedent: tie-break `lastCost` (`ORDER BY received_on DESC,
-  created_at DESC`) justru BENAR dengan jam DB — menyamakannya ke jam
+created_at DESC`) justru BENAR dengan jam DB — menyamakannya ke jam
   aplikasi membuat `lastCost` salah (30.000 bukan 32.000).
 - Kolom waktu yang tidak dibaca query logika apa pun (mis.
   `daily_sales.updated_at`) tidak perlu diubah — jangan perbaiki yang

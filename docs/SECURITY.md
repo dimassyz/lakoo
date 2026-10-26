@@ -358,3 +358,186 @@ dijadwalkan setelah semua irisan T-9 mendarat + staging URL.
   defense-in-depth, bukan authz. Black-box test security-reviewer di
   staging yang memutuskan; bila gagal → entri terkanan atau `x-real-ip`.
   Dicatat di SPEC §8.4.
+
+---
+
+# WHITE-BOX PENUH — T-9 (32 endpoint), 26 Okt 2026
+
+Diminta tech-lead setelah T-9 mendarat penuh. Metode: review sendiri atas
+inti auth/session/rate-limit/idempotency/AI/plan-lifecycle + 4 probe
+paralel (IDOR sweep 23 endpoint, injeksi sweep ~42 sink SQL, transaksi &
+bisnis, demo-cron-test-suite); setiap klaim probe yang akan jadi temuan
+diverifikasi ulang oleh reviewer sebelum masuk laporan.
+
+Suite: `vitest run` → **33 file / 441 test → 440 lolos, 1 gagal**.
+Kegagalan satu-satunya = test performa `productStats` (374,5 ms > budget
+300 ms) — **lolos 9/9 saat dijalankan isolasi**, jadi gagal hanya di bawah
+beban full-suite (bukan kegagalan logika; lihat W-10).
+
+## Verifikasi klaim spesifik tech-lead
+
+| #   | Permintaan                     | Verdict                                                                                                                                                                                                                                                                                                  |
+| --- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Cron auth constant-time        | **BELUM MENDARAT** — `routes/cron.ts:44` masih `header !== \`Bearer ${secret}\``; fix `timingSafeEqual` belum ada di snapshot ini (W-7)                                                                                                                                                                  |
+| 2   | Import path                    | **AMAN** — parameterized penuh (`repo/imports.ts`, semua via drizzle `${}`); batas baris 500/5.000 ditegakkan server-side via Zod (`routes/imports.ts:37,55`); `insufficient_stock` per baris tidak mencabik transaksi salah — baris valid tetap ditulis, invalid dilaporkan (`repo/imports.ts:459-468`) |
+| 3   | AI quota benar-benar membatasi | **YA** — 5 syarat §6.1 diperiksa di `ai/generate.ts:44-49` (AI_ENABLED, API key, `stores.aiEnabled`, kuota global `ai_usage_daily`, kuota toko dari hitungan `action_plans source='ai'` hari ini); tidak ada hardcode; pencatatan hanya saat AI benar-benar dipakai (`routes/plans.ts:243-250`)          |
+
+## FINDINGS (white-box penuh)
+
+### W-1. [backend/src/http/routes/stockIns.ts:192-199 + routes/sales.ts:160-168 + repo/idempotency.ts:32-44] (MEDIUM) — rekaman idempotensi ditulis DI LUAR transaksi bisnis; kirim-ulang bisa menulis ganda [white-box]
+
+- **Rubric:** Business logic (R1, §8.7).
+- **Attack path:** klien (outbox) → `POST /stock-ins` dengan key K →
+  `createStockInBatch` commit (`routes/stockIns.ts:192-198`) → proses
+  crash/restart **sebelum** `storeIdempotent` (`:199`) → outbox kirim ulang
+  key K → `findIdempotent` null (`repo/idempotency.ts:11-29`) → batch
+  dibuat **lagi** dengan `batchId` baru (`repo/stockIns.ts:169,185-188`) →
+  stok dobel. Jalur konkuren: dua request key K sama-sama lolos
+  `findIdempotent`, sama-sama menulis; `ON CONFLICT DO NOTHING`
+  (`idempotency.ts:43`) hanya mencegah baris key ganda, bukan tulisan
+  bisnis ganda.
+- **Spec:** SPEC R1 "Kirim ulang key sama → data tidak ganda";
+  openapi "Satu transaksi, all-or-nothing".
+- **Catatan jujur:** untuk `PUT /sales/recap` dampak terbatas karena
+  tulisannya upsert (`salesRecap.ts:170-174`) — eksposur nyata adalah
+  `POST /stock-ins` (batch ganda = stok dobel).
+- **Fix:** pindahkan `storeIdempotent` ke **dalam** transaksi bisnis yang
+  sama, atau jadikan penulisan bisnis idempoten oleh key (mis. unique
+  `(store_id, key)` yang diperiksa sebelum insert batch).
+
+### W-2. [backend/src/repo/stockIns.ts:110-140,249-291 + database/src/db.ts:17-22] (MEDIUM) — guard stok non-negatif tidak race-free; BR-16 bisa dilanggar oleh koreksi bersamaan [white-box]
+
+- **Rubric:** Business logic (T2, §8.7).
+- **Attack path:** dua koreksi bersamaan pada produk sama (dua device /
+  kirim-ulang outbox) → masing-masing `db.transaction`
+  (`stockIns.ts:249,279`) → `requireNonNegativeStock` →
+  `minStockEver` (`:110-140`) menghitung minimum kumulatif dari snapshot
+  tx yang **tidak melihat** commit tx lain (READ COMMITTED; `db.ts:21`
+  tanpa opsi isolation; tidak ada `FOR UPDATE`/advisory lock di repo) →
+  keduanya lolos → commit → stok negatif. Race lintas-endpoint: `PUT
+/sales/recap` menulis `daily_sales` tanggal lampau hanya memeriksa
+  stok hari ini (`salesRecap.ts:325-339`), tidak lewat min harian.
+- **Spec:** BR-16 "stok tercatat tidak pernah negatif".
+- **Fix:** `SELECT … FOR UPDATE` pada baris produk (atau
+  `pg_advisory_xact_lock` berbasis product_id) di awal transaksi koreksi;
+  atau isolasi SERIALIZABLE dengan retry. Rollback per-tx sudah benar —
+  yang hilang adalah serialisasi antar-tx.
+
+### W-3. [backend/src/repo/demo.ts:41-56] (LOW) — batas 150 klon demo tidak race-free; prune bisa memaksa logout klon aktif [white-box]
+
+- **Rubric:** Business logic (D1, §8.7).
+- **Attack path:** N request `POST /auth/demo` bersamaan di dekat batas →
+  `pruneOldestClones` (`:41-56`) adalah SELECT polos tanpa lock → semua
+  membaca snapshot `active` sama → `excess <= 0` → sama-sama insert →
+  klon aktif > 150. Dampak dibatasi rate limit 10/jam per IP +
+  AUTH_BUDGET 30/15 menit (`routes/auth.ts:144,156-160`).
+- **Efek samping (bukan eksploitasi):** prune menghapus `users` klon
+  **aktif** tertua → cascade menghapus sesinya (`schema.ts:167-169`) →
+  pengguna demo ter-logout paksa.
+- **Fix:** advisory lock di `cloneDemoTemplate`, atau enforce lewat
+  constraint DB; pertimbangkan prune hanya klon kedaluwarsa lebih dulu.
+
+### W-4. [backend/src/repo/products.ts:192,236; repo/plans.ts:406,411,475,510-528,614-615,650,664] (LOW) — tulisan repo by id tanpa `storeId` di WHERE (defense-in-depth) [white-box]
+
+- **Rubric:** Authorization (I1, §8.7) / SPEC §8.1.
+- **Attack path:** tidak tereksploitasi lintas toko via request tunggal —
+  semua write di belakang SELECT store-scoped (`products.ts:163,208`;
+  `plans.ts:160,385,496,601`) dan id berupa UUID. TAPI menyimpang dari
+  SPEC §8.1 ("Setiap query repositori wajib menerima storeId dan memfilter
+  dengannya") dan jadi risiko laten bila guard dipindah/di-refactor.
+  `applyStepPrice` (`plans.ts:630-666`) additionally menjalankan
+  findPlanRow + UPDATE products **di luar satu transaksi** (beda dari
+  startPlan/recordStepOutcome/stopPlan).
+- **Fix:** tambahkan `storeId` ke WHERE setiap write; bungkus
+  `applyStepPrice` dalam satu transaksi.
+
+### W-5. [backend/src/repo/stockIns.ts:177 + routes/stockIns.ts:136] (LOW) — `name_key` inkonsisten antar jalur; duplikat nama bisa lolos [white-box]
+
+- **Rubric:** Business logic / data integrity.
+- **Attack path:** barang dibuat lewat `POST /stock-ins` memakai
+  `.toLowerCase()` polos (`stockIns.ts:177`; pre-check `:136`), sementara
+  `nameKeyOf` (`database/src/nameKey.ts:6-8`) = trim + lowercase +
+  collapse spasi. Nama "Teh Botol" (spasi ganda) vs "Teh Botol" →
+  `name_key` beda → lolos partial unique index
+  (`schema.ts:211-213`) → barang duplikat lintas jalur (products create
+  vs stock-ins vs import). Isu dikenal PROJECT_LOG:79.
+- **Fix:** pakai `nameKeyOf` di semua jalur.
+
+### W-6. [backend/src/repo/stockIns.ts:267-268] (LOW) — baris hilang saat race → 500, bukan 404 [white-box]
+
+- **Attack path:** tx lain menghapus baris lebih dulu → UPDATE mengenai
+  0 baris → `findStockIn` null → `throw new Error("not_found")` (Error
+  biasa) → `app.ts:90-93` memetakan ke **500 internal_error**, kontrak
+  minta **404 not_found**.
+- **Fix:** lempar `notFound()` (ApiError), bukan Error biasa.
+
+### W-7. [backend/src/http/routes/cron.ts:39-45] (LOW) — cron bearer masih perbandingan string biasa [white-box]
+
+- **Attack path:** `requireCronBearer` memakai `header !==
+\`Bearer ${secret}\`` (`:44`) — bukan constant-time. Serangan timing
+via HTTP praktis sulit (jitter jaringan), tapi item backlog §8.7/E1
+menyebut "constant-time compare" dan tech-lead menyatakan fix
+`timingSafeEqual` sedang dalam perbaikan — **belum mendarat** di
+  snapshot ini.
+- **Status:** OPEN. Verifikasi ulang saat fix mendarat.
+
+### W-8. [backend/src/http/routes/stockIns.ts:161-162 + routes/sales.ts:142-143] (LOW) — pesan "wajib UUID v4", penerimaan UUID versi apa pun [white-box]
+
+- `z.string().uuid()` (zod ^3.25) menerima UUID non-v4; kontrak
+  (openapi `Idempotency-Key`, SPEC) menyebut v4. Cosmetic/contract
+  mismatch; tidak melemahkan keamanan (key tetap unik per store).
+- **Fix:** pesan jadi "wajib UUID", atau validasi versi.
+
+### W-9. [backend/src/repo/idempotency.ts:16-19] (LOW) — replay idempotensi tanpa filter kedaluwarsa 7 hari [white-box]
+
+- `findIdempotent` tidak memfilter `created_at > now() - 7 hari`;
+  jendela replay bergantung pada cron pembersih (`repo/cron.ts:38-44`,
+  hapus > 7 hari). Replay bisa melebihi jendela spec sampai cron jalan.
+- **Fix:** tambahkan filter tanggal di query.
+
+### W-10. [database/src/queries/productStats.test.ts:251] (OBSERVATION) — test performa 300 ms gagal di bawah beban full-suite [white-box]
+
+- Full-suite: 441 test → 440 lolos; kegagalan = budget performa
+  (374,5 ms > 300 ms). Saat dijalankan isolasi: **9/9 lolos** (~11 s).
+  Test sensitif beban, bukan logika. Ditandai untuk QA/tech-lead karena
+  klaim "gate hijau" bergantung pada beban mesin/CI.
+
+## Terverifikasi baik (tidak perlu ditindaklanjuti)
+
+- **IDOR (23 endpoint):** `storeId` 100% dari `currentSession`; grep
+  `req.(query|param|json)` + storeId = 0 hasil; semua READ store-scoped;
+  barang/rencana/baris toko lain → 404; `PATCH /store` tanpa field
+  terlarang (tidak ada email/password di schema), toko demo → 403
+  `forbidden_demo` (`routes/store.ts:117-119`); email demo di-mask
+  (`serialize.ts:20`).
+- **Injeksi (~42 sink SQL):** semua nilai user-controlled lewat bound
+  parameter drizzle; satu-satunya `sql.raw` produksi
+  (`routes/results.ts:63-65`) menerima konstanta hardcoded internal —
+  pola fragile, saat ini aman; tidak ada eval/exec/child_process/
+  penulisan file dari input; `gemini.ts` API key via header
+  `x-goog-api-key` (bukan URL), timeout 12 s, respons divalidasi zod.
+- **AI (T3):** prompt injection surface by design; mitigasi berlapis:
+  SYSTEM_INSTRUCTION + responseSchema + zod parse + `validatePlan`
+  (digit dilarang di teks, enum, rentang, bundle harus barang toko
+  sendiri, tahap 1 tidak rugi) → output invalid diganti template
+  seluruhnya (`ai/generate.ts:104-105`).
+- **Transaksi:** batch stock-ins + recap all-or-nothing; jendela 7 hari
+  ditegakkan di server dalam tx yang sama; BR-16 rollback terbukti test;
+  plan `sold_out` pindah state dalam tx yang sama.
+- **Cron:** 4 langkah §10.1; semua DELETE berbatas waktu
+  (`repo/cron.ts:38-51`); template hilang → 503 (teruji).
+- **E-1 CLOSED:** `auth-context.ts:47-52` — demo expiry diperiksa, sesi
+  dihapus, 401.
+- **E-2 CLOSED:** `routes/auth.ts:156-160` — anggaran global 30/15 menit
+  per IP untuk `/auth/*` (logout dikecualikan).
+- **E-3:** unchanged since early pass — menunggu black-box test staging.
+
+## VERDICT (white-box penuh)
+
+**FINDINGS — T-9: 1 MEDIUM must-fix (W-1), 1 MEDIUM (W-2), 6 LOW
+(W-3…W-9), 1 observation (W-10). 0 HIGH/CRITICAL.**
+W-1 & W-2 adalah must-fix sebelum T-12 bisa ditutup: keduanya melanggar
+invariant kontrak (idempotency replay, BR-16) pada jalur yang reachable
+(kirim-ulang outbox / koreksi bersamaan). W-7 (cron timingSafeEqual)
+menunggu fix yang sudah dijanjikan. Black-box pass tetap menunggu staging
+URL dari T-13. T-12 tetap TERBUKA.
