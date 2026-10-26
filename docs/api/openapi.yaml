@@ -67,26 +67,31 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/RegisterRequest' }
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
             examples:
               basic:
-                value: { storeName: Toko Bu Sri, email: sri@contoh.id, password: rahasia123 }
+                value:
+                  {
+                    storeName: Toko Bu Sri,
+                    email: sri@contoh.id,
+                    password: rahasia123,
+                  }
       responses:
-        '201':
+        "201":
           description: Akun dibuat dan sesi aktif.
           headers:
-            Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+            Set-Cookie: { $ref: "#/components/headers/SessionCookie" }
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Me' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '409':
+              schema: { $ref: "#/components/schemas/Me" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
           description: Email sudah terdaftar (`email_taken`).
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '429': { $ref: '#/components/responses/RateLimited' }
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 
   /auth/login:
     post:
@@ -99,23 +104,23 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/LoginRequest' }
+            schema: { $ref: "#/components/schemas/LoginRequest" }
       responses:
-        '200':
+        "200":
           description: Berhasil masuk.
           headers:
-            Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+            Set-Cookie: { $ref: "#/components/headers/SessionCookie" }
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Me' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401':
+              schema: { $ref: "#/components/schemas/Me" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401":
           description: Email atau kata sandi salah (`invalid_credentials`).
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '429': { $ref: '#/components/responses/RateLimited' }
+              schema: { $ref: "#/components/schemas/Error" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 
   /auth/logout:
     post:
@@ -124,9 +129,9 @@ paths:
       summary: Keluar
       description: Menghapus sesi di server dan mengosongkan cookie. Idempoten.
       responses:
-        '204':
+        "204":
           description: Sesi dihapus.
-        '403': { $ref: '#/components/responses/Forbidden' }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /auth/demo:
     post:
@@ -145,20 +150,20 @@ paths:
               type: object
               additionalProperties: false
       responses:
-        '201':
+        "201":
           description: Toko demo siap.
           headers:
-            Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+            Set-Cookie: { $ref: "#/components/headers/SessionCookie" }
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Me' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '429': { $ref: '#/components/responses/RateLimited' }
-        '503':
+              schema: { $ref: "#/components/schemas/Me" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503":
           description: Template demo belum tersedia (`internal_error`). UI menampilkan "Coba lagi sebentar".
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema: { $ref: "#/components/schemas/Error" }
 
   /me:
     get:
@@ -166,12 +171,12 @@ paths:
       operationId: me_get
       summary: Sesi & toko saat ini
       responses:
-        '200':
+        "200":
           description: Data user dan toko.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Me' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
+              schema: { $ref: "#/components/schemas/Me" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
 
   /store:
     patch:
@@ -187,16 +192,16 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/StorePatch' }
+            schema: { $ref: "#/components/schemas/StorePatch" }
       responses:
-        '200':
+        "200":
           description: Toko setelah diubah.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Store' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+              schema: { $ref: "#/components/schemas/Store" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /products:
     get:
@@ -210,7 +215,7 @@ paths:
       parameters:
         - name: status
           in: query
-          schema: { $ref: '#/components/schemas/ProductStatus' }
+          schema: { $ref: "#/components/schemas/ProductStatus" }
         - name: q
           in: query
           description: Cari nama (case-insensitive, contains). Maks 80 karakter.
@@ -224,9 +229,14 @@ paths:
           schema: { type: boolean, default: false }
         - name: sort
           in: query
-          schema: { type: string, enum: [priority, name, frequent], default: priority }
+          schema:
+            {
+              type: string,
+              enum: [priority, name, frequent],
+              default: priority,
+            }
       responses:
-        '200':
+        "200":
           description: Daftar barang.
           content:
             application/json:
@@ -238,9 +248,9 @@ paths:
                   asOf: { type: string, format: date }
                   items:
                     type: array
-                    items: { $ref: '#/components/schemas/ProductSummary' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
+                    items: { $ref: "#/components/schemas/ProductSummary" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
     post:
       tags: [products]
       operationId: products_create
@@ -254,36 +264,42 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ProductCreate' }
+            schema: { $ref: "#/components/schemas/ProductCreate" }
             examples:
               basic:
-                value: { name: Kecap Manis Botol 600ml, costPrice: 21000, sellPrice: 24000, openingStock: 12 }
+                value:
+                  {
+                    name: Kecap Manis Botol 600ml,
+                    costPrice: 21000,
+                    sellPrice: 24000,
+                    openingStock: 12,
+                  }
       responses:
-        '201':
+        "201":
           description: Barang dibuat.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ProductDetail' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '409': { $ref: '#/components/responses/DuplicateProduct' }
+              schema: { $ref: "#/components/schemas/ProductDetail" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/DuplicateProduct" }
 
   /products/{productId}:
     parameters:
-      - $ref: '#/components/parameters/ProductId'
+      - $ref: "#/components/parameters/ProductId"
     get:
       tags: [products]
       operationId: products_get
       summary: Detail barang
       responses:
-        '200':
+        "200":
           description: Detail barang.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ProductDetail' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema: { $ref: "#/components/schemas/ProductDetail" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
     patch:
       tags: [products]
       operationId: products_update
@@ -296,22 +312,22 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ProductPatch' }
+            schema: { $ref: "#/components/schemas/ProductPatch" }
       responses:
-        '200':
+        "200":
           description: Barang setelah diubah.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ProductDetail' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/DuplicateProduct' }
+              schema: { $ref: "#/components/schemas/ProductDetail" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/DuplicateProduct" }
 
   /products/{productId}/archive:
     parameters:
-      - $ref: '#/components/parameters/ProductId'
+      - $ref: "#/components/parameters/ProductId"
     post:
       tags: [products]
       operationId: products_archive
@@ -330,19 +346,19 @@ paths:
               properties:
                 archived: { type: boolean }
       responses:
-        '200':
+        "200":
           description: Barang setelah diubah.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ProductDetail' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/DuplicateProduct' }
+              schema: { $ref: "#/components/schemas/ProductDetail" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/DuplicateProduct" }
 
   /products/{productId}/stock-adjustments:
     parameters:
-      - $ref: '#/components/parameters/ProductId'
+      - $ref: "#/components/parameters/ProductId"
     post:
       tags: [products]
       operationId: products_adjust_stock
@@ -362,15 +378,15 @@ paths:
               properties:
                 countedStock: { type: integer, minimum: 0, maximum: 100000 }
       responses:
-        '200':
+        "200":
           description: Barang setelah stok diperbaiki.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ProductDetail' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema: { $ref: "#/components/schemas/ProductDetail" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /stock-ins:
     get:
@@ -389,7 +405,7 @@ paths:
           in: query
           schema: { type: string, format: uuid }
       responses:
-        '200':
+        "200":
           description: Daftar barang masuk.
           content:
             application/json:
@@ -400,9 +416,9 @@ paths:
                 properties:
                   items:
                     type: array
-                    items: { $ref: '#/components/schemas/StockIn' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
+                    items: { $ref: "#/components/schemas/StockIn" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
     post:
       tags: [stock-ins]
       operationId: stock_ins_create_batch
@@ -413,21 +429,29 @@ paths:
         `receivedOn` tidak boleh masa depan dan ≤ 365 hari lalu. Maks 100 baris.
         Wajib `Idempotency-Key`. Error per baris dikembalikan di `error.lines[]`.
       parameters:
-        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/StockInBatchCreate' }
+            schema: { $ref: "#/components/schemas/StockInBatchCreate" }
             examples:
               nota:
                 value:
-                  receivedOn: '2026-11-03'
+                  receivedOn: "2026-11-03"
                   lines:
-                    - { productId: 3f6a1c52-6f0e-4c1e-9d55-2a1c9b7e1a01, qty: 24, unitCost: 3100 }
-                    - { newProduct: { name: Teh Celup Isi 25, sellPrice: 7500 }, qty: 10, unitCost: 6200 }
+                    - {
+                        productId: 3f6a1c52-6f0e-4c1e-9d55-2a1c9b7e1a01,
+                        qty: 24,
+                        unitCost: 3100,
+                      }
+                    - {
+                        newProduct: { name: Teh Celup Isi 25, sellPrice: 7500 },
+                        qty: 10,
+                        unitCost: 6200,
+                      }
       responses:
-        '201':
+        "201":
           description: Tersimpan.
           content:
             application/json:
@@ -439,12 +463,12 @@ paths:
                   batchId: { type: string, format: uuid }
                   items:
                     type: array
-                    items: { $ref: '#/components/schemas/StockIn' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '409': { $ref: '#/components/responses/IdempotencyConflict' }
-        '422': { $ref: '#/components/responses/LineErrors' }
+                    items: { $ref: "#/components/schemas/StockIn" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/IdempotencyConflict" }
+        "422": { $ref: "#/components/responses/LineErrors" }
 
   /stock-ins/{stockInId}:
     parameters:
@@ -469,33 +493,33 @@ paths:
               additionalProperties: false
               properties:
                 qty: { type: integer, minimum: 1, maximum: 100000 }
-                unitCost: { $ref: '#/components/schemas/Rupiah' }
+                unitCost: { $ref: "#/components/schemas/Rupiah" }
                 receivedOn: { type: string, format: date }
       responses:
-        '200':
+        "200":
           description: Baris setelah dikoreksi.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/StockIn' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/Conflict' }
-        '422': { $ref: '#/components/responses/BusinessRule' }
+              schema: { $ref: "#/components/schemas/StockIn" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
     delete:
       tags: [stock-ins]
       operationId: stock_ins_delete
       summary: Hapus baris barang masuk (≤ 7 hari sejak dibuat)
       description: Aturan sama dengan PATCH.
       responses:
-        '204':
+        "204":
           description: Terhapus.
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/Conflict' }
-        '422': { $ref: '#/components/responses/BusinessRule' }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
 
   /sales/recap:
     get:
@@ -512,13 +536,13 @@ paths:
           required: true
           schema: { type: string, format: date }
       responses:
-        '200':
+        "200":
           description: Data rekap.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/SalesRecap' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
+              schema: { $ref: "#/components/schemas/SalesRecap" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
     put:
       tags: [sales]
       operationId: sales_recap_put
@@ -529,34 +553,46 @@ paths:
         Barang yang tidak dikirim tidak diubah. Satu transaksi, all-or-nothing (SPEC §5.8).
         Wajib `Idempotency-Key`. Maks 600 baris; productId tidak boleh berulang.
       parameters:
-        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/SalesRecapPut' }
+            schema: { $ref: "#/components/schemas/SalesRecapPut" }
             examples:
               quantity:
                 value:
-                  date: '2026-11-03'
+                  date: "2026-11-03"
                   mode: quantity
-                  lines: [{ productId: 3f6a1c52-6f0e-4c1e-9d55-2a1c9b7e1a01, qty: 6 }]
+                  lines:
+                    [
+                      {
+                        productId: 3f6a1c52-6f0e-4c1e-9d55-2a1c9b7e1a01,
+                        qty: 6,
+                      },
+                    ]
               opname:
                 value:
-                  date: '2026-11-03'
+                  date: "2026-11-03"
                   mode: opname
-                  lines: [{ productId: 3f6a1c52-6f0e-4c1e-9d55-2a1c9b7e1a01, countedStock: 18 }]
+                  lines:
+                    [
+                      {
+                        productId: 3f6a1c52-6f0e-4c1e-9d55-2a1c9b7e1a01,
+                        countedStock: 18,
+                      },
+                    ]
       responses:
-        '200':
+        "200":
           description: Tersimpan.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/SalesRecapResult' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '409': { $ref: '#/components/responses/IdempotencyConflict' }
-        '422': { $ref: '#/components/responses/LineErrors' }
+              schema: { $ref: "#/components/schemas/SalesRecapResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/IdempotencyConflict" }
+        "422": { $ref: "#/components/responses/LineErrors" }
 
   /imports/products:
     post:
@@ -574,18 +610,18 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ImportProductsRequest' }
+            schema: { $ref: "#/components/schemas/ImportProductsRequest" }
       responses:
-        '200':
+        "200":
           description: Hasil preview/commit.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ImportResult' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '413': { $ref: '#/components/responses/PayloadTooLarge' }
-        '429': { $ref: '#/components/responses/RateLimited' }
+              schema: { $ref: "#/components/schemas/ImportResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 
   /imports/sales:
     post:
@@ -601,18 +637,18 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ImportSalesRequest' }
+            schema: { $ref: "#/components/schemas/ImportSalesRequest" }
       responses:
-        '200':
+        "200":
           description: Hasil preview/commit.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ImportResult' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '413': { $ref: '#/components/responses/PayloadTooLarge' }
-        '429': { $ref: '#/components/responses/RateLimited' }
+              schema: { $ref: "#/components/schemas/ImportResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 
   /dashboard:
     get:
@@ -624,16 +660,16 @@ paths:
         `today.dueSteps` = tahap `in_progress` dengan `dueOn ≤ hari ini`.
         `weeklySummary` hanya terisi pada hari Minggu dan Senin (WIB); dibuat malas bila belum ada.
       responses:
-        '200':
+        "200":
           description: Data beranda.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Dashboard' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
+              schema: { $ref: "#/components/schemas/Dashboard" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
 
   /products/{productId}/plans:
     parameters:
-      - $ref: '#/components/parameters/ProductId'
+      - $ref: "#/components/parameters/ProductId"
     post:
       tags: [plans]
       operationId: plans_generate
@@ -653,31 +689,31 @@ paths:
               properties:
                 regenerate: { type: boolean, default: false }
       responses:
-        '200':
+        "200":
           description: Rencana tersimpan sebelumnya.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Plan' }
-        '201':
+              schema: { $ref: "#/components/schemas/Plan" }
+        "201":
           description: Rencana baru dibuat.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Plan' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/Conflict' }
-        '429': { $ref: '#/components/responses/RateLimited' }
+              schema: { $ref: "#/components/schemas/Plan" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 
   /products/{productId}/plans/current:
     parameters:
-      - $ref: '#/components/parameters/ProductId'
+      - $ref: "#/components/parameters/ProductId"
     get:
       tags: [plans]
       operationId: plans_get_current
       summary: Rencana suggested/active barang ini (bila ada) + rencana terakhir yang sudah berakhir
       responses:
-        '200':
+        "200":
           description: Rencana saat ini.
           content:
             application/json:
@@ -688,14 +724,14 @@ paths:
                 properties:
                   plan:
                     oneOf:
-                      - $ref: '#/components/schemas/Plan'
-                      - type: 'null'
+                      - $ref: "#/components/schemas/Plan"
+                      - type: "null"
                   lastEnded:
                     oneOf:
-                      - $ref: '#/components/schemas/Plan'
-                      - type: 'null'
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '404': { $ref: '#/components/responses/NotFound' }
+                      - $ref: "#/components/schemas/Plan"
+                      - type: "null"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /plans:
     get:
@@ -710,11 +746,11 @@ paths:
           in: query
           schema:
             type: array
-            items: { $ref: '#/components/schemas/PlanState' }
+            items: { $ref: "#/components/schemas/PlanState" }
           style: form
           explode: false
       responses:
-        '200':
+        "200":
           description: Daftar rencana.
           content:
             application/json:
@@ -725,13 +761,13 @@ paths:
                 properties:
                   items:
                     type: array
-                    items: { $ref: '#/components/schemas/Plan' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
+                    items: { $ref: "#/components/schemas/Plan" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
 
   /plans/{planId}/start:
     parameters:
-      - $ref: '#/components/parameters/PlanId'
+      - $ref: "#/components/parameters/PlanId"
     post:
       tags: [plans]
       operationId: plans_start
@@ -740,20 +776,20 @@ paths:
         Mencatat `startedOn` = hari ini dan `lockedValueAtStart`; tahap 1 → `in_progress`.
         State bukan `suggested` → `409 plan_invalid_state`. `shareText` diisi ulang dengan tanggal berlaku nyata.
       responses:
-        '200':
+        "200":
           description: Rencana aktif.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Plan' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/Conflict' }
+              schema: { $ref: "#/components/schemas/Plan" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
 
   /plans/{planId}/steps/{stepNo}/outcome:
     parameters:
-      - $ref: '#/components/parameters/PlanId'
-      - $ref: '#/components/parameters/StepNo'
+      - $ref: "#/components/parameters/PlanId"
+      - $ref: "#/components/parameters/StepNo"
     post:
       tags: [plans]
       operationId: plans_step_outcome
@@ -773,21 +809,21 @@ paths:
               properties:
                 outcome: { type: string, enum: [succeeded, failed] }
       responses:
-        '200':
+        "200":
           description: Rencana setelah diperbarui.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Plan' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/Conflict' }
+              schema: { $ref: "#/components/schemas/Plan" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
 
   /plans/{planId}/steps/{stepNo}/apply-price:
     parameters:
-      - $ref: '#/components/parameters/PlanId'
-      - $ref: '#/components/parameters/StepNo'
+      - $ref: "#/components/parameters/PlanId"
+      - $ref: "#/components/parameters/StepNo"
     post:
       tags: [plans]
       operationId: plans_step_apply_price
@@ -796,34 +832,34 @@ paths:
         Hanya untuk tahap `in_progress` milik rencana `active`. Mengubah `products.sellPrice` menjadi `newPrice` tahap.
         Tidak pernah dipanggil otomatis (BRD O-9). Tahap dengan `newPrice` sama dengan harga jual sekarang → `409 step_invalid_state`.
       responses:
-        '200':
+        "200":
           description: Barang setelah harga diubah.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ProductDetail' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/Conflict' }
+              schema: { $ref: "#/components/schemas/ProductDetail" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
 
   /plans/{planId}/stop:
     parameters:
-      - $ref: '#/components/parameters/PlanId'
+      - $ref: "#/components/parameters/PlanId"
     post:
       tags: [plans]
       operationId: plans_stop
       summary: Hentikan rencana aktif
       description: active → stopped; tahap `in_progress` → `skipped`. State lain → `409 plan_invalid_state`.
       responses:
-        '200':
+        "200":
           description: Rencana dihentikan.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Plan' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/Conflict' }
+              schema: { $ref: "#/components/schemas/Plan" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
 
   /results:
     get:
@@ -834,12 +870,12 @@ paths:
         `totalRecovered` = Σ kas pulih semua rencana yang pernah dijalankan. `recovered30d` = Σ kas pulih
         dari penjualan 30 hari terakhir (North Star). `plans` = rencana yang pernah dijalankan (bukan suggested).
       responses:
-        '200':
+        "200":
           description: Hasil.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Results' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
+              schema: { $ref: "#/components/schemas/Results" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
 
   /weekly-summaries/latest:
     get:
@@ -847,12 +883,12 @@ paths:
       operationId: weekly_summaries_latest
       summary: Ringkasan minggu lengkap terakhir (dibuat malas bila belum ada)
       responses:
-        '200':
+        "200":
           description: Ringkasan.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/WeeklySummary' }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
+              schema: { $ref: "#/components/schemas/WeeklySummary" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
 
   /health:
     get:
@@ -862,7 +898,7 @@ paths:
       description: Mengecek koneksi DB (`SELECT 1`). Tidak menyentuh AI.
       security: []
       responses:
-        '200':
+        "200":
           description: Sehat.
           content:
             application/json:
@@ -873,28 +909,35 @@ paths:
                 properties:
                   status: { type: string, enum: [ok] }
                   time: { type: string, format: date-time }
-        '503':
+        "503":
           description: DB tidak terjangkau.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema: { $ref: "#/components/schemas/Error" }
 
   /cron/daily:
     get:
       tags: [system]
       operationId: cron_daily
       summary: Tugas harian (dipanggil Vercel Cron)
-      description: 'Lihat SPEC §10.1. Wajib header `Authorization: Bearer <CRON_SECRET>`.'
+      description: "Lihat SPEC §10.1. Wajib header `Authorization: Bearer <CRON_SECRET>`."
       security:
         - cronBearer: []
       responses:
-        '200':
+        "200":
           description: Selesai.
           content:
             application/json:
               schema:
                 type: object
-                required: [demoTemplateRegenerated, plansWarmed, aiPlansWarmed, demoClonesDeleted, durationMs]
+                required:
+                  [
+                    demoTemplateRegenerated,
+                    plansWarmed,
+                    aiPlansWarmed,
+                    demoClonesDeleted,
+                    durationMs,
+                  ]
                 additionalProperties: false
                 properties:
                   demoTemplateRegenerated: { type: boolean }
@@ -902,7 +945,7 @@ paths:
                   aiPlansWarmed: { type: integer }
                   demoClonesDeleted: { type: integer }
                   durationMs: { type: integer }
-        '401': { $ref: '#/components/responses/Unauthenticated' }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
 
 components:
   securitySchemes:
@@ -918,7 +961,7 @@ components:
 
   headers:
     SessionCookie:
-      description: '`lakoo_session=<token>; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=<detik>`'
+      description: "`lakoo_session=<token>; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=<detik>`"
       schema: { type: string }
 
   parameters:
@@ -949,47 +992,47 @@ components:
       description: Format body/parameter tidak valid (`validation_error`); detail per field di `error.fields`.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     Unauthenticated:
       description: Belum masuk / sesi kedaluwarsa (`unauthenticated`).
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     Forbidden:
       description: Origin tidak diizinkan (`bad_origin`) atau aksi dilarang (`forbidden_demo`).
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     NotFound:
       description: Tidak ditemukan atau milik toko lain (`not_found`).
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     Conflict:
       description: Konflik state (`plan_not_applicable`, `plan_already_active`, `plan_invalid_state`, `step_invalid_state`, `edit_window_closed`).
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     DuplicateProduct:
       description: Nama barang sudah dipakai barang aktif (`duplicate_product_name`).
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     IdempotencyConflict:
       description: Idempotency-Key sudah dipakai untuk endpoint lain (`idempotency_key_reused`).
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     BusinessRule:
       description: Aturan bisnis menolak (`insufficient_stock`).
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     LineErrors:
       description: Satu atau lebih baris ditolak; tidak ada yang tersimpan. Detail di `error.lines[]`.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
           examples:
             insufficient:
               value:
@@ -997,7 +1040,11 @@ components:
                   code: insufficient_stock
                   message: Ada baris yang perlu dicek.
                   lines:
-                    - { index: 2, code: insufficient_stock, message: Stok tercatat hanya 3. }
+                    - {
+                        index: 2,
+                        code: insufficient_stock,
+                        message: Stok tercatat hanya 3.,
+                      }
     RateLimited:
       description: Terlalu banyak percobaan (`rate_limited`). Header `Retry-After` dalam detik.
       headers:
@@ -1005,12 +1052,12 @@ components:
           schema: { type: integer }
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     PayloadTooLarge:
       description: Body lebih dari 2 MB atau baris melebihi batas (`payload_too_large`).
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
 
   schemas:
     Rupiah:
@@ -1071,27 +1118,56 @@ components:
 
     StoreType:
       type: string
-      enum: [warung_kelontong, toko_kelontong, minimarket_kecil, warung_sembako, lainnya]
+      enum:
+        [
+          warung_kelontong,
+          toko_kelontong,
+          minimarket_kecil,
+          warung_sembako,
+          lainnya,
+        ]
 
     CustomerType:
       type: string
-      enum: [warga_perumahan, anak_sekolah, pekerja_pabrik_kantor, pedagang_lain, pengendara_lewat, kos_mahasiswa]
+      enum:
+        [
+          warga_perumahan,
+          anak_sekolah,
+          pekerja_pabrik_kantor,
+          pedagang_lain,
+          pengendara_lewat,
+          kos_mahasiswa,
+        ]
 
     Store:
       type: object
-      required: [id, name, storeType, location, customerTypes, healthyDays, deadDays, warningWeeks, aiEnabled, onboarded, profileComplete, isDemo]
+      required:
+        [
+          id,
+          name,
+          storeType,
+          location,
+          customerTypes,
+          healthyDays,
+          deadDays,
+          warningWeeks,
+          aiEnabled,
+          onboarded,
+          profileComplete,
+          isDemo,
+        ]
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
         storeType:
           oneOf:
-            - $ref: '#/components/schemas/StoreType'
-            - type: 'null'
-        location: { type: [string, 'null'] }
+            - $ref: "#/components/schemas/StoreType"
+            - type: "null"
+        location: { type: [string, "null"] }
         customerTypes:
           type: array
-          items: { $ref: '#/components/schemas/CustomerType' }
+          items: { $ref: "#/components/schemas/CustomerType" }
         healthyDays: { type: integer }
         deadDays: { type: integer }
         warningWeeks: { type: integer }
@@ -1112,14 +1188,14 @@ components:
         name: { type: string, minLength: 1, maxLength: 60 }
         storeType:
           oneOf:
-            - $ref: '#/components/schemas/StoreType'
-            - type: 'null'
-        location: { type: [string, 'null'], maxLength: 80 }
+            - $ref: "#/components/schemas/StoreType"
+            - type: "null"
+        location: { type: [string, "null"], maxLength: 80 }
         customerTypes:
           type: array
           maxItems: 6
           uniqueItems: true
-          items: { $ref: '#/components/schemas/CustomerType' }
+          items: { $ref: "#/components/schemas/CustomerType" }
         healthyDays: { type: integer, minimum: 7, maximum: 60 }
         deadDays: { type: integer, minimum: 15, maximum: 180 }
         warningWeeks: { type: integer, minimum: 2, maximum: 6 }
@@ -1139,11 +1215,11 @@ components:
           properties:
             id: { type: string, format: uuid }
             email:
-              type: [string, 'null']
+              type: [string, "null"]
               description: Kosong (null) untuk akun demo.
             isDemo: { type: boolean }
-            demoExpiresAt: { type: [string, 'null'], format: date-time }
-        store: { $ref: '#/components/schemas/Store' }
+            demoExpiresAt: { type: [string, "null"], format: date-time }
+        store: { $ref: "#/components/schemas/Store" }
 
     ProductStatus:
       type: string
@@ -1152,7 +1228,7 @@ components:
     ProductSummary:
       description: Ringkasan barang (ketat — tidak boleh ada field tambahan).
       allOf:
-        - $ref: '#/components/schemas/ProductBase'
+        - $ref: "#/components/schemas/ProductBase"
       unevaluatedProperties: false
 
     ProductBase:
@@ -1186,56 +1262,56 @@ components:
         id: { type: string, format: uuid }
         name: { type: string }
         unit: { type: string }
-        category: { type: [string, 'null'] }
-        sellPrice: { $ref: '#/components/schemas/Rupiah' }
-        lastCost: { $ref: '#/components/schemas/Rupiah' }
+        category: { type: [string, "null"] }
+        sellPrice: { $ref: "#/components/schemas/Rupiah" }
+        lastCost: { $ref: "#/components/schemas/Rupiah" }
         stock: { type: integer }
         lockedValue:
           type: integer
           description: max(stock, 0) × lastCost.
-        status: { $ref: '#/components/schemas/ProductStatus' }
-        lastSaleDate: { type: [string, 'null'], format: date }
+        status: { $ref: "#/components/schemas/ProductStatus" }
+        lastSaleDate: { type: [string, "null"], format: date }
         daysSinceLastSale:
-          type: [integer, 'null']
+          type: [integer, "null"]
           description: Hari sejak laku terakhir (atau sejak stok pertama bila belum pernah laku).
         daysUntilEmpty:
-          type: [integer, 'null']
+          type: [integer, "null"]
           description: Hanya sehat/waspada; null bila belum cukup data (SPEC §5.2).
         restockSoon: { type: boolean }
         sold28: { type: integer }
         isComplementary: { type: boolean }
         complementaryOverstock: { type: boolean }
         complementaryThreshold:
-          type: [integer, 'null']
+          type: [integer, "null"]
           description: Hanya untuk pelengkap.
         priorityScore:
-          type: [integer, 'null']
+          type: [integer, "null"]
           minimum: 0
           maximum: 100
           description: Hanya waspada/sekarat/mati non-pelengkap.
-        reason: { type: [string, 'null'] }
+        reason: { type: [string, "null"] }
         planState:
           description: State rencana suggested/active bila ada.
           oneOf:
-            - $ref: '#/components/schemas/PlanState'
-            - type: 'null'
+            - $ref: "#/components/schemas/PlanState"
+            - type: "null"
         archived: { type: boolean }
 
     ProductDetail:
       description: Detail barang (ketat).
       allOf:
-        - $ref: '#/components/schemas/ProductBase'
+        - $ref: "#/components/schemas/ProductBase"
         - type: object
           required: [complementaryMaxStock, weekQty, firstStockDate, createdAt]
           properties:
-            complementaryMaxStock: { type: [integer, 'null'] }
+            complementaryMaxStock: { type: [integer, "null"] }
             weekQty:
               type: array
               minItems: 8
               maxItems: 8
               items: { type: integer }
               description: Terjual per jendela 7 hari; indeks 0 = 7 hari terakhir (SPEC §4.2).
-            firstStockDate: { type: [string, 'null'], format: date }
+            firstStockDate: { type: [string, "null"], format: date }
             createdAt: { type: string, format: date-time }
       unevaluatedProperties: false
 
@@ -1246,9 +1322,9 @@ components:
       properties:
         name: { type: string, minLength: 1, maxLength: 80 }
         unit: { type: string, minLength: 1, maxLength: 16, default: pcs }
-        category: { type: [string, 'null'], maxLength: 40 }
-        costPrice: { $ref: '#/components/schemas/Rupiah' }
-        sellPrice: { $ref: '#/components/schemas/Rupiah' }
+        category: { type: [string, "null"], maxLength: 40 }
+        costPrice: { $ref: "#/components/schemas/Rupiah" }
+        sellPrice: { $ref: "#/components/schemas/Rupiah" }
         openingStock: { type: integer, minimum: 0, maximum: 100000 }
         isComplementary: { type: boolean, default: false }
 
@@ -1259,14 +1335,26 @@ components:
       properties:
         name: { type: string, minLength: 1, maxLength: 80 }
         unit: { type: string, minLength: 1, maxLength: 16 }
-        category: { type: [string, 'null'], maxLength: 40 }
-        sellPrice: { $ref: '#/components/schemas/Rupiah' }
+        category: { type: [string, "null"], maxLength: 40 }
+        sellPrice: { $ref: "#/components/schemas/Rupiah" }
         isComplementary: { type: boolean }
-        complementaryMaxStock: { type: [integer, 'null'], minimum: 1, maximum: 100000 }
+        complementaryMaxStock:
+          { type: [integer, "null"], minimum: 1, maximum: 100000 }
 
     StockIn:
       type: object
-      required: [id, batchId, productId, productName, receivedOn, qty, unitCost, createdAt, editable]
+      required:
+        [
+          id,
+          batchId,
+          productId,
+          productName,
+          receivedOn,
+          qty,
+          unitCost,
+          createdAt,
+          editable,
+        ]
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
@@ -1275,7 +1363,7 @@ components:
         productName: { type: string }
         receivedOn: { type: string, format: date }
         qty: { type: integer }
-        unitCost: { $ref: '#/components/schemas/Rupiah' }
+        unitCost: { $ref: "#/components/schemas/Rupiah" }
         createdAt: { type: string, format: date-time }
         editable:
           type: boolean
@@ -1303,11 +1391,12 @@ components:
                 additionalProperties: false
                 properties:
                   name: { type: string, minLength: 1, maxLength: 80 }
-                  unit: { type: string, minLength: 1, maxLength: 16, default: pcs }
-                  category: { type: [string, 'null'], maxLength: 40 }
-                  sellPrice: { $ref: '#/components/schemas/Rupiah' }
+                  unit:
+                    { type: string, minLength: 1, maxLength: 16, default: pcs }
+                  category: { type: [string, "null"], maxLength: 40 }
+                  sellPrice: { $ref: "#/components/schemas/Rupiah" }
               qty: { type: integer, minimum: 1, maximum: 100000 }
-              unitCost: { $ref: '#/components/schemas/Rupiah' }
+              unitCost: { $ref: "#/components/schemas/Rupiah" }
             oneOf:
               - required: [productId]
               - required: [newProduct]
@@ -1326,13 +1415,23 @@ components:
           type: array
           items:
             type: object
-            required: [productId, name, unit, sellPrice, morningStock, stockInOnDate, recordedQty, currentStock]
+            required:
+              [
+                productId,
+                name,
+                unit,
+                sellPrice,
+                morningStock,
+                stockInOnDate,
+                recordedQty,
+                currentStock,
+              ]
             additionalProperties: false
             properties:
               productId: { type: string, format: uuid }
               name: { type: string }
               unit: { type: string }
-              sellPrice: { $ref: '#/components/schemas/Rupiah' }
+              sellPrice: { $ref: "#/components/schemas/Rupiah" }
               morningStock: { type: integer }
               stockInOnDate: { type: integer }
               recordedQty: { type: integer }
@@ -1389,7 +1488,7 @@ components:
               stockAfter:
                 type: integer
                 description: Stok hari ini setelah simpan.
-              status: { $ref: '#/components/schemas/ProductStatus' }
+              status: { $ref: "#/components/schemas/ProductStatus" }
 
     ImportMode:
       type: string
@@ -1400,7 +1499,7 @@ components:
       required: [mode, rows]
       additionalProperties: false
       properties:
-        mode: { $ref: '#/components/schemas/ImportMode' }
+        mode: { $ref: "#/components/schemas/ImportMode" }
         onDuplicate: { type: string, enum: [skip, update_price], default: skip }
         rows:
           type: array
@@ -1412,23 +1511,23 @@ components:
             additionalProperties: false
             properties:
               name:
-                type: [string, 'null']
+                type: [string, "null"]
                 maxLength: 200
                 description: Divalidasi 1–80 karakter di server per baris.
-              unit: { type: [string, 'null'], maxLength: 50 }
-              category: { type: [string, 'null'], maxLength: 100 }
+              unit: { type: [string, "null"], maxLength: 50 }
+              category: { type: [string, "null"], maxLength: 100 }
               costPrice:
-                type: [integer, string, 'null']
+                type: [integer, string, "null"]
                 description: Angka atau teks mentah dari file; divalidasi per baris.
-              sellPrice: { type: [integer, string, 'null'] }
-              stock: { type: [integer, string, 'null'] }
+              sellPrice: { type: [integer, string, "null"] }
+              stock: { type: [integer, string, "null"] }
 
     ImportSalesRequest:
       type: object
       required: [mode, rows]
       additionalProperties: false
       properties:
-        mode: { $ref: '#/components/schemas/ImportMode' }
+        mode: { $ref: "#/components/schemas/ImportMode" }
         rows:
           type: array
           minItems: 1
@@ -1439,18 +1538,19 @@ components:
             additionalProperties: false
             properties:
               date:
-                type: [string, 'null']
+                type: [string, "null"]
                 maxLength: 20
                 description: YYYY-MM-DD atau DD/MM/YYYY; divalidasi per baris.
-              productName: { type: [string, 'null'], maxLength: 200 }
-              qty: { type: [integer, string, 'null'] }
+              productName: { type: [string, "null"], maxLength: 200 }
+              qty: { type: [integer, string, "null"] }
 
     ImportResult:
       type: object
-      required: [mode, totalRows, validRows, invalidRows, created, updated, skipped]
+      required:
+        [mode, totalRows, validRows, invalidRows, created, updated, skipped]
       additionalProperties: false
       properties:
-        mode: { $ref: '#/components/schemas/ImportMode' }
+        mode: { $ref: "#/components/schemas/ImportMode" }
         totalRows: { type: integer }
         validRows: { type: integer }
         created:
@@ -1475,7 +1575,16 @@ components:
                 description: Indeks baris di rows (0-based).
               code:
                 type: string
-                enum: [invalid_name, invalid_price, invalid_qty, invalid_date, unknown_product, duplicate_in_file, insufficient_stock]
+                enum:
+                  [
+                    invalid_name,
+                    invalid_price,
+                    invalid_qty,
+                    invalid_date,
+                    unknown_product,
+                    duplicate_in_file,
+                    insufficient_stock,
+                  ]
               message: { type: string }
 
     StatusBucket:
@@ -1488,14 +1597,30 @@ components:
 
     Dashboard:
       type: object
-      required: [asOf, store, totals, today, topPriority, complementaryOverstock, restockSoon, weeklySummary]
+      required:
+        [
+          asOf,
+          store,
+          totals,
+          today,
+          topPriority,
+          complementaryOverstock,
+          restockSoon,
+          weeklySummary,
+        ]
       additionalProperties: false
       properties:
         asOf: { type: string, format: date }
-        store: { $ref: '#/components/schemas/Store' }
+        store: { $ref: "#/components/schemas/Store" }
         totals:
           type: object
-          required: [lockedValue, complementaryLockedValue, problemLockedValue, byStatus]
+          required:
+            [
+              lockedValue,
+              complementaryLockedValue,
+              problemLockedValue,
+              byStatus,
+            ]
           additionalProperties: false
           properties:
             lockedValue: { type: integer }
@@ -1508,11 +1633,11 @@ components:
               required: [sehat, waspada, sekarat, mati, stok_habis]
               additionalProperties: false
               properties:
-                sehat: { $ref: '#/components/schemas/StatusBucket' }
-                waspada: { $ref: '#/components/schemas/StatusBucket' }
-                sekarat: { $ref: '#/components/schemas/StatusBucket' }
-                mati: { $ref: '#/components/schemas/StatusBucket' }
-                stok_habis: { $ref: '#/components/schemas/StatusBucket' }
+                sehat: { $ref: "#/components/schemas/StatusBucket" }
+                waspada: { $ref: "#/components/schemas/StatusBucket" }
+                sekarat: { $ref: "#/components/schemas/StatusBucket" }
+                mati: { $ref: "#/components/schemas/StatusBucket" }
+                stok_habis: { $ref: "#/components/schemas/StatusBucket" }
         today:
           type: object
           required: [statusChanges, dueSteps]
@@ -1527,8 +1652,8 @@ components:
                 properties:
                   productId: { type: string, format: uuid }
                   name: { type: string }
-                  from: { $ref: '#/components/schemas/ProductStatus' }
-                  to: { $ref: '#/components/schemas/ProductStatus' }
+                  from: { $ref: "#/components/schemas/ProductStatus" }
+                  to: { $ref: "#/components/schemas/ProductStatus" }
             dueSteps:
               type: array
               items:
@@ -1545,18 +1670,18 @@ components:
         topPriority:
           type: array
           maxItems: 3
-          items: { $ref: '#/components/schemas/ProductSummary' }
+          items: { $ref: "#/components/schemas/ProductSummary" }
         complementaryOverstock:
           type: array
-          items: { $ref: '#/components/schemas/ProductSummary' }
+          items: { $ref: "#/components/schemas/ProductSummary" }
         restockSoon:
           type: array
           maxItems: 10
-          items: { $ref: '#/components/schemas/ProductSummary' }
+          items: { $ref: "#/components/schemas/ProductSummary" }
         weeklySummary:
           oneOf:
-            - $ref: '#/components/schemas/WeeklySummary'
-            - type: 'null'
+            - $ref: "#/components/schemas/WeeklySummary"
+            - type: "null"
 
     PlanState:
       type: string
@@ -1564,7 +1689,16 @@ components:
 
     ActionType:
       type: string
-      enum: [display_move, bundle, discount, promo_wa, sell_at_cost, clearance, stop_restock]
+      enum:
+        [
+          display_move,
+          bundle,
+          discount,
+          promo_wa,
+          sell_at_cost,
+          clearance,
+          stop_restock,
+        ]
 
     PlanStep:
       type: object
@@ -1592,15 +1726,15 @@ components:
       additionalProperties: false
       properties:
         stepNo: { type: integer, minimum: 1, maximum: 3 }
-        actionType: { $ref: '#/components/schemas/ActionType' }
+        actionType: { $ref: "#/components/schemas/ActionType" }
         title:
           type: string
           description: Placeholder sudah diisi sistem.
         instructions: { type: string }
         successCriteria: { type: string }
         durationDays: { type: integer, minimum: 3, maximum: 21 }
-        discountPercent: { type: [integer, 'null'] }
-        belowCostPercent: { type: [integer, 'null'] }
+        discountPercent: { type: [integer, "null"] }
+        belowCostPercent: { type: [integer, "null"] }
         bundleProduct:
           oneOf:
             - type: object
@@ -1610,9 +1744,9 @@ components:
                 id: { type: string, format: uuid }
                 name: { type: string }
                 sellPrice: { type: integer }
-            - type: 'null'
+            - type: "null"
         bundlePrice:
-          type: [integer, 'null']
+          type: [integer, "null"]
           description: Harga paket A+B (hanya bundle).
         oldPrice:
           type: integer
@@ -1625,11 +1759,15 @@ components:
         cashBackEstimate:
           type: integer
           description: newPrice × stok saat rencana dibuat.
-        shareText: { type: [string, 'null'], maxLength: 500 }
-        outcome: { type: string, enum: [pending, in_progress, succeeded, failed, skipped] }
-        startedOn: { type: [string, 'null'], format: date }
-        dueOn: { type: [string, 'null'], format: date }
-        endedOn: { type: [string, 'null'], format: date }
+        shareText: { type: [string, "null"], maxLength: 500 }
+        outcome:
+          {
+            type: string,
+            enum: [pending, in_progress, succeeded, failed, skipped],
+          }
+        startedOn: { type: [string, "null"], format: date }
+        dueOn: { type: [string, "null"], format: date }
+        endedOn: { type: [string, "null"], format: date }
 
     Plan:
       type: object
@@ -1658,14 +1796,14 @@ components:
           type: string
           enum: [ai, template]
           description: 'Label UI: "Disusun AI" untuk ai, "Saran dasar" untuk template.'
-        state: { $ref: '#/components/schemas/PlanState' }
-        statusAtGeneration: { $ref: '#/components/schemas/ProductStatus' }
+        state: { $ref: "#/components/schemas/PlanState" }
+        statusAtGeneration: { $ref: "#/components/schemas/ProductStatus" }
         rationale: { type: string }
         generatedAt: { type: string, format: date-time }
-        startedOn: { type: [string, 'null'], format: date }
-        endedOn: { type: [string, 'null'], format: date }
-        lockedValueAtStart: { type: [integer, 'null'] }
-        currentStep: { type: [integer, 'null'], minimum: 1, maximum: 3 }
+        startedOn: { type: [string, "null"], format: date }
+        endedOn: { type: [string, "null"], format: date }
+        lockedValueAtStart: { type: [integer, "null"] }
+        currentStep: { type: [integer, "null"], minimum: 1, maximum: 3 }
         recovered:
           type: integer
           description: Kas pulih (SPEC §5.7); 0 bila belum dimulai.
@@ -1674,7 +1812,7 @@ components:
           type: array
           minItems: 3
           maxItems: 3
-          items: { $ref: '#/components/schemas/PlanStep' }
+          items: { $ref: "#/components/schemas/PlanStep" }
 
     WeeklySummary:
       type: object
@@ -1697,7 +1835,15 @@ components:
 
     Results:
       type: object
-      required: [totalRecovered, recovered30d, activeCount, finishedCount, plans, latestWeeklySummary]
+      required:
+        [
+          totalRecovered,
+          recovered30d,
+          activeCount,
+          finishedCount,
+          plans,
+          latestWeeklySummary,
+        ]
       additionalProperties: false
       properties:
         totalRecovered: { type: integer }
@@ -1708,8 +1854,8 @@ components:
           description: completed + exhausted + stopped + sold_out.
         plans:
           type: array
-          items: { $ref: '#/components/schemas/Plan' }
+          items: { $ref: "#/components/schemas/Plan" }
         latestWeeklySummary:
           oneOf:
-            - $ref: '#/components/schemas/WeeklySummary'
-            - type: 'null'
+            - $ref: "#/components/schemas/WeeklySummary"
+            - type: "null"

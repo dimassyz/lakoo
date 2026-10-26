@@ -1,4 +1,5 @@
 # BRIEF KEBUTUHAN PRODUK: Lakoo — Asisten Pintar untuk Inventaris Tokomu
+
 ### Untuk diteruskan ke Tech Lead — ditulis dari sudut pandang pemilik bisnis, bahasa manusia
 
 ---
@@ -17,7 +18,7 @@ Kalaupun saya sadar, saya bingung harus berbuat apa. Diobral berapa? Di-bundling
 
 1. **Catat barang dan penjualan dengan gampang.** Tambah barang baru maksimal 1 menit. Catat penjualan kilat (pilih barang → jumlah → simpan, ±30 detik per transaksi) — otomatis mengurangi stok. Kalau bisa import dari file, lebih bagus. **Bonus:** tempel teks nota belanja → sistem yang memecahnya jadi baris-baris barang otomatis.
 2. **Dikasih tahu barang mana yang bermasalah — bahkan sebelum bermasalah.** Saya mau buka aplikasi dan langsung lihat: barang apa yang sehat, yang sekarat, yang mati — plus **berapa rupiah uang saya yang terkunci** di masing-masing. Kalau ada barang yang penjualannya melambat 3 minggu berturut-turut, kasih tahu saya duluan ("waspada") sebelum jadi sekarat. Untuk barang sehat, kasih tahu kira-kira berapa hari lagi stoknya habis.
-3. **Dikasih saran konkret per barang — yang disusun secara cerdas oleh sistem (pakai teknologi AI) dan kenal toko saya.** Bukan sekadar "barang ini tidak laku", tapi: lakukan ini dulu, kalau tidak berhasil lakukan itu, lalu itu — spesifik untuk tiap barang berdasarkan data toko saya, bukan saran generik yang sama untuk semua barang. Sistem harus tahu toko saya itu warung/toko apa, di mana, pelanggannya siapa — supaya sarannya masuk akal untuk *toko saya*. Tiap saran ada hitungannya (masih untung berapa kalau diskon sekian).
+3. **Dikasih saran konkret per barang — yang disusun secara cerdas oleh sistem (pakai teknologi AI) dan kenal toko saya.** Bukan sekadar "barang ini tidak laku", tapi: lakukan ini dulu, kalau tidak berhasil lakukan itu, lalu itu — spesifik untuk tiap barang berdasarkan data toko saya, bukan saran generik yang sama untuk semua barang. Sistem harus tahu toko saya itu warung/toko apa, di mana, pelanggannya siapa — supaya sarannya masuk akal untuk _toko saya_. Tiap saran ada hitungannya (masih untung berapa kalau diskon sekian).
 4. **Dikasih ringkasan mingguan.** Tiap Minggu pagi saya mau baca 3 kalimat: apa yang terjadi seminggu ini, barang apa yang butuh perhatian, rencana mana yang selesai.
 5. **Bisa menandai barang pelengkap.** Ada barang yang memang saya simpan biar warung kelihatan lengkap walau lakunya kecil. Jangan suruh saya obral barang itu — tapi ingatkan kalau jumlahnya kebanyakan.
 6. **Lihat hasilnya.** Setelah saya menjalankan saran, saya mau lihat: berapa kas yang sudah pulih.
@@ -35,28 +36,31 @@ Kalaupun saya sadar, saya bingung harus berbuat apa. Diobral berapa? Di-bundling
 ## 5. Kapan saya memakai aplikasi ini
 
 **Setiap hari:**
+
 - **Tutup toko (±2 menit)** — rekap penjualan hari ini (atau sekalian opname cepat: stok pagi vs stok malam). Ini momen yang sudah jadi kebiasaan: hitung uang laci, sekalian catat di aplikasi.
 - **Pagi hari (±1 menit, opsional)** — lirik dashboard sekilas: ada barang yang berubah status? ada tahap rencana yang jatuh tempo hari ini?
 
 **Setiap minggu:**
+
 - **Minggu malam** — kalau tidak sempat rekap harian, rekap seminggu sekaligus (±5–10 menit).
 - **Minggu pagi (±10 menit)** — buka dashboard, lihat barang bermasalah, pilih rencana yang mau dijalankan minggu ini, tandai hasil rencana minggu lalu.
 
 **Saat barang datang dari supplier:**
+
 - Catat barang masuk: nama, jumlah, harga (±1 menit per jenis barang).
 
 **Prinsip desain: numpang ritual, jangan bikin ritual baru.**
 
-*Konsepnya (baca dulu sebelum peta di bawah):* aplikasi untuk pemilik warung kebanyakan mati bukan karena jelek, melainkan karena menuntut kebiasaan baru — "buka aplikasi tiap hari jam 9 pagi untuk input data". Pemilik warung sibuk dan capek; minggu pertama rajin, minggu ketiga aplikasi di-uninstall. Solusinya bukan notifikasi pengingat (akan di-dismiss), melainkan **menempelkan pemakaian aplikasi ke kebiasaan yang sudah ada dan tidak bisa ditawar** — istilahnya *habit stacking*: "setelah [kebiasaan lama], saya akan [perilaku baru]". Analoginya: warteg yang buka di depan gerbang pabrik tidak perlu mencari pelanggan — karyawannya sudah pasti lewat situ tiap jam makan siang. Aplikasi ini wartegnya; ritual harian pemilik warung adalah gerbang pabriknya. Konsekuensi desainnya: (1) setiap fitur wajib punya "ritual tumpangan" — pemicunya adalah ritual itu sendiri, bukan notifikasi aplikasi; (2) durasi numpang harus jauh lebih pendek dari ritual induknya (numpang 2 menit ke ritual 5 menit = oke; numpang 15 menit = ditinggal); (3) layar yang dibuka di momen ritual harus bisa dipahami sekali lirik.
+_Konsepnya (baca dulu sebelum peta di bawah):_ aplikasi untuk pemilik warung kebanyakan mati bukan karena jelek, melainkan karena menuntut kebiasaan baru — "buka aplikasi tiap hari jam 9 pagi untuk input data". Pemilik warung sibuk dan capek; minggu pertama rajin, minggu ketiga aplikasi di-uninstall. Solusinya bukan notifikasi pengingat (akan di-dismiss), melainkan **menempelkan pemakaian aplikasi ke kebiasaan yang sudah ada dan tidak bisa ditawar** — istilahnya _habit stacking_: "setelah [kebiasaan lama], saya akan [perilaku baru]". Analoginya: warteg yang buka di depan gerbang pabrik tidak perlu mencari pelanggan — karyawannya sudah pasti lewat situ tiap jam makan siang. Aplikasi ini wartegnya; ritual harian pemilik warung adalah gerbang pabriknya. Konsekuensi desainnya: (1) setiap fitur wajib punya "ritual tumpangan" — pemicunya adalah ritual itu sendiri, bukan notifikasi aplikasi; (2) durasi numpang harus jauh lebih pendek dari ritual induknya (numpang 2 menit ke ritual 5 menit = oke; numpang 15 menit = ditinggal); (3) layar yang dibuka di momen ritual harus bisa dipahami sekali lirik.
 
 Ini ritual-ritual saya dan cara aplikasi menumpanginya:
 
-1. **Ritual tutup toko (malam hari).** Yang sudah saya lakukan: hitung uang laci, catat pemasukan di buku, kunci toko. → *Aplikasi menumpang:* tepat setelah saya hitung uang, saya buka aplikasi dan isi rekap penjualan hari ini (±2 menit). Pemicunya: selesai hitung uang. Form-nya harus selesai sebelum saya mengunci toko.
-2. **Ritual buka toko (pagi hari).** Yang sudah saya lakukan: buka pintu, cek dagangan/display, siapkan uang kembalian. → *Aplikasi menumpang:* sambil cek dagangan, saya lirik dashboard ±1 menit — ada barang berubah status? ada tahap rencana yang jatuh tempo? Layarnya harus bisa dipahami sekali lirik (angka besar, warna jelas), bukan dibaca seperti laporan.
-3. **Ritual barang datang.** Yang sudah saya lakukan: terima barang dari sales, cek nota, bayar. → *Aplikasi menumpang:* nota sudah di tangan saya — tinggal salin nama, jumlah, harga ke aplikasi (±1 menit per jenis barang). Form-nya minimal, mengikuti urutan nota.
-4. **Ritual Minggu pagi (waktu luang).** Yang sudah saya lakukan: duduk, mikir usaha minggu depan. → *Aplikasi menumpang:* ringkasan mingguan otomatis ("minggu ini 2 barang baru masuk status sekarat, 1 playbook selesai") + saya pilih rencana minggu ini (±10 menit).
+1. **Ritual tutup toko (malam hari).** Yang sudah saya lakukan: hitung uang laci, catat pemasukan di buku, kunci toko. → _Aplikasi menumpang:_ tepat setelah saya hitung uang, saya buka aplikasi dan isi rekap penjualan hari ini (±2 menit). Pemicunya: selesai hitung uang. Form-nya harus selesai sebelum saya mengunci toko.
+2. **Ritual buka toko (pagi hari).** Yang sudah saya lakukan: buka pintu, cek dagangan/display, siapkan uang kembalian. → _Aplikasi menumpang:_ sambil cek dagangan, saya lirik dashboard ±1 menit — ada barang berubah status? ada tahap rencana yang jatuh tempo? Layarnya harus bisa dipahami sekali lirik (angka besar, warna jelas), bukan dibaca seperti laporan.
+3. **Ritual barang datang.** Yang sudah saya lakukan: terima barang dari sales, cek nota, bayar. → _Aplikasi menumpang:_ nota sudah di tangan saya — tinggal salin nama, jumlah, harga ke aplikasi (±1 menit per jenis barang). Form-nya minimal, mengikuti urutan nota.
+4. **Ritual Minggu pagi (waktu luang).** Yang sudah saya lakukan: duduk, mikir usaha minggu depan. → _Aplikasi menumpang:_ ringkasan mingguan otomatis ("minggu ini 2 barang baru masuk status sekarat, 1 playbook selesai") + saya pilih rencana minggu ini (±10 menit).
 
-**Aturan mainnya:** setiap fitur baru wajib menjawab tiga hal — *numpang ke ritual nomor berapa, di momen tepatnya kapan, dan berapa lama.* Kalau sebuah fitur butuh ritual baru yang belum ada (misalnya "buka aplikasi tiap 2 jam"), fitur itu gugur.
+**Aturan mainnya:** setiap fitur baru wajib menjawab tiga hal — _numpang ke ritual nomor berapa, di momen tepatnya kapan, dan berapa lama._ Kalau sebuah fitur butuh ritual baru yang belum ada (misalnya "buka aplikasi tiap 2 jam"), fitur itu gugur.
 
 ## 6. Definisi "berhasil" menurut saya
 

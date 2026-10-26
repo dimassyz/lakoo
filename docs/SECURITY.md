@@ -1,13 +1,13 @@
 # SECURITY REVIEW — Lakoo T-12 (Security & hardening)
 
-| | |
-|---|---|
-| Reviewer | security-reviewer |
-| Task | T-12 (docs/TASKS.md) — Review security (input validation, rate limit, outbox) |
-| Inputs | docs/api/openapi.yaml 1.0, docs/SPEC.md §8, docs/FSD.md §0 |
-| Scope file | src/, docs/ (per instruksi tech-lead; frontend & database tidak disentuh) |
-| Commit | working tree (belum di-commit; 1 commit docs saja di `main`) |
-| Tanggal review | 26 Okt 2026 |
+|                |                                                                               |
+| -------------- | ----------------------------------------------------------------------------- |
+| Reviewer       | security-reviewer                                                             |
+| Task           | T-12 (docs/TASKS.md) — Review security (input validation, rate limit, outbox) |
+| Inputs         | docs/api/openapi.yaml 1.0, docs/SPEC.md §8, docs/FSD.md §0                    |
+| Scope file     | src/, docs/ (per instruksi tech-lead; frontend & database tidak disentuh)     |
+| Commit         | working tree (belum di-commit; 1 commit docs saja di `main`)                  |
+| Tanggal review | 26 Okt 2026                                                                   |
 
 ---
 
