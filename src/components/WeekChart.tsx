@@ -1,15 +1,19 @@
-import React from 'react';
+import React from "react";
 
 const WeekChart: React.FC = () => {
   return (
-    <div className="bg-white border border-[#6B7280] rounded-[8px] p-4">
-      <div className="text-sm text-[#6B7280] mb-3">8 Minggu Penjualan</div>
-      <div className="h-40 flex items-end gap-1">
+    <div className="rounded-[8px] border border-[#6B7280] bg-white p-4">
+      <div className="mb-3 text-sm text-[#6B7280]">8 Minggu Penjualan</div>
+      <div className="flex h-40 items-end gap-1">
         {Array.from({ length: 8 }, (_, i) => (
-          <div key={i} className="flex-1 bg-[#10B981] rounded-t" style={{ height: `${50 + Math.random() * 30}%` }} />
+          <div
+            key={i}
+            className="flex-1 rounded-t bg-[#10B981]"
+            style={{ height: `${50 + Math.random() * 30}%` }}
+          />
         ))}
       </div>
-      <div className="flex justify-between text-xs text-[#6B7280] mt-2">
+      <div className="mt-2 flex justify-between text-xs text-[#6B7280]">
         <div>1</div>
         <div>2</div>
         <div>3</div>

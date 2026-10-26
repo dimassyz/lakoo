@@ -1,17 +1,19 @@
-import React from 'react';
+import React from "react";
 
 const DetailPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8F7F4] p-4">
-      <div className="max-w-md mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="mx-auto max-w-md">
+        <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1F1F1F]">Detail Barang</h1>
         </div>
 
-        <div className="bg-white border border-[#6B7280] rounded-[8px] p-6">
+        <div className="rounded-[8px] border border-[#6B7280] bg-white p-6">
           <div className="text-center">
-            <div className="text-5xl font-bold text-[#1F1F1F] mb-1">Keripik Balado</div>
-            <div className="text-[#10B981] text-4xl font-bold">Rp 45.000</div>
+            <div className="mb-1 text-5xl font-bold text-[#1F1F1F]">
+              Keripik Balado
+            </div>
+            <div className="text-4xl font-bold text-[#10B981]">Rp 45.000</div>
           </div>
 
           <div className="mt-8 grid grid-cols-2 gap-6">
@@ -25,7 +27,7 @@ const DetailPage: React.FC = () => {
             </div>
           </div>
 
-          <button className="w-full py-4 bg-[#10B981] text-white font-semibold text-lg rounded-[8px] mt-8 active:scale-[0.95]">
+          <button className="mt-8 w-full rounded-[8px] bg-[#10B981] py-4 text-lg font-semibold text-white active:scale-[0.95]">
             Lihat Rekomendasi Rencana
           </button>
         </div>
