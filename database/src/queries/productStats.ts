@@ -74,8 +74,9 @@ function weekArray(): SQL[] {
  * `COUNT(sale_date)` (bukan `COUNT(DISTINCT sale_date)`): ekuivalen karena
  * unique index `daily_sales_product_id_sale_date_key` pada (product_id,
  * sale_date) — dalam satu grup produk tiap tanggal muncul paling banyak sekali.
- * Bentuk DISTINCT memaksa Postgres mengurutkan 182.500 baris untuk
- * men-de-duplikasi yang sudah unik; itu 320–336 ms dari total 335–359 ms.
+ * Bentuk DISTINCT memaksa Postgres men-de-duplikasi yang sudah dijamin unik;
+ * EXPLAIN ANALYZE security-reviewer: Sort 182.500 baris ≈ 320–336 ms dari
+ * 335–359 ms total. Satu baris, 359 → 239 ms, cross-check nilai IDENTICAL.
  */
 function salesCte(storeId: string): SQL {
   return sql`sales AS (
