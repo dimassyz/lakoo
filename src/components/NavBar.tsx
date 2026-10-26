@@ -1,3 +1,4 @@
+import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState, type ReactNode } from "react";
@@ -28,7 +29,7 @@ const tombolKecil =
   "rounded-card border-muted border px-2 py-1 text-[13px] font-semibold";
 
 /** FSD §0.4 — keluar ditahan bila masih ada isian di antrean. */
-function Keluar({ antrean }: { antrean: Antrean }) {
+export function Keluar({ antrean }: { antrean: Antrean }) {
   const router = useRouter();
   const [tanya, setTanya] = useState(false);
 
@@ -279,6 +280,10 @@ export function AppShell({
 
   return (
     <div className="min-h-screen lg:flex">
+      {/* SPEC §7b — seluruh rute /toko/* NOINDEX; hanya `/` dan `/privasi` yang diindeks. */}
+      <Head>
+        <meta name="robots" content="noindex, nofollow" />
+      </Head>
       <Sidebar antrean={antrean} />
       <div className="flex-1 pb-20 lg:pb-0">
         {store?.isDemo ? (

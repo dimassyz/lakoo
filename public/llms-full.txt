@@ -1,0 +1,88 @@
+# Lakoo — ringkasan lengkap untuk mesin pencari dan asisten AI
+
+Sumber: halaman publik `/` dan `/privasi`. Semua angka contoh berasal dari data
+toko demo, bukan klaim statistik.
+
+## Apa itu Lakoo
+
+Lakoo adalah aplikasi web inventaris untuk toko kelontong di Indonesia. Ia
+menjawab satu pertanyaan yang biasanya tidak pernah dihitung pemilik warung:
+berapa uang yang sudah dibayar untuk stok tetapi belum kembali menjadi uang
+karena barangnya tidak laku. Lakoo menyebutnya uang terkunci, lalu menyusun
+rencana tiga tahap untuk mengembalikannya menjadi kas.
+
+Lakoo bukan aplikasi kasir. Tidak ada struk, printer, atau pembayaran. Yang
+dicatat hanya jumlah barang terjual per hari.
+
+## Definisi: uang terkunci
+
+Uang terkunci adalah modal yang sudah dibayar untuk stok, tetapi belum kembali
+menjadi uang karena barangnya tidak laku. Selama barang itu diam di rak,
+uangnya tidak bisa dipakai membeli barang yang justru cepat habis.
+
+Contoh hitungan: 40 botol sampo × Rp18.500 = Rp740.000. Selama sampo itu tidak
+terjual, Rp740.000 tetap terkunci di rak.
+
+## Cara kerja, tiga langkah
+
+1. Catat penjualan saat tutup toko. Sekitar dua menit: masukkan penjualan hari
+   ini per barang. Tidak perlu alat baru.
+2. Lihat barang yang sekarat dan mati. Lakoo menandai barang yang tidak laku,
+   beserta modal yang tertahan di rak.
+3. Jalankan rencana tiga tahap. Harga diturunkan bertahap sampai barang laku,
+   lalu kas yang kembali terlihat.
+
+## Status barang
+
+Status dihitung dari data penjualan, bukan dari AI: Sehat, Waspada, Sekarat,
+Mati, dan Stok habis. Ambangnya bisa diubah di Pengaturan (bawaan: sehat bila
+laku dalam 14 hari, mati bila tidak laku lebih dari 45 hari, waspada bila
+turun tiga minggu berturut-turut).
+
+## Pertanyaan yang sering diajukan
+
+### Apakah Lakoo aplikasi kasir?
+
+Bukan. Lakoo adalah asisten inventaris: mencatat penjualan harian, menandai
+barang yang tidak laku, dan menyusun rencana obral. Tidak ada struk, tidak ada
+printer, tidak ada pembayaran. Kalau Anda sudah punya kasir, Lakoo tetap bisa
+dipakai berdampingan karena pencatatan penjualan hanya butuh jumlah per barang.
+
+### Apakah harus internet?
+
+Untuk membuka aplikasi, ya. Namun saat sinyal putus, isian Rekap Penjualan dan
+Barang Masuk disimpan dulu di HP dan dikirim otomatis ketika sinyal kembali.
+Jadi mencatat tetap bisa dilakukan di dalam toko yang sinyalnya buruk, tanpa
+kehilangan data.
+
+### Bagaimana AI menyusun saran?
+
+Status barang dihitung dari data penjualan Anda, bukan dari AI: sehat, waspada,
+sekarat, atau mati. AI hanya menyusun kalimat rencana tiga tahap dari angka
+itu. Kalau AI gagal atau dimatikan, Lakoo memakai saran dasar yang sudah
+tersedia, sehingga rencana tetap muncul.
+
+### Apakah data saya aman?
+
+Data toko disimpan di server kami dan hanya bisa dibuka lewat sesi akun Anda.
+Tidak ada analitik pihak ketiga, tidak ada pelacakan, dan tidak ada cookie
+selain cookie sesi. Kami tidak menjual data. Akun demo berisi data contoh dan
+otomatis kedaluwarsa setelah masa demo berakhir.
+
+### Berapa biayanya?
+
+Gratis, tanpa kartu kredit dan tanpa masa uji coba berbatas. Anda bisa mencoba
+akun demo tanpa mendaftar untuk melihat cara kerjanya dengan data toko contoh,
+lalu membuat akun sendiri saat sudah yakin. Lakoo berbahasa Indonesia
+sepenuhnya.
+
+## Data dan privasi
+
+- Disimpan: email akun, data toko (nama, jenis, lokasi, tipe pelanggan), daftar
+  barang, penjualan harian, rencana obral.
+- Tidak disimpan: nomor pelanggan; tidak ada pelacak pihak ketiga; tidak ada
+  cookie selain sesi.
+- Data barang (nama, status, stok, harga, angka penjualan) dikirim ke penyedia
+  AI (Google) tanpa email saat menyusun rencana.
+- Akun demo dihapus dalam 24 jam.
+- Permintaan hapus akun: lihat alamat kontak di halaman `/privasi`.

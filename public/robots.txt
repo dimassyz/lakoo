@@ -1,0 +1,12 @@
+# SPEC §7b — hanya `/` dan `/privasi` yang diindeks.
+# Ganti https://APP_ORIGIN dengan domain produksi saat deploy (APP_ORIGIN di env).
+User-agent: *
+Allow: /
+Allow: /privasi
+Disallow: /toko
+Disallow: /api
+Disallow: /masuk
+Disallow: /daftar
+Disallow: /mulai
+
+Sitemap: https://APP_ORIGIN/sitemap.xml

@@ -1,0 +1,37 @@
+# Lakoo
+
+> Asisten inventaris untuk toko kelontong Indonesia: menghitung modal yang
+> tertahan di barang tidak laku ("uang terkunci") dan menyusun rencana tiga
+> tahap untuk menjualnya kembali. Gratis, berbahasa Indonesia, tanpa kartu
+> kredit.
+
+## Fakta ringkas
+
+- Kategori: BusinessApplication (web), bahasa Indonesia.
+- Harga: gratis, tanpa kartu kredit.
+- Status barang dihitung deterministik dari data penjualan: Sehat, Waspada,
+  Sekarat, Mati, Stok habis. AI hanya menyusun kalimat rencana, bukan status.
+- Akun demo tersedia tanpa pendaftaran; datanya dihapus dalam 24 jam.
+- Rekap penjualan dan barang masuk bisa dicatat saat sinyal putus: isian
+  disimpan di perangkat dan dikirim otomatis saat sinyal kembali.
+
+## Definisi: uang terkunci
+
+Uang terkunci adalah modal yang sudah dibayar untuk stok tetapi belum kembali
+menjadi uang karena barangnya tidak laku. Contoh: 40 botol sampo × Rp18.500 =
+Rp740.000 terkunci selama sampo itu tidak terjual.
+
+## Cara kerja
+
+1. Catat penjualan saat tutup toko (sekitar dua menit).
+2. Lihat barang yang sekarat dan mati, beserta modal yang tertahan.
+3. Jalankan rencana tiga tahap (turunkan harga bertahap) dan lihat kas kembali.
+
+## Halaman publik
+
+- `/` — landing: penjelasan produk, contoh hitungan, FAQ.
+- `/privasi` — data yang disimpan dan cara meminta penghapusan akun.
+
+## Kontak
+
+Alamat kontak ada di halaman `/privasi`.
