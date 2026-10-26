@@ -11,8 +11,8 @@ import { hariIniWib, rupiah } from "./ui";
 export type Mode = "quantity" | "opname";
 export type Nilai = Record<string, number>;
 
-/** FSD §7 — data rekap satu tanggal. */
-export function useRekap(tanggal: string, mode: Mode) {
+/** FSD §7 — data rekap satu tanggal. `awal` = isian dari antrean yang diperbaiki. */
+export function useRekap(tanggal: string, mode: Mode, awal?: Nilai) {
   const [data, setData] = useState<SalesRecap | null>(null);
   const [nilai, setNilai] = useState<Nilai>({});
   const [memuat, setMemuat] = useState(true);
@@ -30,15 +30,16 @@ export function useRekap(tanggal: string, mode: Mode) {
     } else {
       setData(hasil);
       setNilai(
-        mode === "quantity"
-          ? Object.fromEntries(
-              hasil.lines.map((l) => [l.productId, l.recordedQty]),
-            )
-          : {},
+        awal ??
+          (mode === "quantity"
+            ? Object.fromEntries(
+                hasil.lines.map((l) => [l.productId, l.recordedQty]),
+              )
+            : {}),
       );
     }
     setMemuat(false);
-  }, [tanggal, mode]);
+  }, [tanggal, mode, awal]);
 
   useEffect(() => {
     void muat();
@@ -207,15 +208,34 @@ export function useSimpanRekap({
   return { simpan, menyimpan };
 }
 
+/** Terapkan isian antrean begitu itemnya terbaca dari IndexedDB. */
+function useTerapkanAwal(
+  awal: { tanggal: string; mode: Mode } | undefined,
+  setTanggal: (t: string) => void,
+  setMode: (m: Mode) => void,
+) {
+  useEffect(() => {
+    if (!awal) return;
+    setTanggal(awal.tanggal);
+    setMode(awal.mode);
+  }, [awal, setTanggal, setMode]);
+}
+
 /** Tanggal, mode, pencarian, isian, validasi lokal, dan ringkasan footer. */
-export function useRekapTampilan() {
-  const [tanggal, setTanggal] = useState(hariIniWib);
-  const [mode, setMode] = useState<Mode>("quantity");
+export function useRekapTampilan(awal?: {
+  tanggal: string;
+  mode: Mode;
+  nilai: Nilai;
+}) {
+  const [tanggal, setTanggal] = useState(awal?.tanggal ?? hariIniWib());
+  const [mode, setMode] = useState<Mode>(awal?.mode ?? "quantity");
   const [cari, setCari] = useState("");
   const { data, nilai, setNilai, memuat, gagal, muat } = useRekap(
     tanggal,
     mode,
+    awal?.nilai,
   );
+  useTerapkanAwal(awal, setTanggal, setMode);
 
   const lokal = useMemo(
     () => (data ? errorBaris(data, mode, nilai) : {}),
@@ -299,8 +319,12 @@ export function useRekapAksi(args: {
 }
 
 /** Perekat layar rekap. */
-export function useRekapLayar() {
-  const tampilan = useRekapTampilan();
+export function useRekapLayar(awal?: {
+  tanggal: string;
+  mode: Mode;
+  nilai: Nilai;
+}) {
+  const tampilan = useRekapTampilan(awal);
   const aksi = useRekapAksi({
     tanggal: tampilan.tanggal,
     mode: tampilan.mode,

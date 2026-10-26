@@ -1,5 +1,6 @@
 import Head from "next/head";
-import { useState } from "react";
+import { useRouter } from "next/router";
+import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/NavBar";
 import { BarisOpname, BarisQuantity, SheetStok } from "@/components/RekapBaris";
 import { api, type SalesRecap } from "@/lib/api";
@@ -10,8 +11,39 @@ import {
   type RekapLayar,
 } from "@/lib/rekap";
 import { batasTanggal, geserHari, hariIniWib, rupiah } from "@/lib/ui";
+import { ambilItem } from "@/lib/worker";
 
 type Baris = SalesRecap["lines"][number];
+type Awal = { tanggal: string; mode: Mode; nilai: Nilai };
+
+/** FSD §0.4 — "Buka & perbaiki" memulihkan isian yang tertahan di antrean. */
+function useAwalAntrean(): Awal | undefined {
+  const router = useRouter();
+  const id =
+    typeof router.query.antrean === "string" ? router.query.antrean : undefined;
+  const [awal, setAwal] = useState<Awal>();
+  const dipakai = useRef(false);
+
+  useEffect(() => {
+    if (!id || dipakai.current) return;
+    dipakai.current = true;
+    void ambilItem(id).then((it) => {
+      if (it?.kind !== "recap") return;
+      setAwal({
+        tanggal: it.payload.date,
+        mode: it.payload.mode,
+        nilai: Object.fromEntries(
+          it.payload.lines.map((l) => [
+            l.productId,
+            l.qty ?? l.countedStock ?? 0,
+          ]),
+        ),
+      });
+    });
+  }, [id]);
+
+  return awal;
+}
 
 const tombolGeser =
   "h-10 w-10 rounded-card border border-muted text-lg font-semibold disabled:text-muted";
@@ -286,7 +318,8 @@ function BadanRekap({
 }
 
 export default function RekapPage() {
-  const r = useRekapLayar();
+  const awal = useAwalAntrean();
+  const r = useRekapLayar(awal);
   const [sheet, setSheet] = useState<Baris | null>(null);
 
   return (

@@ -11,6 +11,9 @@ type Dasar = {
   baris: number;
   status: "pending" | "needs_review";
   dibuat: string;
+  /** Worker: percobaan gagal ke berapa, dan kapan boleh dicoba lagi (epoch ms). */
+  coba?: number;
+  berikut?: number;
 };
 
 export type OutboxItem =

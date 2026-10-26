@@ -294,6 +294,25 @@ type SimpanArgs = {
   on422: (pesanPerBaris: Record<string, string>) => void;
 };
 
+/** FSD §0.4 — pulihkan isian nota yang tertahan di antrean ke form. */
+export function barisDariPayload(
+  payload: StockInBatchCreate,
+  produk: ProductSummary[],
+): BarisMasuk[] {
+  return payload.lines.map((l, i) => {
+    const p = produk.find((x) => x.id === l.productId);
+    return {
+      kunci: `antrean-${i}`,
+      nama: p?.name ?? l.newProduct?.name ?? "",
+      productId: l.productId ?? null,
+      baru: !l.productId,
+      qty: String(l.qty),
+      unitCost: String(l.unitCost),
+      sellPrice: l.newProduct ? String(l.newProduct.sellPrice) : "",
+    };
+  });
+}
+
 /** FSD §0.4 — simpan lewat outbox IndexedDB; Idempotency-Key = id outbox. */
 export function useSimpanMasuk({
   tanggal,

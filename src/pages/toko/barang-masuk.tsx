@@ -1,15 +1,36 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/router";
+import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/NavBar";
 import { BarisNota, BarisRiwayat } from "@/components/BarisMasuk";
 import { NotaTempel } from "@/components/NotaTempel";
 import {
+  barisDariPayload,
   kelompokRiwayat,
   useLayarMasuk,
   type LayarMasuk,
 } from "@/lib/barangMasuk";
 import { batasTanggal, rupiah } from "@/lib/ui";
+import { ambilItem } from "@/lib/worker";
+
+/** FSD §0.4 — "Buka & perbaiki" memulihkan isian nota yang tertahan di antrean. */
+function usePulihkanAntrean(l: LayarMasuk) {
+  const router = useRouter();
+  const id =
+    typeof router.query.antrean === "string" ? router.query.antrean : undefined;
+  const dipakai = useRef(false);
+
+  useEffect(() => {
+    if (!id || dipakai.current) return;
+    dipakai.current = true;
+    void ambilItem(id).then((it) => {
+      if (it?.kind !== "stockin") return;
+      l.form.setTanggal(it.payload.receivedOn);
+      l.form.isi(barisDariPayload(it.payload, l.produk.items));
+    });
+  }, [id, l]);
+}
 
 const tombolUtama =
   "rounded-card bg-safe px-4 py-3 font-semibold text-white disabled:opacity-40";
@@ -176,6 +197,7 @@ function RiwayatMasuk({ l }: { l: LayarMasuk }) {
 export default function BarangMasukPage() {
   const l = useLayarMasuk();
   const [tempel, setTempel] = useState(false);
+  usePulihkanAntrean(l);
 
   return (
     <>
