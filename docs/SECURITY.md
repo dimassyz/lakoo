@@ -209,3 +209,152 @@ Referrer-Policy, tanpa temuan baru di `next.config.ts`.
 mensyaratkan review backend (T-9) yang belum ada + black-box pass yang
 belum mungkin. Re-review penuh dijadwalkan ulang setelah T-9
 diimplementasikan dan staging URL tersedia.
+
+---
+
+# EARLY PASS — T-9 irisan 2 (auth surface), 26 Okt 2026
+
+Diminta tech-lead: review dulu 5 file auth paling kritikal sebelum irisan
+3-5 membangun di atasnya. **Early pass saja — tidak menutup apa pun.**
+T-12 penuh tetap TERBUKA.
+
+File yang direview: `backend/src/http/session.ts`, `password.ts`,
+`auth-context.ts`, `rate-limit.ts`, `validate.ts`, plus pendukung yang
+menyelesaikan attack path: `routes/auth.ts`, `routes/me.ts`, `repo/auth.ts`,
+`errors.ts`, `serialize.ts`, `app.ts`, `node-adapter.ts`,
+`database/src/schema.ts`.
+
+Suite backend: `vitest run backend/src/http` → **52/52 lolos** (5 file).
+
+## Verifikasi klaim backend-dev
+
+| #   | Klaim                                               | Verdict                     | Bukti                                                                                                                                                                                                                                                                                               |
+| --- | --------------------------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Login timing-equalized via dummy argon2 verify      | **HOLDS**                   | `routes/auth.ts:51-54` (equalizeTiming), `:113-117` (dipakai saat user undefined ATAU passwordHash null); kode & pesan respons identik (`errors.ts:100-102`); test `auth.test.ts:222`                                                                                                               |
+| 2   | Rate limit tidak bisa lolos dua request bersamaan   | **HOLDS (by construction)** | `rate-limit.ts:39-47` — satu statement atomik `INSERT … ON CONFLICT (key) DO UPDATE … RETURNING count`; target konflik = PK `rate_limits.key` (`schema.ts:472`); row lock Postgres men-serialisasi update bersamaan. Catatan: tidak ada test konkurensi; atomicity dari desain SQL, bukan dari test |
+| 3   | Unique violation 23505 → 409 email_taken, bukan 500 | **HOLDS**                   | `routes/auth.ts:56-63` (isUniqueViolation), `:92-96` (catch di createAccount); pre-check `:81-82` + unique index `users_email_key` pada kolom citext (`schema.ts:107,114`) — race maupun non-race sama-sama 409; test `auth.test.ts:116`                                                            |
+| 4   | x-forwarded-for trust boundary di Vercel            | **UNCERTAIN**               | Lihat Finding 3 — klaim "Vercel menimpa" belum terverifikasi; perilaku overwrite-vs-append menentukan eksploitabilitas                                                                                                                                                                              |
+
+## FINDINGS (early pass)
+
+### E-1. [backend/src/http/auth-context.ts:39-52] (MEDIUM) — `demo_expires_at` tidak pernah diperiksa; sesi demo kedaluwarsa tetap berlaku [white-box]
+
+- **Rubric:** Authentication (lifecycle sesi).
+- **Spec:** SPEC §8.1 (`docs/SPEC.md:473`) — "Sesi demo berakhir tepat pada
+  `demo_expires_at`."
+- **Attack path:** pengunjung demo lama → GET `/me` dengan cookie lama →
+  `auth-context.ts:31-36` (token ditemukan) → `:39` (cek
+  `session.expiresAt` = 30 hari, belum lewat) → `:45-46`
+  (`isDemo` hanya dipakai untuk SKIP renew, bukan cek expiry) → `:52`
+  return SessionContext → `routes/me.ts:9-10` → 200 + data toko demo.
+  Tidak ada satu baris pun yang membandingkan `store.demoExpiresAt` dengan
+  `now` (grep: hanya muncul di komentar, `serialize.ts:11,28`, dan cek
+  `isDemo`).
+- **Exploit sketch:** mulai demo di T0 (cookie Max-Age 30 hari); di
+  T0+25 jam — sudah lewat jendela demo 24 jam — kirim ulang cookie →
+  akses API penuh ke toko demo tersebut sampai T0+30 hari (atau sampai
+  cron menghapus klon demo, yang belum diimplementasikan di irisan 2).
+- **Keterbatasan (jujur):** path baru reachable saat `/auth/demo`
+  mendarat (irisan 3+) — itu sebabnya dilaporkan SEKARANG sebagai early
+  pass, sebelum irisan 3-5 membangun di atas file ini. Dampak terbatas
+  pada data demo milik sendiri (bukan lintas toko), tapi melanggar
+  requirement eksplisit dan menahan baris sesi 30 hari.
+- **Fix:** di `currentSession`, setelah cek expiry sesi, tambahkan:
+  `if (found.store.demoExpiresAt !== null && found.store.demoExpiresAt.getTime() <= now.getTime()) { await deleteSessionByHash(deps.db, tokenHash); throw unauthenticated(); }`
+- **Kondisi:** wajib ditutup SEBELUM endpoint `/auth/demo` dikenalkan.
+
+### E-2. [backend/src/http/routes/auth.ts:106-111 + rate-limit.ts:37] (MEDIUM) — kunci rate limit login memuat email yang dikontrol penyerang → anggaran per-(IP+email) bisa dihindari dari satu IP [white-box]
+
+- **Rubric:** Business logic / DoS (S1 credential stuffing, §8.7).
+- **Attack path:** penyerang → `POST /auth/login` dengan email acak baru
+  setiap request → `routes/auth.ts:106-111` membentuk kunci
+  `IP:email` (unik per request) → `rate-limit.ts:39-47` membuat baris
+  baru, `count=1 ≤ 5` → lolos → `routes/auth.ts:113-116`
+  `equalizeTiming` → satu verifikasi argon2id penuh (m=19456 → puluhan
+  ms CPU) → 401. Ulangi tanpa batas dari SATU IP.
+- **Dampak:** (a) batas 5/15 menit per (IP+email) tidak membatasi total
+  upaya login dari satu IP — penyerang cukup memutar email; (b) setiap
+  percobaan membakar CPU argon2 (amplifikasi DoS); (c) tabel
+  `rate_limits` mendapat baris permanen per kunci unik — tidak ada
+  cleanup di `rate-limit.ts` → pertumbuhan tak terbatas.
+- **Catatan penting:** implementasi **sesuai** SPEC §8.4 apa adanya
+  ("5 / 15 menit per (IP + email)") — ini celah desain spec, bukan
+  penyimpangan kode. Eskalasi ke tech-lead sesuai aturan tie-breaker.
+- **Fix (opsi, keputusan tech-lead):** tambah anggaran per-IP global untuk
+  endpoint auth (mis. 20/jam per IP lintas semua kunci email), atau
+  jadikan IP sebagai kunci utama dengan email sebagai dimensi sekunder;
+  plus job cleanup `rate_limits`.
+
+### E-3. [backend/src/http/validate.ts:32-38] (MEDIUM, ketidakpastian dinyatakan) — `clientIp` memakai entri PERTAMA `x-forwarded-for`; perilaku Vercel (overwrite vs append) belum diverifikasi [white-box]
+
+- **Rubric:** Authentication (rate-limit integrity) / defense-in-depth.
+- **Attack path:** penyerang → request auth dengan header
+  `X-Forwarded-For: 1.2.3.4` (palsu) → `validate.ts:35-37` mengambil
+  entri `[0]` → kunci rate limit per-IP memakai IP palsu **jika**
+  platform menambah (append) IP klien di belakang alih-alih menimpa
+  (overwrite) → anggaran per-IP (register 5/jam, dan aturan per-IP
+  masa depan) bisa dihindari dengan memutar nilai header.
+- **Keterbatasan (jujur):** komentar kode (`validate.ts:33-34`) mengklaim
+  Vercel menimpa header — klaim ini BELUM diverifikasi dan keyakinan saya
+  terhadap perilaku persis Vercel < 80%. Bukan jalur authz (`storeId`
+  hanya dari sesi — terverifikasi); dampak terbatas pada integritas rate
+  limit.
+- **Fix:** ambil entri **terkanan** `x-forwarded-for` (aman baik saat
+  platform menimpa maupun menambah), atau utamakan `x-real-ip`; verifikasi
+  dengan black-box test di staging: 6 percobaan login dari satu IP dengan
+  `X-Forwarded-For` diputar — jika percobaan ke-6 TIDAK 429, header
+  dipercaya apa adanya (bisa dipalsukan).
+- **Test staging (definisi):** dari satu IP asli, kirim 6× POST
+  `/auth/login` (email valid, password salah) dengan XFF
+  `10.0.0.1` … `10.0.0.6`. 429 pada percobaan ke-6 = XFF ditimpa
+  platform (aman). Tidak ada 429 = XFF dipercaya (perlu fix).
+
+## Terverifikasi baik (tidak perlu ditindaklanjuti)
+
+- Token 32-byte `randomBytes` → base64url (`session.ts:14-16`); hanya
+  SHA-256 di DB (`session.ts:22-24`); unique index `sessions_token_hash_key`
+  (`schema.ts:180`).
+- Cookie `HttpOnly; Secure; SameSite=Lax; Path=/` + Max-Age
+  (`session.ts:41-43`); logout clear dengan atribut sama (`session.ts:49`).
+- Sesi kedaluwarsa dihapus saat dipakai (`auth-context.ts:39-42`); renew
+  < 15 hari, sesi demo tidak pernah di-renews (`auth-context.ts:44-50`).
+- argon2id eksplisit m=19456/t=2/p=1 (`password.ts:8-13`); verify gagal
+  tidak melempar (`password.ts:23-27`).
+- `storeId` hanya dari sesi — tidak ada `storeId` dari body/query di
+  seluruh surface (`auth-context.ts:27-52`, `routes/me.ts`).
+- Zod `.strict()` di skema auth (`routes/auth.ts:30-43`); field tak dikenal
+  → 400 (`validate.ts:9-28`); test `auth.test.ts:132`.
+- Gate Origin + `Content-Type: application/json` untuk semua non-GET
+  (`app.ts:31-42`).
+- Body di-cap 2 MB SEBELUM buffering (`node-adapter.ts:5,14-25`).
+- Error handler: non-ApiError → pesan generik, tanpa stack trace ke klien
+  (`app.ts:56-66`).
+- `serialize.ts` memilih field eksplisit — `passwordHash` tidak pernah
+  masuk respons (`serialize.ts:4-31`).
+- Email di-lowercase sebelum dipakai; kolom citext konsisten dengan unique
+  index (`schema.ts:107,114`; `routes/auth.ts:79,105`).
+
+## VERDICT (early pass)
+
+**FINDINGS — T-9 irisan 2: 3 MEDIUM (E-1, E-2, E-3), 0 HIGH/CRITICAL,
+0 must-fix-blocks-merge.** Klaim 1-3 backend-dev HOLDS; klaim 4 UNCERTAIN
+(lihat E-3). E-1 wajib ditutup sebelum `/auth/demo` mendarat. E-2 & E-3
+menunggu adjudikasi tech-lead (E-2 = celah desain SPEC §8.4; E-3 butuh
+verifikasi perilaku Vercel / black-box test di staging). Early pass tidak
+menutup T-12; white-box penuh 12 attack point + black-box pass tetap
+dijadwalkan setelah semua irisan T-9 mendarat + staging URL.
+
+## DISPOSISI TECH-LEAD (26 Okt 2026)
+
+- **E-1 → MUST-FIX, masuk slice sekarang.** Backend-dev sedang membangun
+  `/auth/demo`; path jadi reachable di slice ini, jadi fix wajib mendarat
+  bersamaan: cek `demoExpiresAt <= now` → hapus sesi + 401, lengkap dengan
+  test. **Re-verify dijadwalkan** saat slice tersebut mendarat.
+- **E-2 → SPEC §8.4 di-amendemen.** Tambahan anggaran global 30/15 menit
+  per IP untuk semua endpoint `/auth/*`, di luar limit per-endpoint.
+  Pertumbuhan tabel `rate_limits` ditangani cron harian. Implementasi
+  diverifikasi bersama slice berikutnya.
+- **E-3 → tanpa perubahan kode sekarang.** Rate limit adalah
+  defense-in-depth, bukan authz. Black-box test security-reviewer di
+  staging yang memutuskan; bila gagal → entri terkanan atau `x-real-ip`.
+  Dicatat di SPEC §8.4.

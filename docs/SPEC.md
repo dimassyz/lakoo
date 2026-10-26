@@ -160,7 +160,7 @@ DDL resmi ada di `database/src/schema.ts` (Drizzle) + migrasi SQL. Tabel di bawa
 | Tabel               | Field kunci                                                                                                                                                                                                                                                                                                                                                                                                                                    | Constraint / index                                                                   |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `users`             | id, email (`citext`), password_hash (null untuk demo), is_demo bool, created_at                                                                                                                                                                                                                                                                                                                                                                | unique(email)                                                                        |
-| `stores`            | id, owner_user_id → users, name (1–60), store_type enum, location text ≤ 80 (null), customer_types text[] (enum values), healthy_days int def 14, dead_days int def 45, warning_weeks int def 3, ai_enabled bool def true, onboarded_at tstz null, is_demo_template bool def false, demo_expires_at tstz null, created_at                                                                                                                      | unique(owner_user_id); check(healthy_days < dead_days); index(demo_expires_at)       |
+| `stores`            | id, owner_user_id → users, name (1–60), store_type enum (null — diisi lewat onboarding `/mulai`), location text ≤ 80 (null), customer_types text[] (enum values), healthy_days int def 14, dead_days int def 45, warning_weeks int def 3, ai_enabled bool def true, onboarded_at tstz null, is_demo_template bool def false, demo_expires_at tstz null, created_at                                                                             | unique(owner_user_id); check(healthy_days < dead_days); index(demo_expires_at)       |
 | `sessions`          | id, user_id → users, token_hash bytea (SHA-256), expires_at, created_at, last_seen_at                                                                                                                                                                                                                                                                                                                                                          | unique(token_hash); index(user_id)                                                   |
 | `products`          | id, store_id, name 1–80, name_key (lower + trim + spasi tunggal), unit def 'pcs' ≤ 16, category ≤ 40 null, sell_price int ≥ 0, is_complementary bool def false, complementary_max_stock int null, archived_at null, created_at, updated_at                                                                                                                                                                                                     | unique(store_id, name_key) WHERE archived_at IS NULL                                 |
 | `stock_ins`         | id, store_id, product_id, received_on date, qty int ≥ 0, unit_cost int ≥ 0, kind enum(`opening`,`purchase`), batch_id uuid (satu nota), created_at                                                                                                                                                                                                                                                                                             | index(store_id, product_id, received_on)                                             |
@@ -258,10 +258,11 @@ Tabel uji batas (wajib ada sebagai test, ambang bawaan):
 ### 5.2 Uang terkunci, perkiraan habis, pelengkap
 
 - `locked_value = max(stock, 0) × last_cost` (BR-7). Total = Σ produk aktif. Pelengkap tetap termasuk di total, dan juga dilaporkan terpisah (`complementary_locked_value`).
-- **Perkiraan habis** (hanya untuk sehat/waspada):
+- **Perkiraan habis** (sehat/waspada/**stok_habis**):
   - `avg = sold_28 / 28`
   - kalau `sale_days_28 < 3` → `null` (UI: "belum cukup data")
-  - selain itu `days_until_empty = floor(stock / avg)`, dan `restock_soon = days_until_empty ≤ 3`
+  - selain itu `days_until_empty = floor(stock / avg)` (stok_habis → 0), dan `restock_soon = days_until_empty ≤ 3`
+  - **Amendemen 26 Okt 2026 (tech-lead):** stok_habis ikut perkiraan habis supaya barang cepat laku yang raknya kosong muncul di daftar "Segera kulakan" (`days_until_empty = 0` → `restock_soon = true`). Status stok_habis sendiri TETAP tidak masuk skor prioritas §5.3 — tidak ada stok yang bisa dilikuidasi.
 - **Pelengkap kebanyakan:**
   - `span = clamp(days_since(first_stock_date, asOf) + 1, 1, 90)`
   - `avg90 = sold_90 / span`
@@ -274,7 +275,7 @@ Tabel uji batas (wajib ada sebagai test, ambang bawaan):
 Hanya untuk status waspada/sekarat/mati dan **bukan pelengkap**.
 
 ```
-money  = max_locked > 0 ? locked_value / max_locked : 0       (max_locked = maks locked_value di himpunan ini)
+money  = max_locked > 0 ? locked_value / max_locked : 0       (max_locked = maks locked_value di himpunan yang diskor — waspada/sekarat/mati non-pelengkap — BUKAN seluruh barang aktif)
 age    = min(1, d / (2 × dead_days))
 weight = {waspada: 0.3, sekarat: 0.6, mati: 1.0}
 score  = round(100 × (0.5·money + 0.3·age + 0.2·weight))      → 0..100
@@ -335,6 +336,8 @@ Pasangan bundle = barang sehat (bukan pelengkap, bukan diri sendiri) dengan `sol
 | mati    | `discount` 15% 7 hr (bila rugi → `sell_at_cost`) + share | `sell_at_cost` 7 hr + share                      | `clearance` 20% 7 hr + share           |
 
 Teks template ada di `backend/src/domain/planTemplates.ts`, berupa kalimat bahasa Indonesia dengan placeholder. Template wajib lolos validasi §5.5.
+
+**Amendemen 26 Okt 2026 (tech-lead):** rantai fallback `bundle → discount` yang menghasilkan **rugi** diganti `sell_at_cost` (untung 0), mengikuti pola eksplisit "(bila rugi → `sell_at_cost`)" di sekarat tahap 2 dan mati tahap 1. BR-11 melarang tahap 1 rugi, dan template wajib lolos validator §5.5 — jadi fallback berhenti di `sell_at_cost`, bukan diskon rugi. Contoh: sekarat tahap 1 dengan margin tipis (jual 13.000, kulak 12.000; diskon 10% = 11.700) → tahap 1 menjadi `sell_at_cost`.
 
 ### 5.7 Kas pulih (BR-12, F-16)
 
@@ -525,9 +528,12 @@ Field tak dikenal ditolak (`.strict()`). Semua query lewat Drizzle (parameterize
 | `POST /auth/demo`           | 10 / jam                           | IP         |
 | `POST /products/{id}/plans` | 20 / hari (kuota AI terpisah §6.1) | store      |
 | `POST /imports/*`           | 20 / jam                           | store      |
+| semua endpoint `/auth/*`    | 30 / 15 menit                      | IP         |
 | semua endpoint lain         | 300 / menit                        | store      |
 
 IP diambil dari `x-forwarded-for` (entri pertama, di-set Vercel). Respons 429 menyertakan `Retry-After`.
+
+**Amendemen 26 Okt 2026 (tech-lead, temuan E-2 security-reviewer):** baris "semua endpoint `/auth/*` 30/15 menit per IP" adalah anggaran global di luar limit per-endpoint. Tanpa ini, penyerang memutar email menghindari limit login 5/15 menit per (IP+email) dari satu IP dan membakar CPU argon2 tanpa batas. Pertumbuhan tabel `rate_limits` ditangani cron harian (§10.1). Catatan verifikasi E-3: klaim "Vercel menimpa XFF" belum terverifikasi — black-box test di staging (6× login dari satu IP dengan XFF diputar; 429 pada percobaan ke-6 = aman). Kalau gagal, ganti ke entri terkanan atau `x-real-ip`.
 
 ### 8.5 Tidak boleh dicatat di log
 
