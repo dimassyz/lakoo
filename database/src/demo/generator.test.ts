@@ -55,13 +55,17 @@ function factsOf(product: GeneratedProduct): Facts {
   };
 }
 
+/** Empat minggu berturut-turut turun, dengan volume berarti di minggu terakhir. */
+function isDeclining(weekQty: number[]): boolean {
+  const [w1 = 0, w2 = 0, w3 = 0, w4 = 0] = weekQty;
+  return w4 > w3 && w3 > w2 && w2 > w1 && w4 >= 4;
+}
+
 /** Cermin SPEC §5.1 — test ini yang memverifikasi distribusi generator. */
 function statusOf(facts: Facts): TargetStatus {
   if (facts.stock <= 0) return "stok_habis";
-  const [w1 = 0, w2 = 0, w3 = 0, w4 = 0] = facts.weekQty;
   if (facts.daysSinceLastSale <= HEALTHY_DAYS) {
-    const declining = w4 > w3 && w3 > w2 && w2 > w1 && w4 >= 4;
-    return declining ? "waspada" : "sehat";
+    return isDeclining(facts.weekQty) ? "waspada" : "sehat";
   }
   if (facts.daysSinceLastSale <= DEAD_DAYS) return "sekarat";
   return "mati";
@@ -99,7 +103,9 @@ describe("generator data demo", () => {
     expect(counts.mati).toBeGreaterThanOrEqual(8);
     expect(counts.stok_habis).toBeGreaterThanOrEqual(2);
   });
+});
 
+describe("generator pelengkap & kasus brief", () => {
   it("menyediakan pelengkap dengan minimal satu kebanyakan", () => {
     const complementary = data.products.filter(
       (product) => product.isComplementary,
@@ -137,7 +143,9 @@ describe("generator data demo", () => {
 
     expect(factsOf(sampo as GeneratedProduct).stock).toBe(40);
   });
+});
 
+describe("generator integritas stok & penjualan", () => {
   it("stok tidak pernah negatif sepanjang 90 hari", () => {
     for (const product of data.products) {
       for (let day = 0; day <= HISTORY_DAYS; day += 1) {

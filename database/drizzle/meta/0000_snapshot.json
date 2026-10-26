@@ -136,12 +136,8 @@
           "name": "action_plans_store_id_stores_id_fk",
           "tableFrom": "action_plans",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -149,12 +145,8 @@
           "name": "action_plans_product_id_products_id_fk",
           "tableFrom": "action_plans",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -326,12 +318,8 @@
           "name": "daily_sales_store_id_stores_id_fk",
           "tableFrom": "daily_sales",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -339,12 +327,8 @@
           "name": "daily_sales_product_id_products_id_fk",
           "tableFrom": "daily_sales",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -428,12 +412,8 @@
           "name": "idempotency_keys_store_id_stores_id_fk",
           "tableFrom": "idempotency_keys",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -441,10 +421,7 @@
       "compositePrimaryKeys": {
         "idempotency_keys_store_id_key_pk": {
           "name": "idempotency_keys_store_id_key_pk",
-          "columns": [
-            "store_id",
-            "key"
-          ]
+          "columns": ["store_id", "key"]
         }
       },
       "uniqueConstraints": {},
@@ -608,12 +585,8 @@
           "name": "plan_steps_plan_id_action_plans_id_fk",
           "tableFrom": "plan_steps",
           "tableTo": "action_plans",
-          "columnsFrom": [
-            "plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -621,12 +594,8 @@
           "name": "plan_steps_bundle_product_id_products_id_fk",
           "tableFrom": "plan_steps",
           "tableTo": "products",
-          "columnsFrom": [
-            "bundle_product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["bundle_product_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -781,12 +750,8 @@
           "name": "products_store_id_stores_id_fk",
           "tableFrom": "products",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -930,12 +895,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1024,12 +985,8 @@
           "name": "stock_adjustments_store_id_stores_id_fk",
           "tableFrom": "stock_adjustments",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1037,12 +994,8 @@
           "name": "stock_adjustments_product_id_products_id_fk",
           "tableFrom": "stock_adjustments",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1154,12 +1107,8 @@
           "name": "stock_ins_store_id_stores_id_fk",
           "tableFrom": "stock_ins",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1167,12 +1116,8 @@
           "name": "stock_ins_product_id_products_id_fk",
           "tableFrom": "stock_ins",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1328,12 +1273,8 @@
           "name": "stores_owner_user_id_users_id_fk",
           "tableFrom": "stores",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1496,12 +1437,8 @@
           "name": "weekly_summaries_store_id_stores_id_fk",
           "tableFrom": "weekly_summaries",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1535,9 +1472,7 @@
     "public.adjustment_reason": {
       "name": "adjustment_reason",
       "schema": "public",
-      "values": [
-        "correction"
-      ]
+      "values": ["correction"]
     },
     "public.customer_type": {
       "name": "customer_type",
@@ -1554,10 +1489,7 @@
     "public.plan_source": {
       "name": "plan_source",
       "schema": "public",
-      "values": [
-        "ai",
-        "template"
-      ]
+      "values": ["ai", "template"]
     },
     "public.plan_state": {
       "name": "plan_state",
@@ -1574,41 +1506,22 @@
     "public.product_status": {
       "name": "product_status",
       "schema": "public",
-      "values": [
-        "sehat",
-        "waspada",
-        "sekarat",
-        "mati",
-        "stok_habis"
-      ]
+      "values": ["sehat", "waspada", "sekarat", "mati", "stok_habis"]
     },
     "public.sale_source": {
       "name": "sale_source",
       "schema": "public",
-      "values": [
-        "quantity",
-        "opname",
-        "import"
-      ]
+      "values": ["quantity", "opname", "import"]
     },
     "public.step_outcome": {
       "name": "step_outcome",
       "schema": "public",
-      "values": [
-        "pending",
-        "in_progress",
-        "succeeded",
-        "failed",
-        "skipped"
-      ]
+      "values": ["pending", "in_progress", "succeeded", "failed", "skipped"]
     },
     "public.stock_in_kind": {
       "name": "stock_in_kind",
       "schema": "public",
-      "values": [
-        "opening",
-        "purchase"
-      ]
+      "values": ["opening", "purchase"]
     },
     "public.store_type": {
       "name": "store_type",

@@ -37,7 +37,7 @@ Pemilik toko kelontong kehabisan modal kulakan karena uangnya terkunci di stok y
 ```
  HP Android / Laptop (Chrome)
  ┌──────────────────────────────────────────────┐
- │ Next.js UI (React, App Router)               │
+ │ Next.js UI (React, Pages Router)             │
  │  • halaman marketing (SSG): / , /privasi     │
  │  • aplikasi: /masuk /daftar /mulai /toko/*   │
  │  • Outbox (IndexedDB) → kirim ulang otomatis │
@@ -60,8 +60,8 @@ Pemilik toko kelontong kehabisan modal kulakan karena uangnya terkunci di stok y
 
 | Komponen | Lokasi | Tanggung jawab | Pemilik |
 |---|---|---|---|
-| UI web | `frontend/` | Semua halaman, design system, klien API bertipe (dari openapi.yaml), Outbox, parsing file import (CSV/XLSX) di browser, metadata SEO | frontend-dev |
-| Mount API | `frontend/src/app/api/[[...route]]/route.ts` | Satu-satunya file di `frontend/` milik backend: meneruskan request `/api/*` ke Hono | backend-dev |
+| UI web | `src/pages/` (kecuali `api/`) | Semua halaman, design system, klien API bertipe (dari openapi.yaml), Outbox, parsing file import (CSV/XLSX) di browser, metadata SEO | frontend-dev |
+| Mount API | `src/pages/api/[...route].ts` | Satu-satunya file di `src/pages/` milik backend: meneruskan request `/api/*` ke Hono | backend-dev |
 | API | `backend/src/http/` | Routing Hono, middleware (sesi, origin check, rate limit, idempotensi, error), validasi Zod | backend-dev |
 | Domain | `backend/src/domain/` | Fungsi murni tanpa I/O: status, skor, perkiraan habis, pelengkap, kalkulator harga, validasi rencana, template rencana, kas pulih, kalimat ringkasan | backend-dev |
 | AI | `backend/src/ai/` | Adapter penyedia (Gemini), prompt builder, skema output, timeout, pembatas biaya | backend-dev |
@@ -70,13 +70,15 @@ Pemilik toko kelontong kehabisan modal kulakan karena uangnya terkunci di stok y
 | CI/CD | `.github/`, konfigurasi Vercel | Gate CI, deploy staging/produksi, env, cron | devops-engineer |
 | Dokumen & kontrak | `docs/`, `AGENTS.md`, `CODE_STANDARDS.md` | Spesifikasi, kontrak, ADR | tech-lead |
 
+> **Amendemen 26 Okt 2026 (tech-lead):** repo aktual memakai **Pages Router flat di root** — bukan monorepo `frontend/` + App Router seperti draf awal. Mount API karena itu di `src/pages/api/[...route].ts`. Sisanya (Hono di `backend/`, domain murni, adapter AI, Drizzle di `database/`) tidak berubah. Ini deviasi **path saja**, keputusan tercatat di `docs/PROJECT_LOG.md`.
+
 ### 3.3 Tech stack & alasan
 
 | Lapisan | Pilihan | Alasan |
 |---|---|---|
 | Bahasa | TypeScript (strict) di semua paket | Satu bahasa untuk FE/BE: tipe kontrak bisa dibagi, dan developer model murah tidak perlu berganti konteks |
-| Monorepo | pnpm workspaces: `frontend`, `backend`, `database`, `e2e` | Memenuhi syarat struktur repo (frontend/backend/database/docs) dengan batas kepemilikan file yang tegas, sambil tetap **satu deployment** |
-| UI | Next.js 15 (App Router) + React 19 + Tailwind CSS v4 | SSG untuk landing (Lighthouse ≥ 90), client components untuk form ritual; Vercel native |
+| Monorepo | Flat root: Next.js (Pages Router) di root + paket `backend`, `database`, `e2e` | Batas kepemilikan file yang tegas, sambil tetap **satu deployment** |
+| UI | Next.js 15 (Pages Router) + React 19 + Tailwind CSS v4 | SSG untuk landing (Lighthouse ≥ 90), client components untuk form ritual; Vercel native |
 | Primitive UI | Radix UI primitives (Dialog, Popover, Tabs) bila perlu; **tanpa** kit bertema | Aksesibilitas keyboard/fokus siap pakai; tampilan sepenuhnya dari DESIGN.md |
 | Server state | TanStack Query v5 | Cache + revalidasi sederhana untuk layar sekali lirik |
 | Klien API | `openapi-typescript` (generate tipe) + `openapi-fetch` | Contract-first: tipe FE diturunkan dari `docs/api/openapi.yaml`, bukan ditulis tangan |
