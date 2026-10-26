@@ -72,7 +72,7 @@ Setiap task punya:
 
 | Role | Task | Inputs | Outputs | Allowed files | Depends on | Acceptance criteria |
 |------|------|--------|---------|---------------|------------|---------------------|
-| backend-dev | Implementasi semua endpoint sesuai openapi.yaml | openapi.yaml, SPEC §5 | src/ (api routes atau express) | src/, docs/ | T-1 | Semua endpoint ada, validasi input, autentikasi dengan cookie lakoo_session |
+| backend-dev | Implementasi semua endpoint sesuai openapi.yaml | openapi.yaml, SPEC §5 | backend/src/http, backend/src/domain, backend/src/ai, src/pages/api/[...route].ts (mount) | backend/, src/pages/api/, docs/ | T-1 | Semua endpoint ada, validasi input, autentikasi dengan cookie lakoo_session |
 
 ## T-10: Integrasi database & cron
 
