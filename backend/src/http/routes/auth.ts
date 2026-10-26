@@ -71,10 +71,19 @@ function isUniqueViolation(error: unknown): boolean {
   );
 }
 
-async function startSession(deps: AuthDeps, userId: string): Promise<string> {
+/**
+ * `expiresAt` opsional: sesi demo memakai `demo_expires_at` sebagai satu-satunya
+ * sumber kebenaran (SPEC §8.1) — bukan TTL 30 hari yang cuma ditutupi cookie.
+ */
+async function startSession(
+  deps: AuthDeps,
+  userId: string,
+  expiresAt?: Date,
+): Promise<string> {
   const token = generateToken();
-  const expiresAt = new Date(deps.now().getTime() + SESSION_TTL_SECONDS * 1000);
-  await createSession(deps.db, userId, hashToken(token), expiresAt);
+  const end =
+    expiresAt ?? new Date(deps.now().getTime() + SESSION_TTL_SECONDS * 1000);
+  await createSession(deps.db, userId, hashToken(token), end);
   return token;
 }
 
@@ -143,7 +152,12 @@ async function handleLogout(c: Context, deps: AuthDeps) {
 async function handleDemo(c: Context, deps: AuthDeps) {
   await consumeRateLimit(deps.db, DEMO_RULE, clientIp(c), deps.now());
   const { user, store } = await cloneDemoTemplate(deps.db, deps.now());
-  const token = await startSession(deps, user.id);
+  // Baris sesi hidup selama demo, bukan 30 hari: cookie saja tidak menegakkan apa pun.
+  const token = await startSession(
+    deps,
+    user.id,
+    store.demoExpiresAt ?? undefined,
+  );
   c.header("Set-Cookie", sessionCookie(token, DEMO_TTL_SECONDS));
   return c.json(toMe(user, store), 201);
 }

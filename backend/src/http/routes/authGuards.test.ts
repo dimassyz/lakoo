@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { isNotNull } from "drizzle-orm";
 import { createTestDb } from "../../../../database/src/test/pglite.ts";
 import type { AnyDb } from "../../../../database/src/db.ts";
 import {
@@ -79,6 +80,17 @@ afterAll(async () => {
 describe("E-1 — sesi demo berakhir tepat di demo_expires_at", () => {
   it("masih sah sebelum demo_expires_at", async () => {
     expect((await me()).status).toBe(200);
+  });
+
+  it("baris sesi hidup selama demo, bukan 30 hari", async () => {
+    // Cookie Max-Age hanya instruksi klien; yang menegakkan adalah baris DB.
+    const rows = await db.select().from(sessions);
+    const demoStore = (
+      await db.select().from(stores).where(isNotNull(stores.demoExpiresAt))
+    )[0]!;
+    expect(rows[0]!.expiresAt.getTime()).toBe(
+      demoStore.demoExpiresAt!.getTime(),
+    );
   });
 
   it("401 setelah demo_expires_at lewat, dan sesi dihapus", async () => {
