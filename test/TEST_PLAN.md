@@ -255,7 +255,12 @@ memasukkan `test/**`**
   untuk iterasi sampai approval.
 - **UPDATE (26 Okt 2026): APPROVAL DIBERIKAN** — tech-lead menyetujui
   `test/**` upon ALL GREEN, dan ALL GREEN sudah dilaporkan (suite 50/50).
-  Devops mengerjakan apply config + snapshot `test/` (pending di devops).
+- **TERTUTUP (26 Okt 2026): include DITERAPKAN & test/ DI-SNAPSHOT** —
+  commit `c177b5f` (snapshot v6): `test/**/*.{test,spec}.{ts,tsx}` masuk
+  `include` root `vitest.config.mts`; 5 file `test/` masuk PR #1.
+  Diverifikasi QA sendiri: root gate `npx vitest run` → **291 passed
+  (21 file), exit 0** — termasuk 50 test QA. Gate CI kini menjalankan
+  suite QA; QA-02 selesai.
 
 **QA-03 — LOW (dokumen) — DITUTUP 26 Okt 2026**
 
@@ -311,7 +316,7 @@ npx vitest run --config test/vitest.config.mts
 # Satu file
 npx vitest run --config test/vitest.config.mts test/schema-contract.test.ts
 
-# Gate penuh (setelah test/** masuk include root, QA-02)
+# Gate penuh (test/** sudah masuk include root sejak snapshot v6 / c177b5f)
 pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
