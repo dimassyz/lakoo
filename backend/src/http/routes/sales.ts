@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { AnyDb } from "../../../../database/src/db.ts";
 import { currentSession } from "../auth-context.ts";
 import { ApiError, validationError } from "../errors.ts";
-import { findIdempotent, storeIdempotent } from "../../repo/idempotency.ts";
+import { findIdempotent } from "../../repo/idempotency.ts";
 import { listProductStats } from "../../repo/products.ts";
 import { hasSalesOn, recapRows, saveRecap } from "../../repo/salesRecap.ts";
 import { todayIso } from "./products.ts";
@@ -164,8 +164,8 @@ async function handleRecapPut(c: Context, deps: SalesDeps) {
     parsed.data.mode,
     parsed.data.lines,
     today,
+    { key, endpoint: ENDPOINT, statusCode: 200 },
   );
-  await storeIdempotent(deps.db, store.id, key, ENDPOINT, 200, result);
   return c.json(result, 200);
 }
 

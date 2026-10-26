@@ -307,3 +307,11 @@ describe("POST /products/{productId}/stock-adjustments", () => {
     ).toBe(400);
   });
 });
+
+describe("W-8 — id di path bukan UUID", () => {
+  it("404, bukan 500 dari parser uuid Postgres", async () => {
+    const res = await req("/products/bukan-uuid", "GET");
+    expect(res.status).toBe(404);
+    expect((await res.json()).error.code).toBe("not_found");
+  });
+});

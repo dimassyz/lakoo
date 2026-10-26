@@ -80,6 +80,13 @@ export const unauthenticated = (): ApiError =>
     "Sesi tidak ditemukan. Silakan masuk lagi.",
   );
 
+export const duplicateProductName = (): ApiError =>
+  new ApiError(
+    409,
+    "duplicate_product_name",
+    "Nama produk sudah dipakai di toko ini.",
+  );
+
 export const notFound = (): ApiError =>
   new ApiError(404, "not_found", "Data yang dicari tidak ada.");
 

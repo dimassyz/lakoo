@@ -11,7 +11,7 @@ import {
 import { seedDemoTemplate } from "../../../../database/src/demo/seed.ts";
 import { stores } from "../../../../database/src/schema.ts";
 import { unauthenticated } from "../errors.ts";
-import { loadProductSummaries } from "../productView.ts";
+import { loadProducts } from "../productView.ts";
 import { cleanupTables, deleteExpiredClones } from "../../repo/cron.ts";
 import { bundleCandidatesOf, composeAndSave } from "./plans.ts";
 import { todayIso } from "./products.ts";
@@ -69,6 +69,7 @@ async function warmOne(
   store: typeof stores.$inferSelect,
   summary: ProductSummary,
   summaries: ProductSummary[],
+  weekQty: readonly number[],
   today: string,
 ): Promise<boolean> {
   try {
@@ -80,6 +81,7 @@ async function warmOne(
         summary,
         summaries,
         candidates: bundleCandidatesOf(summaries, summary.id),
+        weekQty,
         today,
       },
     );
@@ -95,7 +97,13 @@ async function warmPlans(
   store: typeof stores.$inferSelect,
   today: string,
 ): Promise<{ plansWarmed: number; aiPlansWarmed: number }> {
-  const summaries = await loadProductSummaries(deps.db, store.id, today);
+  const { stats, items: summaries } = await loadProducts(
+    deps.db,
+    store.id,
+    today,
+  );
+  const weekQtyOf = (productId: string): number[] =>
+    stats.find((stat) => stat.productId === productId)?.weekQty ?? [];
   const targets = problemProductsOf(summaries);
   let aiPlansWarmed = 0;
   let plansWarmed = 0;
@@ -103,7 +111,9 @@ async function warmPlans(
   for (let index = 0; index < targets.length; index += WARM_CONCURRENCY) {
     const batch = targets.slice(index, index + WARM_CONCURRENCY);
     const results = await Promise.all(
-      batch.map((summary) => warmOne(deps, store, summary, summaries, today)),
+      batch.map((summary) =>
+        warmOne(deps, store, summary, summaries, weekQtyOf(summary.id), today),
+      ),
     );
     plansWarmed += results.length;
     aiPlansWarmed += results.filter(Boolean).length;

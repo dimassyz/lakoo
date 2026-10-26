@@ -2,6 +2,8 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import type { AnyDb } from "../../../database/src/db.ts";
 import { actionPlans } from "../../../database/src/schema.ts";
 import { ApiError, type ErrorCode, type ErrorLine } from "../http/errors.ts";
+import { storeIdempotent, type IdempotentTag } from "./idempotency.ts";
+import { lockProduct } from "./stockIns.ts";
 import { loadProductSummaries } from "../http/productView.ts";
 
 export interface RecapRow {
@@ -302,6 +304,15 @@ function fail(code: ErrorCode, lines: ErrorLine[]): never {
   throw new ApiError(422, code, "Ada baris yang perlu dicek.", { lines });
 }
 
+/** W-2: serialisasi per barang sebelum cek stok, supaya BR-16 tidak bisa di-race. */
+async function lockAll(
+  db: AnyDb,
+  storeId: string,
+  applied: { row: { productId: string } }[],
+): Promise<void> {
+  for (const { row } of applied) await lockProduct(db, storeId, row.productId);
+}
+
 export async function saveRecap(
   db: AnyDb,
   storeId: string,
@@ -309,6 +320,7 @@ export async function saveRecap(
   mode: SaleMode,
   input: RecapInputLine[],
   today: string,
+  idempotent?: IdempotentTag,
 ): Promise<RecapResult> {
   return db.transaction(async (tx) => {
     const typed = tx as unknown as AnyDb;
@@ -320,6 +332,7 @@ export async function saveRecap(
     );
 
     const { applied, errors } = resolveLines(rows, mode, input);
+    await lockAll(typed, storeId, applied);
     if (errors.length > 0) fail("validation_error", errors);
 
     const summaries = await applyAll(
@@ -345,6 +358,18 @@ export async function saveRecap(
         .map(({ row }) => row.productId),
     );
 
-    return toResult(date, mode, applied, summaries);
+    const result = toResult(date, mode, applied, summaries);
+    // W-1: rekaman idempotensi ikut transaksi — bukan sesudahnya.
+    if (idempotent !== undefined) {
+      await storeIdempotent(
+        typed,
+        storeId,
+        idempotent.key,
+        idempotent.endpoint,
+        idempotent.statusCode,
+        result,
+      );
+    }
+    return result;
   });
 }

@@ -576,16 +576,6 @@ export async function stepPriceToApply(
   return { productId: plan[0].productId, newPrice: step.newPrice };
 }
 
-export async function setProductPrice(
-  db: AnyDb,
-  productId: string,
-  newPrice: number,
-): Promise<void> {
-  await db.execute(
-    sql`UPDATE products SET sell_price = ${newPrice} WHERE id = ${productId}`,
-  );
-}
-
 /** `active` → `stopped`; tahap yang sedang berjalan jadi `skipped`. */
 export async function stopPlan(
   db: AnyDb,
@@ -647,7 +637,7 @@ export async function applyStepPrice(
   const current = await db
     .select({ sellPrice: products.sellPrice })
     .from(products)
-    .where(eq(products.id, plan.productId))
+    .where(and(eq(products.id, plan.productId), eq(products.storeId, storeId)))
     .limit(1);
   // Kontrak: harga tahap sama dengan harga sekarang bukan aksi yang sah.
   if (current[0]?.sellPrice === step.newPrice) {
@@ -661,6 +651,6 @@ export async function applyStepPrice(
   await db
     .update(products)
     .set({ sellPrice: step.newPrice, updatedAt: now })
-    .where(eq(products.id, plan.productId));
+    .where(and(eq(products.id, plan.productId), eq(products.storeId, storeId)));
   return plan.productId;
 }

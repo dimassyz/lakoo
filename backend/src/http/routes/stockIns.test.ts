@@ -8,6 +8,8 @@ import {
   stores,
 } from "../../../../database/src/schema.ts";
 import { createApp } from "../app.ts";
+import { sql } from "drizzle-orm";
+import { createStockInBatch } from "../../repo/stockIns.ts";
 
 const ORIGIN = "https://lakoo.test";
 const NOW = new Date("2026-11-09T03:00:00Z"); // 10:00 WIB
@@ -171,6 +173,34 @@ describe("POST /stock-ins — barang baru", () => {
     };
     expect(body.error.code).toBe("duplicate_product_name");
     expect(body.error.lines[0]!.index).toBe(0);
+  });
+});
+
+describe("POST /stock-ins — name_key lintas jalur", () => {
+  it("mengenali nama dari POST /products walau beda spasi dan huruf", async () => {
+    const created = await req("/products", "POST", {
+      name: "Kecap Manis 600ml",
+      unit: "botol",
+      sellPrice: 15_000,
+      costPrice: 12_000,
+      openingStock: 3,
+    });
+    expect(created.status).toBe(201);
+
+    // Spasi berlebih + huruf kecil: name_key harus sama (SPEC §4.1).
+    const res = await post({
+      receivedOn: TODAY,
+      lines: [
+        {
+          newProduct: { name: "  kecap   manis 600ml  ", sellPrice: 15_000 },
+          qty: 1,
+          unitCost: 12_000,
+        },
+      ],
+    });
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("duplicate_product_name");
   });
 });
 
@@ -366,5 +396,27 @@ describe("stock-ins — sesi", () => {
   it("mewajibkan sesi", async () => {
     const res = await Promise.resolve(app.request("/api/v1/stock-ins"));
     expect(res.status).toBe(401);
+  });
+});
+
+describe("W-1 — rekaman idempotensi ada di transaksi yang sama", () => {
+  it("gagal menulis rekaman → stok masuk ikut dibatalkan", async () => {
+    // `idempotency_keys.key` bertipe uuid, jadi kunci non-UUID gagal DI DALAM tx.
+    await expect(
+      createStockInBatch(
+        db,
+        storeId,
+        TODAY,
+        [{ productId: kecapId, qty: 7, unitCost: 1_000 }],
+        NOW,
+        { key: "bukan-uuid", endpoint: "/stock-ins", statusCode: 201 },
+      ),
+    ).rejects.toThrow();
+
+    // Kalau rekaman ditulis di luar tx, baris stok 7 tadi sudah terlanjur commit.
+    const counted = await db.execute(
+      sql`SELECT COUNT(*) AS n FROM stock_ins WHERE product_id = ${kecapId} AND qty = 7`,
+    );
+    expect(Number((counted.rows[0] as { n: unknown }).n)).toBe(0);
   });
 });

@@ -1,6 +1,8 @@
 import { sql } from "drizzle-orm";
+import { nameKeyOf } from "../../../database/src/nameKey.ts";
+import { storeIdempotent, type IdempotentTag } from "./idempotency.ts";
 import type { AnyDb } from "../../../database/src/db.ts";
-import { ApiError } from "../http/errors.ts";
+import { ApiError, notFound } from "../http/errors.ts";
 import { todayIso } from "../http/routes/products.ts";
 
 export const EDIT_WINDOW_DAYS = 7;
@@ -163,6 +165,7 @@ export async function createStockInBatch(
   receivedOn: string,
   lines: StockInLineInput[],
   now: Date,
+  idempotent?: IdempotentTag,
 ): Promise<CreatedBatch> {
   return db.transaction(async (tx) => {
     const typed = tx as unknown as AnyDb;
@@ -174,7 +177,7 @@ export async function createStockInBatch(
       if (productId === undefined && line.newProduct !== undefined) {
         const created = await typed.execute(sql`
           INSERT INTO products (store_id, name, name_key, unit, category, sell_price)
-          VALUES (${storeId}, ${line.newProduct.name}, ${line.newProduct.name.toLowerCase()},
+          VALUES (${storeId}, ${line.newProduct.name}, ${nameKeyOf(line.newProduct.name)},
                   ${line.newProduct.unit ?? "pcs"}, ${line.newProduct.category ?? null},
                   ${line.newProduct.sellPrice})
           RETURNING id`);
@@ -191,7 +194,19 @@ export async function createStockInBatch(
       if (item !== null) items.push(item);
     }
 
-    return { batchId, items };
+    const result = { batchId, items };
+    // Di dalam tx yang sama: crash setelah commit tanpa rekaman = kirim ulang menggandakan stok.
+    if (idempotent !== undefined) {
+      await storeIdempotent(
+        typed,
+        storeId,
+        idempotent.key,
+        idempotent.endpoint,
+        idempotent.statusCode,
+        result,
+      );
+    }
+    return result;
   });
 }
 
@@ -222,6 +237,21 @@ async function requireEditable(
   return item;
 }
 
+/**
+ * W-2: serialisasi semua mutasi stok per barang. Dua PATCH bersamaan yang
+ * sama-sama lolos `minStockEver` bisa membuat stok negatif; lock baris produk
+ * menutup celah itu dan dilepas otomatis saat transaksi selesai.
+ */
+export async function lockProduct(
+  db: AnyDb,
+  storeId: string,
+  productId: string,
+): Promise<void> {
+  await db.execute(
+    sql`SELECT 1 FROM products WHERE id = ${productId} AND store_id = ${storeId} FOR UPDATE`,
+  );
+}
+
 /** Koreksi yang membuat stok hari mana pun negatif harus ditolak (kontrak PATCH). */
 async function requireNonNegativeStock(
   db: AnyDb,
@@ -249,6 +279,8 @@ export async function updateStockIn(
   return db.transaction(async (tx) => {
     const typed = tx as unknown as AnyDb;
     const current = await requireEditable(typed, storeId, id, now);
+    // Kunci sebelum membaca riwayat: dua PATCH bersamaan tidak boleh sama-sama lolos.
+    await lockProduct(typed, storeId, current.productId);
 
     await typed.execute(sql`
       UPDATE stock_ins SET
@@ -265,7 +297,7 @@ export async function updateStockIn(
     );
 
     const updated = await findStockIn(typed, storeId, id, now);
-    if (updated === null) throw new Error("not_found");
+    if (updated === null) throw notFound();
     return updated;
   });
 }

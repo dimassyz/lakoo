@@ -10,7 +10,7 @@ import { findProduct } from "../../repo/products.ts";
 import { aiQuotaFor, recordAiUsage } from "../../repo/aiUsage.ts";
 import { PLAN_GENERATE_RULE, consumeRateLimit } from "../rate-limit.ts";
 import { ApiError, validationError } from "../errors.ts";
-import { loadProductSummaries } from "../productView.ts";
+import { loadProductSummaries, loadProducts } from "../productView.ts";
 import { generatePlan, readAiSettings } from "../../ai/generate.ts";
 import { weekdayName } from "../../ai/prompt.ts";
 import {
@@ -72,7 +72,11 @@ async function requirePlannable(
   if (product === null)
     throw new ApiError(404, "not_found", "Barang tidak ditemukan.");
 
-  const summaries = await loadProductSummaries(deps.db, storeId, today);
+  const { stats, items: summaries } = await loadProducts(
+    deps.db,
+    storeId,
+    today,
+  );
   const summary = summaries.find((item) => item.id === productId);
   if (summary === undefined)
     throw new ApiError(404, "not_found", "Barang tidak ditemukan.");
@@ -84,7 +88,10 @@ async function requirePlannable(
       "Barang ini tidak bisa dibuatkan rencana.",
     );
   }
-  return { summary, summaries };
+  // Riwayat 7 minggu untuk prompt AI — tanpa ini saran tidak punya dasar data.
+  const weekQty =
+    stats.find((stat) => stat.productId === productId)?.weekQty ?? [];
+  return { summary, summaries, weekQty };
 }
 
 export function bundleCandidatesOf(
@@ -112,6 +119,7 @@ function promptOf(
   candidates: BundleCandidate[],
   summaries: Awaited<ReturnType<typeof loadProductSummaries>>,
   today: string,
+  weekQty: readonly number[],
 ) {
   const names = new Map(summaries.map((item) => [item.id, item]));
   return {
@@ -131,7 +139,7 @@ function promptOf(
       stock: summary.stock,
       status: summary.status,
       daysSinceLastSale: summary.daysSinceLastSale,
-      weekQty: [],
+      weekQty,
     },
     bundleCandidates: candidates.slice(0, 8).map((candidate) => ({
       id: candidate.productId,
@@ -197,6 +205,7 @@ export interface ComposeInput {
   productId: string;
   summary: Awaited<ReturnType<typeof loadProductSummaries>>[number];
   summaries: Awaited<ReturnType<typeof loadProductSummaries>>;
+  weekQty: readonly number[];
   candidates: BundleCandidate[];
   today: string;
 }
@@ -214,7 +223,8 @@ function templateOf(summary: ProductSummary, candidates: BundleCandidate[]) {
 }
 
 export async function composeAndSave(deps: PlanDeps, input: ComposeInput) {
-  const { store, productId, summary, summaries, candidates, today } = input;
+  const { store, productId, summary, summaries, candidates, today, weekQty } =
+    input;
   const settings = readAiSettings(deps.env);
   const validation = {
     productId,
@@ -228,7 +238,7 @@ export async function composeAndSave(deps: PlanDeps, input: ComposeInput) {
   const result = await generatePlan({
     template: templateOf(summary, candidates),
     validation,
-    prompt: promptOf(store, summary, candidates, summaries, today),
+    prompt: promptOf(store, summary, candidates, summaries, today, weekQty),
     settings,
     quota: await aiQuotaFor(deps.db, store.id, today),
     fetchImpl: deps.fetchImpl,
@@ -277,7 +287,7 @@ async function handleGenerate(c: Context, deps: PlanDeps) {
   const regenerate = await readRegenerate(c);
   const today = todayIso(deps.now());
 
-  const { summary, summaries } = await requirePlannable(
+  const { summary, summaries, weekQty } = await requirePlannable(
     deps,
     store.id,
     productId,
@@ -295,6 +305,7 @@ async function handleGenerate(c: Context, deps: PlanDeps) {
     summaries,
     candidates: bundleCandidatesOf(summaries, productId),
     today,
+    weekQty,
   });
   return c.json(saved, 201);
 }

@@ -58,12 +58,12 @@ const geminiBody = (plan: unknown) => ({
   usageMetadata: { promptTokenCount: 2_000, candidatesTokenCount: 600 },
 });
 
-const fakeFetch = () =>
-  vi.fn(async () => ({
-    ok: true,
-    status: 200,
-    json: async () => geminiBody(aiPlan()),
-  })) as unknown as typeof fetch;
+const fetchMock = vi.fn(async () => ({
+  ok: true,
+  status: 200,
+  json: async () => geminiBody(aiPlan()),
+}));
+const fakeFetch = () => fetchMock as unknown as typeof fetch;
 
 const req = (path: string, method = "GET") =>
   Promise.resolve(
@@ -162,5 +162,19 @@ describe("POST /products/{id}/plans — jalur AI sungguhan", () => {
     // Token dari usageMetadata Gemini, bukan perkiraan.
     expect(usage[0]!.inputTokens).toBe(2_000);
     expect(usage[0]!.outputTokens).toBe(600);
+
+    // Prompt AI wajib membawa riwayat 7 minggu — array kosong = saran tanpa data.
+    const [, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      { body: string },
+    ];
+    const prompt = JSON.parse(init.body) as {
+      contents: { parts: { text: string }[] }[];
+    };
+    const sent = prompt.contents[0]!.parts[0]!.text;
+    const context = JSON.parse(sent.slice(sent.indexOf("{"))) as {
+      product: { week_qty: number[] };
+    };
+    expect(context.product.week_qty).toHaveLength(7);
   }, 60_000);
 });

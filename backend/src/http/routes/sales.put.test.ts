@@ -9,7 +9,7 @@ import {
   stockIns,
   stores,
 } from "../../../../database/src/schema.ts";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { createApp } from "../app.ts";
 
 const ORIGIN = "https://lakoo.test";
@@ -381,5 +381,28 @@ describe("PUT /sales/recap — validasi", () => {
     const lines = Array.from({ length: 601 }, () => line(ids.kecap!, "qty", 1));
     const res = await put({ date: TODAY, mode: "quantity", lines });
     expect(res.status).toBe(400);
+  });
+});
+
+describe("W-9 — jendela replay 7 hari", () => {
+  it("kunci lebih tua dari 7 hari diproses ulang, bukan memutar respons basi", async () => {
+    const key = crypto.randomUUID();
+    const first = await put(
+      { date: TODAY, mode: "quantity", lines: [line(ids.kecap!, "qty", 2)] },
+      key,
+    );
+    expect(first.status).toBe(200);
+
+    await db.execute(
+      sql`UPDATE idempotency_keys SET created_at = now() - interval '8 days'
+          WHERE key = ${key}`,
+    );
+
+    const second = await put(
+      { date: TODAY, mode: "quantity", lines: [line(ids.kecap!, "qty", 9)] },
+      key,
+    );
+    expect(second.status).toBe(200);
+    expect((await second.json()).lines[0].soldQty).toBe(9);
   });
 });

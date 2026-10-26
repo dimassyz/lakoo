@@ -3,8 +3,9 @@ import type { Context } from "hono";
 import { z } from "zod";
 import type { AnyDb } from "../../../../database/src/db.ts";
 import { currentSession } from "../auth-context.ts";
+import { nameKeyOf } from "../../../../database/src/nameKey.ts";
 import { ApiError, validationError } from "../errors.ts";
-import { findIdempotent, storeIdempotent } from "../../repo/idempotency.ts";
+import { findIdempotent } from "../../repo/idempotency.ts";
 import {
   createStockInBatch,
   deleteStockIn,
@@ -133,7 +134,7 @@ async function checkNewNames(
   const seen = new Set<string>();
   for (const [index, line] of lines.entries()) {
     if (line.newProduct === undefined) continue;
-    const key = line.newProduct.name.toLowerCase();
+    const key = nameKeyOf(line.newProduct.name);
     if (seen.has(key) || (await nameKeyTaken(db, storeId, key))) {
       throw new ApiError(
         422,
@@ -195,8 +196,8 @@ async function handleCreate(c: Context, deps: StockInDeps) {
     parsed.data.receivedOn,
     parsed.data.lines,
     deps.now(),
+    { key, endpoint: ENDPOINT, statusCode: 201 },
   );
-  await storeIdempotent(deps.db, store.id, key, ENDPOINT, 201, created);
   return c.json(created, 201);
 }
 

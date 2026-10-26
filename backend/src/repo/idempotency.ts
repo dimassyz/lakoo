@@ -1,13 +1,24 @@
 import { sql } from "drizzle-orm";
 import type { AnyDb } from "../../../database/src/db.ts";
 
+/** Tag rekaman yang ditulis di dalam transaksi bisnis (W-1). */
+export interface IdempotentTag {
+  key: string;
+  endpoint: string;
+  statusCode: number;
+}
+
 export interface IdempotentRecord {
   endpoint: string;
   statusCode: number;
   responseBody: unknown;
 }
 
-/** Rekaman idempotensi lama untuk (store, key), bila ada. */
+/**
+ * Rekaman idempotensi untuk (store, key), bila ada DAN masih dalam jendela
+ * replay 7 hari — batas yang sama dengan cleanup cron, supaya kirim ulang
+ * setelah seminggu benar-benar memproses ulang (bukan memutar balik respons basi).
+ */
 export async function findIdempotent(
   db: AnyDb,
   storeId: string,
@@ -15,7 +26,9 @@ export async function findIdempotent(
 ): Promise<IdempotentRecord | null> {
   const result = await db.execute(
     sql`SELECT endpoint, status_code, response_body FROM idempotency_keys
-        WHERE store_id = ${storeId} AND key = ${key} LIMIT 1`,
+        WHERE store_id = ${storeId} AND key = ${key}
+          AND created_at > now() - interval '7 days'
+        LIMIT 1`,
   );
   const row = result.rows[0] as
     | { endpoint: string; status_code: number; response_body: unknown }
