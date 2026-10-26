@@ -311,6 +311,8 @@ export async function deleteStockIn(
   await db.transaction(async (tx) => {
     const typed = tx as unknown as AnyDb;
     const current = await requireEditable(typed, storeId, id, now);
+    // Kunci sebelum mengubah riwayat — pola yang sama dengan updateStockIn.
+    await lockProduct(typed, storeId, current.productId);
     await typed.execute(
       sql`DELETE FROM stock_ins WHERE store_id = ${storeId} AND id = ${id}`,
     );

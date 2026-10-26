@@ -364,6 +364,28 @@ describe("PATCH /stock-ins/{id} — penolakan", () => {
   });
 });
 
+/** Skenario W-2: tambah baris masuk, jual hampir semua, coba hapus baris itu. */
+async function hapusMembuatStokNegatif(productId: string) {
+  const detail = (await (await req(`/products/${productId}`)).json()) as {
+    stock: number;
+  };
+  // Q = stok sekarang + 10, lalu jual sampai sisa 2 → hapus baris Q = stok negatif,
+  // apa pun baseline fixture.
+  const qty = detail.stock + 10;
+  await post({
+    receivedOn: "2026-11-04",
+    lines: [{ productId, qty, unitCost: 1_000 }],
+  });
+  const sold = await req(
+    "/sales/recap",
+    "PUT",
+    { date: TODAY, mode: "quantity", lines: [{ productId, qty: qty - 2 }] },
+    crypto.randomUUID(),
+  );
+  expect(sold.status).toBe(200);
+  return qty;
+}
+
 describe("DELETE /stock-ins/{id}", () => {
   it("menghapus baris dalam jendela dan mengembalikan 204", async () => {
     const created = (await (
@@ -389,6 +411,29 @@ describe("DELETE /stock-ins/{id}", () => {
     expect(
       (await req(`/stock-ins/${crypto.randomUUID()}`, "DELETE")).status,
     ).toBe(404);
+  });
+
+  it("W-2: hapus yang membuat stok negatif ditolak 422, baris tetap ada", async () => {
+    const qty = await hapusMembuatStokNegatif(kecapId);
+    const list = (await (
+      await req(`/stock-ins?productId=${kecapId}`)
+    ).json()) as {
+      items: Item[];
+    };
+    const target = list.items.find((item) => item.qty === qty);
+    expect(target).toBeDefined();
+
+    const res = await req(`/stock-ins/${target!.id}`, "DELETE");
+    expect(res.status).toBe(422);
+    expect((await res.json()).error.code).toBe("insufficient_stock");
+
+    // Baris tidak terhapus — transaksi dibatalkan.
+    const after = (await (
+      await req(`/stock-ins?productId=${kecapId}`)
+    ).json()) as {
+      items: Item[];
+    };
+    expect(after.items.some((item) => item.id === target!.id)).toBe(true);
   });
 });
 
@@ -418,5 +463,31 @@ describe("W-1 — rekaman idempotensi ada di transaksi yang sama", () => {
       sql`SELECT COUNT(*) AS n FROM stock_ins WHERE product_id = ${kecapId} AND qty = 7`,
     );
     expect(Number((counted.rows[0] as { n: unknown }).n)).toBe(0);
+  });
+});
+
+describe("23505 — jaring saat pre-check route kalah balapan", () => {
+  it("dua POST bersamaan nama sama → 201 + 409, bukan 500", async () => {
+    // Pre-check route (`nameKeyTaken`) membaca sebelum menulis. Dua request
+    // bersamaan bisa sama-sama lolos lalu salah satu kena partial unique index
+    // `products_store_id_name_key_key`. Yang sampai ke klien harus 409 yang
+    // bisa dibaca, bukan 500 mentah — mapping ada di `handleError` (app.ts).
+    const name = `Balapan ${crypto.randomUUID()}`;
+    const body = {
+      receivedOn: TODAY,
+      lines: [
+        {
+          newProduct: { name, unit: "pcs", sellPrice: 5_000 },
+          qty: 1,
+          unitCost: 1_000,
+        },
+      ],
+    };
+    const results = await Promise.all([post(body), post(body)]);
+
+    const codes = results.map((r) => r.status).sort();
+    expect(codes).toEqual([201, 409]);
+    const conflict = results.find((r) => r.status === 409);
+    expect((await conflict!.json()).error.code).toBe("duplicate_product_name");
   });
 });

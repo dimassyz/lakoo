@@ -315,3 +315,23 @@ describe("W-8 — id di path bukan UUID", () => {
     expect((await res.json()).error.code).toBe("not_found");
   });
 });
+
+describe("23505 — unique violation dari balapan, bukan 500", () => {
+  it("INSERT produk dengan name_key yang sudah ada → 409, bukan 500", async () => {
+    // Pre-check `findLiveProductByNameKey` bisa kalah balapan: dua request
+    // bersamaan sama-sama lolos lalu INSERT kena partial unique index
+    // `products_store_id_name_key_key`. Yang harus sampai ke klien adalah
+    // 409 yang bisa dibaca, bukan 500 mentah.
+    const name = `Balapan ${crypto.randomUUID()}`;
+    await createProduct(name);
+    const res = await req("/products", "POST", {
+      name,
+      unit: "pcs",
+      costPrice: 12_000,
+      sellPrice: 20_000,
+      openingStock: 10,
+    });
+    expect(res.status).toBe(409);
+    expect((await res.json()).error.code).toBe("duplicate_product_name");
+  });
+});

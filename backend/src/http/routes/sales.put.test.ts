@@ -11,6 +11,7 @@ import {
 } from "../../../../database/src/schema.ts";
 import { eq, sql } from "drizzle-orm";
 import { createApp } from "../app.ts";
+import { lockOrder } from "../../repo/salesRecap.ts";
 
 const ORIGIN = "https://lakoo.test";
 const NOW = new Date("2026-11-09T03:00:00Z"); // 10:00 WIB
@@ -404,5 +405,17 @@ describe("W-9 — jendela replay 7 hari", () => {
     );
     expect(second.status).toBe(200);
     expect((await second.json()).lines[0].soldQty).toBe(9);
+  });
+});
+
+describe("W-2 — urutan lock deterministik (anti-deadlock)", () => {
+  it("dedup dan urutkan, apa pun urutan input", () => {
+    expect(lockOrder(["c", "a", "b", "a"])).toEqual(["a", "b", "c"]);
+  });
+
+  it("dua PUT dengan urutan barang berlawanan mendapat urutan lock sama", () => {
+    const pertama = lockOrder([ids.kecap!, ids.gula!]);
+    const kedua = lockOrder([ids.gula!, ids.kecap!]);
+    expect(pertama).toEqual(kedua);
   });
 });

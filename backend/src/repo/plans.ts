@@ -355,20 +355,6 @@ export async function savePlan(
 }
 
 /** Buang rencana `suggested` lama sebelum membuat pengganti (index unik live). */
-export async function discardSuggested(
-  db: AnyDb,
-  storeId: string,
-  planId: string,
-): Promise<void> {
-  await db.transaction(async (tx) => {
-    const typed = tx as unknown as AnyDb;
-    await typed.execute(sql`DELETE FROM plan_steps WHERE plan_id = ${planId}`);
-    await typed.execute(
-      sql`DELETE FROM action_plans WHERE store_id = ${storeId} AND id = ${planId} AND state = 'suggested'`,
-    );
-  });
-}
-
 /** `suggested` → `active`: catat mulai, nilai terkunci, dan tahap 1 berjalan. */
 export async function startPlan(
   db: AnyDb,
@@ -403,7 +389,7 @@ export async function startPlan(
         lockedValueAtStart: lockedValue,
         currentStep: 1,
       })
-      .where(eq(actionPlans.id, planId));
+      .where(and(eq(actionPlans.id, planId), eq(actionPlans.storeId, storeId)));
 
     await typed
       .update(planSteps)
@@ -467,12 +453,14 @@ async function requireRunningStep(
 
 async function finishPlan(
   db: AnyDb,
+  storeId: string,
   planId: string,
   state: "completed" | "exhausted" | "stopped",
   today: string,
 ): Promise<void> {
   await db.execute(
-    sql`UPDATE action_plans SET state = ${state}, ended_on = ${today}::date WHERE id = ${planId}`,
+    sql`UPDATE action_plans SET state = ${state}, ended_on = ${today}::date
+        WHERE id = ${planId} AND store_id = ${storeId}`,
   );
 }
 
@@ -506,26 +494,31 @@ export async function recordStepOutcome(
     }
 
     await requireRunningStep(typed, planId, stepNo);
+    // W-4: subquery satu kali supaya tiap tulis plan_steps ter-scope toko.
+    const scoped = sql`(SELECT id FROM action_plans
+                        WHERE id = ${planId} AND store_id = ${storeId})`;
     await typed.execute(
       sql`UPDATE plan_steps SET outcome = ${outcome}, ended_on = ${today}::date
-          WHERE plan_id = ${planId} AND step_no = ${stepNo}`,
+          WHERE plan_id = ${scoped} AND step_no = ${stepNo}`,
     );
 
     if (outcome === "succeeded") {
       await typed.execute(
         sql`UPDATE plan_steps SET outcome = 'skipped'
-            WHERE plan_id = ${planId} AND step_no > ${stepNo} AND outcome = 'pending'`,
+            WHERE plan_id = ${scoped}
+              AND step_no > ${stepNo} AND outcome = 'pending'`,
       );
-      await finishPlan(typed, planId, "completed", today);
+      await finishPlan(typed, storeId, planId, "completed", today);
     } else if (stepNo >= 3) {
-      await finishPlan(typed, planId, "exhausted", today);
+      await finishPlan(typed, storeId, planId, "exhausted", today);
     } else {
       await typed.execute(
         sql`UPDATE plan_steps SET outcome = 'in_progress', started_on = ${today}::date
-            WHERE plan_id = ${planId} AND step_no = ${stepNo + 1}`,
+            WHERE plan_id = ${scoped} AND step_no = ${stepNo + 1}`,
       );
       await typed.execute(
-        sql`UPDATE action_plans SET current_step = ${stepNo + 1} WHERE id = ${planId}`,
+        sql`UPDATE action_plans SET current_step = ${stepNo + 1}
+            WHERE id = ${planId} AND store_id = ${storeId}`,
       );
     }
 
@@ -602,9 +595,11 @@ export async function stopPlan(
 
     await typed.execute(
       sql`UPDATE plan_steps SET outcome = 'skipped'
-          WHERE plan_id = ${planId} AND outcome = 'in_progress'`,
+          WHERE plan_id IN (SELECT id FROM action_plans
+                            WHERE id = ${planId} AND store_id = ${storeId})
+            AND outcome = 'in_progress'`,
     );
-    await finishPlan(typed, planId, "stopped", today);
+    await finishPlan(typed, storeId, planId, "stopped", today);
 
     const updated = await findPlan(typed, storeId, planId, today);
     if (updated === null)

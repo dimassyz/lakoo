@@ -189,7 +189,7 @@ export async function updateProduct(
         nameKey: (patch as { nameKey?: string }).nameKey,
         updatedAt: now,
       })
-      .where(eq(products.id, id))
+      .where(and(eq(products.id, id), eq(products.storeId, storeId)))
       .returning();
   });
   const row = rows[0];
@@ -233,7 +233,7 @@ export async function setArchived(
     return tx
       .update(products)
       .set({ archivedAt: archived ? now : null, updatedAt: now })
-      .where(eq(products.id, id))
+      .where(and(eq(products.id, id), eq(products.storeId, storeId)))
       .returning();
   });
   const row = rows[0];
