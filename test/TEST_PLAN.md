@@ -516,6 +516,14 @@ sampel) — ambang 300 ms, margin 143.1 ms`. Diff = +8/−0 satu file
         sama) — koreksi tech-lead: itu BUKAN temuan; kalau disebut, disebut
         sebagai hipotesis. Yang terukur hanya angkanya, bukan penyebabnya
         (pola run 61).
+      - **Busur estimate-vs-measurement (pelajaran metodologis saga ini,
+        setara dengan pelajaran verifikasi level-KODE):** perkiraan dari
+        membaca SQL konsisten SALAH ARAH KONSERVATIF — kandidat 2: estimasi
+        ≈ −3% vs terukur **−55 ms** (361,9 → 307,1, lingkungan sama);
+        kandidat 1: estimasi ≈ −9 ms vs terukur **−30…−44 ms** terkontrol
+        (klaim −115 ms ditarik). Dua kandidat, satu pola: hanya pengukuran
+        yang benar; analisis baris tidak pernah mengira pemborosannya
+        sebesar itu.
         **Catatan finalitas:** konfirmasi akhir formal tech-lead masih
         di jalur (nuansa bench-k1 ikut di sana) — kalau berubah jadi "PR
         jalan" (insentif headroom ekstra, bukan ambang — keputusan yang
