@@ -55,3 +55,7 @@ docs/*
 !docs/api/
 docs/api/*
 !docs/api/openapi.yaml
+.neon
+
+.vercel
+.env*
