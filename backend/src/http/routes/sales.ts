@@ -7,6 +7,7 @@ import { ApiError, validationError } from "../errors.ts";
 import { findIdempotent } from "../../repo/idempotency.ts";
 import { listProductStats } from "../../repo/products.ts";
 import { hasSalesOn, recapRows, saveRecap } from "../../repo/salesRecap.ts";
+import { fieldMessage } from "../validate.ts";
 import { todayIso } from "./products.ts";
 
 export interface SalesDeps {
@@ -147,7 +148,9 @@ async function handleRecapPut(c: Context, deps: SalesDeps) {
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const path = issue?.path.join(".") ?? "body";
-    throw validationError({ [path]: issue?.message ?? "tidak valid" });
+    throw validationError({
+      [path]: issue ? fieldMessage(issue) : "tidak valid",
+    });
   }
 
   const today = todayIso(deps.now());

@@ -5,6 +5,7 @@ import type { AnyDb } from "../../../../database/src/db.ts";
 import { currentSession } from "../auth-context.ts";
 import { validationError } from "../errors.ts";
 import { IMPORT_RULE, consumeRateLimit } from "../rate-limit.ts";
+import { fieldMessage } from "../validate.ts";
 import { importProducts, importSales } from "../../repo/imports.ts";
 import { todayIso } from "./products.ts";
 
@@ -61,7 +62,9 @@ function bodyOf<T>(schema: z.ZodType<T>, raw: unknown): T {
   if (parsed.success) return parsed.data;
   const issue = parsed.error.issues[0];
   const path = issue?.path.join(".") || "body";
-  throw validationError({ [path]: issue?.message ?? "tidak valid" });
+  throw validationError({
+    [path]: issue ? fieldMessage(issue) : "tidak valid",
+  });
 }
 
 async function handleProducts(c: Context, deps: ImportDeps) {
