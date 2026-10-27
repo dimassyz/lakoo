@@ -14,6 +14,7 @@ import { loadProductSummaries, loadProducts } from "../productView.ts";
 import { generatePlan, readAiSettings } from "../../ai/generate.ts";
 import { weekdayName } from "../../ai/prompt.ts";
 import {
+  isValidBundlePartner,
   validatePlan,
   type BundleCandidate,
 } from "../../domain/planValidation.ts";
@@ -212,13 +213,17 @@ export interface ComposeInput {
 
 /** Masukan template §5.6 dari ringkasan barang + kandidat bundel. */
 function templateOf(summary: ProductSummary, candidates: BundleCandidate[]) {
+  // Kandidat harus lolos aturan yang sama dengan validator (isValidBundlePartner),
+  // kalau tidak rencana yang dihasilkan ditolak validatePlan → 500. Kalau tidak
+  // ada pasangan sah, bundleProductId null dan template turun ke discount (§5.6).
+  const partner = candidates.find(isValidBundlePartner);
   return {
     status: summary.status,
     sellPrice: summary.sellPrice,
     lastCost: summary.lastCost,
     stock: summary.stock,
-    bundleProductId: candidates[0]?.productId ?? null,
-    bundleSellPrice: candidates[0]?.sellPrice,
+    bundleProductId: partner?.productId ?? null,
+    bundleSellPrice: partner?.sellPrice,
   };
 }
 
