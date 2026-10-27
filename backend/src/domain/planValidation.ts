@@ -54,6 +54,20 @@ export interface BundleCandidate {
   sellPrice: number;
 }
 
+/**
+ * Pasangan bundle yang sah (SPEC §5.6): status sehat/waspada dan bukan
+ * pelengkap. Hidup di SATU tempat karena aturannya ditegakkan `checkBundle`
+ * DAN dipakai `templateOf` untuk memilih kandidat — selama keduanya punya
+ * salinan masing-masing, keduanya bisa drift (dan pernah drift: template
+ * mengambil `candidates[0]` apa adanya, validator menolaknya → 500).
+ */
+export function isValidBundlePartner(candidate: BundleCandidate): boolean {
+  return (
+    !candidate.isComplementary &&
+    (candidate.status === "sehat" || candidate.status === "waspada")
+  );
+}
+
 export interface ValidationContext {
   productId: string;
   productStatus: ProductStatus;
@@ -192,10 +206,12 @@ function checkBundle(
     errors.push("bundle_product_id bukan barang aktif milik toko ini");
     return;
   }
-  if (candidate.isComplementary)
-    errors.push("barang pasangan tidak boleh pelengkap");
-  if (candidate.status !== "sehat" && candidate.status !== "waspada") {
-    errors.push("barang pasangan harus sehat atau waspada");
+  if (!isValidBundlePartner(candidate)) {
+    errors.push(
+      candidate.isComplementary
+        ? "barang pasangan tidak boleh pelengkap"
+        : "barang pasangan harus sehat atau waspada",
+    );
   }
 }
 

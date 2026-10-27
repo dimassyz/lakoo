@@ -22,6 +22,8 @@ let storeId = "";
 let matiId = "";
 let sehatId = "";
 let pelengkapId = "";
+let matiLainId = "";
+let sekaratId = "";
 
 interface Step {
   stepNo: number;
@@ -104,11 +106,30 @@ async function seedProducts(): Promise<void> {
         sellPrice: 500,
         isComplementary: true,
       },
+      {
+        // Nama sengaja diurutkan SEBELUM "Barang Laku" supaya menjadi
+        // kandidat bundel pertama untuk barang bermasalah — bentuk data nyata
+        // yang memicu bug: kandidat[0] bermasalah → ditolak validator → 500.
+        storeId,
+        name: "Anjuran Mati",
+        nameKey: "anjuran mati",
+        unit: "pcs",
+        sellPrice: 15_000,
+      },
+      {
+        storeId,
+        name: "Barang Sekarat",
+        nameKey: "barang sekarat",
+        unit: "pcs",
+        sellPrice: 18_000,
+      },
     ])
     .returning();
   matiId = inserted[0]!.id;
   sehatId = inserted[1]!.id;
   pelengkapId = inserted[2]!.id;
+  matiLainId = inserted[3]!.id;
+  sekaratId = inserted[4]!.id;
 }
 
 async function seedLedger(): Promise<void> {
@@ -129,6 +150,27 @@ async function seedLedger(): Promise<void> {
       receivedOn: "2026-11-01",
       qty: 10,
       unitCost: 6_000,
+      kind: "opening",
+    },
+    // ~100 hari tanpa laku → mati. Nama "Anjuran Mati" < "Barang Laku" jadi
+    // kandidat bundel PERTAMA untuk barang bermasalah.
+    {
+      storeId,
+      productId: matiLainId,
+      batchId: crypto.randomUUID(),
+      receivedOn: "2026-08-01",
+      qty: 10,
+      unitCost: 9_000,
+      kind: "opening",
+    },
+    // ~39 hari tanpa laku → sekarat (healthyDays 14 < 39 ≤ deadDays 45).
+    {
+      storeId,
+      productId: sekaratId,
+      batchId: crypto.randomUUID(),
+      receivedOn: "2026-10-01",
+      qty: 10,
+      unitCost: 11_000,
       kind: "opening",
     },
   ]);
@@ -226,6 +268,34 @@ describe("POST /products/{id}/plans — pembuatan rencana", () => {
     expect(res.status).toBe(201);
     const fresh = (await res.json()) as Plan;
     expect(fresh.id).not.toBe(created.id);
+  });
+});
+
+// Regresi: produk bermasalah dulu kena 500 karena template mengambil
+// candidates[0] APA ADANYA (mati/sekarat), lalu validatePlan menolaknya.
+// Data di bawah sengaja berbentuk produksi: kandidat pertama barang bermasalah
+// adalah barang bermasalah lain ("Anjuran Mati" < "Barang Laku" secara alfabetis,
+// dan summaries diurutkan ORDER BY p.name ASC).
+describe("POST /products/{id}/plans — kandidat bundel bermasalah (regresi 500)", () => {
+  it("barang sekarat dengan kandidat pertama mati → 201, bukan 500", async () => {
+    const res = await generate(sekaratId);
+    expect(res.status).toBe(201);
+    const plan = (await res.json()) as Plan;
+    expect(plan.source).toBe("template");
+    expect(plan.statusAtGeneration).toBe("sekarat");
+  });
+
+  it("rencana sekarat utuh: 3 tahap, tahap 1 bundle atau discount", async () => {
+    const res = await generate(sekaratId, { regenerate: true });
+    expect(res.status).toBe(201);
+    const plan = (await res.json()) as Plan;
+
+    // 201 sudah membuktikan lolos validatePlan — kalau pasangan yang dipilih
+    // tidak sah, handler melempar 500 sebelum sampai sini.
+    expect(plan.steps).toHaveLength(3);
+    // §5.6 sekarat tahap 1 = bundle; tanpa pasangan sah turun jadi discount.
+    expect(["bundle", "discount"]).toContain(plan.steps[0]!.actionType);
+    expect(plan.steps[0]!.isLoss).toBe(false);
   });
 });
 
