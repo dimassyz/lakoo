@@ -4,10 +4,12 @@ import { createTestDb } from "../../../../database/src/test/pglite.ts";
 import type { AnyDb } from "../../../../database/src/db.ts";
 import {
   dailySales,
+  planSteps,
   products,
   stockIns,
   stores,
 } from "../../../../database/src/schema.ts";
+import { eq } from "drizzle-orm";
 import { createApp } from "../app.ts";
 
 const ORIGIN = "https://lakoo.test";
@@ -384,6 +386,42 @@ describe("POST /products/{id}/plans — respons step memenuhi kontrak", () => {
       expect(step.bundleProduct).toBeNull();
       expect(step.bundlePrice).toBeNull();
     }
+  });
+});
+
+// Properti desain tanpa penguji adalah properti yang bisa dibatalkan diam-diam.
+// `plans.ts` UPDATE start/stop hanya menyentuh `outcome`/`startedOn` — field
+// kontrak (oldPrice/bundlePrice) sengaja TIDAK ditulis karena nilainya
+// point-in-time. Tanpa tes ini, seseorang bisa "memperbaiki" start/stop supaya
+// me-refresh harga — terdengar masuk akal, nol tes gagal, dan harga historis
+// ditimpa harga hari ini. Korupsi senyap, kelas SAMA dengan Rp0.
+describe("start → stop TIDAK mengubah field kontrak (immutability)", () => {
+  const contractFields = (planId: string) =>
+    db
+      .select({
+        stepNo: planSteps.stepNo,
+        oldPrice: planSteps.oldPrice,
+        bundlePrice: planSteps.bundlePrice,
+        bundleProductName: planSteps.bundleProductName,
+        bundleProductSellPrice: planSteps.bundleProductSellPrice,
+      })
+      .from(planSteps)
+      .where(eq(planSteps.planId, planId));
+
+  it("oldPrice/bundlePrice setiap step IDENTIK sebelum dan sesudah start → stop", async () => {
+    const plan = (await (
+      await generate(sekaratId, { regenerate: true })
+    ).json()) as Plan;
+
+    const before = await contractFields(plan.id);
+    expect(before.length).toBeGreaterThan(0);
+
+    expect((await req(`/plans/${plan.id}/start`, "POST")).status).toBe(200);
+    expect((await req(`/plans/${plan.id}/stop`, "POST")).status).toBe(200);
+
+    // EKSAK: seluruh baris field kontrak harus identik. Kalau start/stop mulai
+    // me-refresh harga, `after` akan beda dan tes ini GAGAL — bukan lolos palsu.
+    expect(await contractFields(plan.id)).toEqual(before);
   });
 });
 
