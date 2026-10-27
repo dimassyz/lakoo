@@ -32,7 +32,7 @@ export async function readJson<T>(
  *  cocok pola ini, itu pesan kustom dari skema (mis. "tanggal harus format
  *  YYYY-MM-DD") dan dipertahankan apa adanya. */
 const ZOD_DEFAULT_EN =
-  /^(String|Array|Number|Set|Date) must |^Expected .+, received |^Invalid |^Unrecognized key/;
+  /^(String|Array|Number|Set|Date) must |^Expected .+, received |^Invalid |^Unrecognized key|^Required/;
 
 /** Pesan Indonesia untuk kode Zod yang tidak butuh parameter. */
 const FLAT: Partial<Record<z.ZodIssue["code"], string>> = {
@@ -68,8 +68,13 @@ function sizeMessage(issue: z.ZodIssue): string | undefined {
  */
 export function fieldMessage(issue: z.ZodIssue): string {
   if (!ZOD_DEFAULT_EN.test(issue.message)) return issue.message;
-  if (issue.code === "invalid_type")
-    return `Format tidak sesuai (diharapkan ${issue.expected}).`;
+  if (issue.code === "invalid_type") {
+    // Zod memakai "Required" untuk field wajib yang kosong/tidak ada — beda dari
+    // mismatch tipe yang butuh nama tipe. Keduanya invalid_type, dibeda lewat received.
+    return issue.received === "undefined"
+      ? "Wajib diisi."
+      : `Format tidak sesuai (diharapkan ${issue.expected}).`;
+  }
   if (issue.code === "invalid_string") {
     // `validation` bisa berupa object (startsWith/endsWith/includes), bukan cuma string.
     return typeof issue.validation === "string"
