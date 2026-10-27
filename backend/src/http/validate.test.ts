@@ -48,6 +48,19 @@ describe("fieldMessage — pesan default Zod jadi bahasa Indonesia", () => {
     );
   });
 
+  it('field wajib yang hilang → "Wajib diisi." (bukan "Required")', () => {
+    // Zod v3 memakai pesan default "Required" untuk invalid_type dengan
+    // received "undefined". Guard teks harus mengenalinya, kalau tidak lolos
+    // sebagai pesan kustom dan tetap berbahasa Inggris di form login/register.
+    const schema = z.object({
+      email: z.string().email(),
+      password: z.string().min(8),
+    });
+    const issue = firstIssue(schema, {});
+    expect(issue.message).toBe("Required"); // bukti ini memang default Zod
+    expect(fieldMessage(issue)).toBe("Wajib diisi.");
+  });
+
   it("unrecognized_keys pada skema strict", () => {
     const issue = firstIssue(z.object({ a: z.string() }).strict(), {
       a: "x",
@@ -97,5 +110,26 @@ describe("fieldMessage — MEMPERTAHANKAN pesan kustom skema", () => {
       { productId: "x" },
     );
     expect(fieldMessage(issue)).toBe("productId harus UUID");
+  });
+});
+
+describe("fieldMessage — satu respons, beberapa field, semua Indonesia", () => {
+  it("campuran field wajib + format → tidak ada yang lolos berbahasa Inggris", () => {
+    const schema = z.object({
+      email: z.string().email(),
+      password: z.string().min(8),
+    });
+    const result = schema.safeParse({ password: "x" });
+    if (result.success) throw new Error("seharusnya gagal parse");
+    const fields: Record<string, string> = {};
+    for (const issue of result.error.issues) {
+      fields[issue.path.join(".")] ??= fieldMessage(issue);
+    }
+    expect(fields).toEqual({
+      email: "Wajib diisi.",
+      password: "minimal 8 karakter",
+    });
+    // Regresi QA: "Required" dulu lolos karena guard teks tak mengenalinya.
+    expect(Object.values(fields).join(" ")).not.toMatch(/^Required$|Required/);
   });
 });
