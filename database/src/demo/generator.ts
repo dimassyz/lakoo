@@ -80,6 +80,8 @@ export interface GeneratedPlanStep {
   startedOn: string | null;
   dueOn: string | null;
   endedOn: string | null;
+  /** Harga jual barang saat rencana dibuat (kontrak PlanStep.oldPrice). */
+  oldPrice: number;
 }
 
 export interface GeneratedPlan {
@@ -361,6 +363,8 @@ interface StepTiming {
   stepNo: number;
   outcome: GeneratedPlanStep["outcome"];
   lastCost: number;
+  /** Harga jual barang saat rencana dibuat — ikut setiap tahap (kontrak oldPrice). */
+  sellPrice: number;
   stock: number;
   startedOn: string | null;
   dueOn: string | null;
@@ -387,6 +391,7 @@ function toStep(draft: StepDraft, timing: StepTiming): GeneratedPlanStep {
     startedOn: timing.startedOn,
     dueOn: timing.dueOn,
     endedOn: timing.endedOn,
+    oldPrice: timing.sellPrice,
   };
 }
 
@@ -461,6 +466,7 @@ function buildActivePlan(
     stepNo,
     outcome,
     lastCost: cost,
+    sellPrice: sell,
     stock,
     startedOn: from,
     dueOn: due,
@@ -510,6 +516,7 @@ function buildCompletedPlan(
       stepNo: 1,
       outcome: "succeeded",
       lastCost: cost,
+      sellPrice: product.sellPrice,
       stock,
       startedOn,
       dueOn: endedOn,
@@ -523,6 +530,7 @@ function buildCompletedPlan(
         stepNo,
         outcome: "skipped",
         lastCost: cost,
+        sellPrice: product.sellPrice,
         stock,
         startedOn: null,
         dueOn: null,
