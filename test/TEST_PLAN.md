@@ -558,22 +558,47 @@ sampel) — ambang 300 ms, margin 143.1 ms`. Diff = +8/−0 satu file
         kalimatnya bisa dibaca terbalik. Kesimpulan (tutup-dengan-data)
         TIDAK berubah: margin native 129 ms+ mendominasi gain lokal apa
         pun.
-      - **Artefak benchmark (permintaan devops, DIPULIHKAN backend-dev):**
-        `database/src/queries/bench-k1.test.ts` di tree backend-dev —
-        **sha FINAL `8b3086efed93230b`, 90 baris** (sha lama
-        `ca52c8b8ee11d1f9` = versi SEBELUM dua baseline run tambahan
-        dikonsolidasi — JANGAN dipakai verifikasi, angkanya tidak akan
-        cocok dengan record), terverifikasi JALAN (1 passed), tanpa ambang
-        300 ms di dalam (tak akan pernah merah-kan gate), prettier bersih,
-        productStats.ts identik main. TIDAK di main (kandidat 1 tidak
-        diterapkan — kuverifikasi). Angka-angka kini reproducible siapa
-        pun dengan artefak itu. **Status: JANGAN didaratkan SEKARANG** —
-        verdict tercatat di PROJECT_LOG; file UNTRACKED, secara struktural
-        tidak bisa masuk CI tanpa `git add` eksplisit. **Kendaraan PR =
-        devops SAAT artefak mendarat — dan mendaratnya PASCA-DEMO**,
-        bersama cleanup kandidat 1 dengan naming/exclusion yang benar.
-        BUKAN sekarang (qualifier tech-lead: entri ambigu dibaca sebagai
-        izin — kelas kesalahan yang sesi ini bayar berulang).
+      - **Artefak benchmark — MENDARAT sebagai RECORD-INTEGRITY (bukan
+        LANDING) · 26 Okt 2026, amendemen SATU sesuai ruling tech-lead:**
+        `database/src/queries/bench-k1.test.ts` kini ada di branch khusus
+        **`artefak/bench-k1`** (commit `7b006ca`; diff vs main = 1 file,
+        +90 baris; `productStats.ts` identik main — kuverifikasi).
+        **Dua identifier untuk objek yang SAMA, keduanya terverifikasi:**
+        (a) **sha256 konten: `8b3086efed93230ba2ad043d692b39a58da4682c4da658cf6c08ce7442451c98`**
+        — persis sha yang diumumkan backend-dev; verifikasi pembaca:
+        `git cat-file -p origin/artefak/bench-k1:database/src/queries/bench-k1.test.ts | sha256sum`;
+        (b) **git blob sha1: `d83620994bb3f7498818ed6a7fc97c16c67f5157`**
+        (identitas objek di git) — verifikasi:
+        `git rev-parse origin/artefak/bench-k1:database/src/queries/bench-k1.test.ts`.
+        Objek kuverifikasi JALAN sendiri (1 passed, best=225,5 ms). Tanpa
+        ambang 300 ms di dalam (tak akan pernah merah-kan gate).
+        **KOREKSI MILIKKU (dicatat, bukan disembunyikan):** amendemen
+        pertamaku di blok ini menyatakan sha announced `8b3086e` "DITARIK —
+        tidak cocok dengan blob" — **ITU SALAH**. Aku membandingkan
+        sha256-konten dengan git-blob-sha1 (dua algoritma berbeda atas
+        serialisasi berbeda) dan membaca beda algoritma sebagai mismatch.
+        `8b3086e` benar sejak awal; `d8362099` juga benar — beda algoritma,
+        objek sama. Kelas kesalahan sesi ini, sekali lagi dari sisiku:
+        bukti permukaan (dua string beda) diterima tanpa memeriksa APA yang
+        diukur string tersebut. Aturan yang berlaku: **bandingkan identifier
+        hanya dalam algoritma yang SAMA**; beda algoritma = beda identitas,
+        bukan mismatch.
+      - **Status RECORD-INTEGRITY (wording ruling tech-lead, verbatim):**
+        "HANYA untuk reproducibility sha — BUKAN landing, BUKAN masuk
+        gate, BUKAN PR ke main. Keputusan landing pasca-demo berdiri
+        tidak berubah." Branch discoverable yang tidak masuk gate siapa
+        pun; ruling kelas LANDING di bawah BERDIRI TIDAK BERUBAH.
+      - **Status LANDING (tidak berubah):** "JANGAN didaratkan SEKARANG" —
+        verdict tercatat di PROJECT_LOG; mendaratnya PASCA-DEMO, bersama
+        cleanup kandidat 1 dengan naming/exclusion yang benar (qualifier
+        tech-lead: entri ambigu dibaca sebagai izin — kelas kesalahan
+        yang sesi ini bayar berulang).
+      - **Catatan verifikasi untuk pembaca record:** frasa di blok-blok
+        ini bisa terbelah antar baris (wrap prettier) — verifikasi dengan
+        `grep -A1` atau regex toleran-spasi (`grep -oE "kata +kata"`),
+        JANGAN grep satu-baris; dan sha diverifikasi di OBJEK
+        (`git rev-parse <ref>:<path>`), bukan dari pengumuman pesan.
+        (Pelajaran grep sesi ini: nol match ≠ nol ada.)
       - **Status klaim perf: pertanyaan QA-04 TERJAWAB (BUKAN "perf tutup"
         sebagai klaim proyek).** Klaim yang dikunci tech-lead: _"native
         lolos 4/4 run dengan angka tercetak; kasus terburuk 171 ms (57%
