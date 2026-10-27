@@ -37,6 +37,7 @@ const VALIDATION: ValidationContext = {
   bundleCandidates: [
     {
       productId: "11111111-1111-4111-8111-111111111111",
+      name: "Gula Pasir",
       status: "sehat",
       isComplementary: false,
       sellPrice: 10_000,

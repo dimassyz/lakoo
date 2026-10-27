@@ -164,6 +164,10 @@ function stepRowOf(
     startedOn: step.startedOn,
     dueOn: step.dueOn,
     endedOn: step.endedOn,
+    oldPrice: step.oldPrice,
+    bundlePrice: step.bundlePrice,
+    bundleProductName: step.bundleProductName,
+    bundleProductSellPrice: step.bundleProductSellPrice,
   };
 }
 

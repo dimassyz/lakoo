@@ -15,6 +15,13 @@
       "when": 1792986419759,
       "tag": "0001_store_type_nullable",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792990000000,
+      "tag": "0002_plan_step_contract_fields",
+      "breakpoints": true
     }
   ]
 }

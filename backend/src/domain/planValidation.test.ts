@@ -16,6 +16,7 @@ function ctx(overrides: Partial<ValidationContext> = {}): ValidationContext {
     bundleCandidates: [
       {
         productId: "b1",
+        name: "Minyak Goreng",
         status: "sehat",
         isComplementary: false,
         sellPrice: 10_000,
@@ -225,6 +226,7 @@ describe("aturan 5 — barang pasangan bundle", () => {
       bundleCandidates: [
         {
           productId: "b1",
+          name: "Plastik",
           status: "sehat",
           isComplementary: true,
           sellPrice: 10_000,
@@ -240,6 +242,7 @@ describe("aturan 5 — barang pasangan bundle", () => {
       bundleCandidates: [
         {
           productId: "b1",
+          name: "Barang Mati",
           status: "mati",
           isComplementary: false,
           sellPrice: 10_000,

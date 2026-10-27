@@ -7,7 +7,7 @@ import {
 } from "../../../database/src/schema.ts";
 import { ApiError } from "../http/errors.ts";
 import type { PlanDraft, PlanStepDraft } from "../domain/planValidation.ts";
-import { deriveStep } from "../domain/pricing.ts";
+import { bundlePriceFor, deriveStep } from "../domain/pricing.ts";
 import { recoveredPercent } from "../domain/recovery.ts";
 
 export interface PlanStepOut {
@@ -18,8 +18,14 @@ export interface PlanStepOut {
   successCriteria: string;
   durationDays: number;
   discountPercent: number | null;
-  bundleProductId: string | null;
+  bundleProduct: {
+    id: string;
+    name: string;
+    sellPrice: number;
+  } | null;
+  bundlePrice: number | null;
   belowCostPercent: number | null;
+  oldPrice: number;
   newPrice: number;
   profitPerUnit: number;
   cashBackEstimate: number;
@@ -93,8 +99,17 @@ function serialize(
       successCriteria: step.successCriteria,
       durationDays: step.durationDays,
       discountPercent: step.discountPercent ?? null,
-      bundleProductId: step.bundleProductId ?? null,
+      bundleProduct:
+        step.bundleProductId === null || step.bundleProductName === null
+          ? null
+          : {
+              id: step.bundleProductId,
+              name: step.bundleProductName,
+              sellPrice: num(step.bundleProductSellPrice),
+            },
+      bundlePrice: step.bundlePrice ?? null,
       belowCostPercent: step.belowCostPercent ?? null,
+      oldPrice: num(step.oldPrice),
       newPrice: step.newPrice,
       profitPerUnit: step.profitPerUnit,
       cashBackEstimate: step.cashBackEstimate,
@@ -257,6 +272,12 @@ export async function listPlans(
   return Promise.all(rows.map((row) => withProduct(db, row, today)));
 }
 
+/** Pasangan bundel terpilih: nama + harga jual saat rencana dibuat. */
+export interface BundlePartner {
+  name: string;
+  sellPrice: number;
+}
+
 export interface SavePlanInput {
   storeId: string;
   productId: string;
@@ -267,8 +288,42 @@ export interface SavePlanInput {
   sellPrice: number;
   lastCost: number;
   stock: number;
-  bundleSellPrices: Map<string, number>;
+  bundlePartners: Map<string, BundlePartner>;
   now: Date;
+}
+
+/**
+ * Field kontrak yang bergantung pada pasangan bundel (§5.4). Di luar step
+ * bundle ketiganya null — dipisah dari `stepRowOf` supaya kompleksitasnya
+ * tetap terbaca.
+ */
+function bundleFieldsOf(
+  draft: PlanStepDraft,
+  input: SavePlanInput,
+  partner: BundlePartner | undefined,
+): {
+  bundlePrice: number | null;
+  bundleProductName: string | null;
+  bundleProductSellPrice: number | null;
+} {
+  if (draft.actionType !== "bundle") {
+    return {
+      bundlePrice: null,
+      bundleProductName: null,
+      bundleProductSellPrice: null,
+    };
+  }
+  return {
+    bundlePrice: bundlePriceFor({
+      actionType: "bundle",
+      sellPrice: input.sellPrice,
+      lastCost: input.lastCost,
+      discountPercent: draft.discountPercent ?? undefined,
+      bundleSellPrice: partner?.sellPrice,
+    }),
+    bundleProductName: partner?.name ?? null,
+    bundleProductSellPrice: partner?.sellPrice ?? null,
+  };
 }
 
 function stepRowOf(
@@ -276,10 +331,10 @@ function stepRowOf(
   draft: PlanStepDraft,
   input: SavePlanInput,
 ): typeof planSteps.$inferInsert {
-  const bundleSellPrice =
-    draft.bundleProductId === null || draft.bundleProductId === undefined
-      ? undefined
-      : input.bundleSellPrices.get(draft.bundleProductId);
+  const bundleId = draft.bundleProductId ?? null;
+  const partner =
+    bundleId === null ? undefined : input.bundlePartners.get(bundleId);
+  const bundleSellPrice = partner?.sellPrice;
   const derived = deriveStep(
     {
       actionType: draft.actionType,
@@ -301,7 +356,7 @@ function stepRowOf(
     successCriteria: draft.successCriteria,
     durationDays: draft.durationDays,
     discountPercent: draft.discountPercent ?? null,
-    bundleProductId: draft.bundleProductId ?? null,
+    bundleProductId: bundleId,
     belowCostPercent: draft.belowCostPercent ?? null,
     newPrice: derived.newPrice,
     profitPerUnit: derived.profitPerUnit,
@@ -309,6 +364,11 @@ function stepRowOf(
     isLoss: derived.isLoss,
     shareText: draft.shareCopy ?? null,
     outcome: "pending",
+    // Kontrak PlanStep: oldPrice/bundleProduct/bundlePrice. Harga disimpan SAAT
+    // rencana dibuat supaya rencana lama tidak ikut berubah kalau harga produk
+    // berubah setelahnya.
+    oldPrice: input.sellPrice,
+    ...bundleFieldsOf(draft, input, partner),
   };
 }
 

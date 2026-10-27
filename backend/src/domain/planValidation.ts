@@ -49,6 +49,7 @@ export interface PlanDraft {
 /** Kandidat barang pasangan bundle: semua produk aktif milik toko yang sama. */
 export interface BundleCandidate {
   productId: string;
+  name: string;
   status: ProductStatus;
   isComplementary: boolean;
   sellPrice: number;
