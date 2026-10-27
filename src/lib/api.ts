@@ -5,8 +5,15 @@ import type { components, paths } from "./api-types";
  * Satu klien untuk seluruh src/. Tipe diturunkan dari openapi.yaml
  * (`pnpm api:types`), bukan interface tulis tangan.
  */
+/**
+ * Prefix kontrak: `docs/api/openapi.yaml` → `servers: - url: /api/v1`.
+ * Backend memakai `basePath("/api/v1")`; tanpa prefix yang sama setiap
+ * panggilan jatuh ke 404. Diuji di `api.test.ts` terhadap openapi.yaml.
+ */
+export const API_BASE = "/api/v1";
+
 export const api = createClient<paths>({
-  baseUrl: "/api",
+  baseUrl: API_BASE,
   credentials: "same-origin",
 });
 
