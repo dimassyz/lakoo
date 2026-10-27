@@ -32,6 +32,9 @@ interface Step {
   isLoss: boolean;
   outcome: string;
   startedOn: string | null;
+  oldPrice: number;
+  bundleProduct: { id: string; name: string; sellPrice: number } | null;
+  bundlePrice: number | null;
 }
 
 interface Plan {
@@ -296,6 +299,91 @@ describe("POST /products/{id}/plans — kandidat bundel bermasalah (regresi 500)
     // §5.6 sekarat tahap 1 = bundle; tanpa pasangan sah turun jadi discount.
     expect(["bundle", "discount"]).toContain(plan.steps[0]!.actionType);
     expect(plan.steps[0]!.isLoss).toBe(false);
+  });
+});
+
+// Kontrak (openapi.yaml, PlanStep) mendaftarkan 20 field REQUIRED dengan
+// `additionalProperties: false`. Sebelum fix ini, `oldPrice`, `bundleProduct`,
+// dan `bundlePrice` tidak pernah dikirim — dan `bundleProductId` malah properti
+// liar. Tes ini mengunci SELURUH daftar, bukan satu field, supaya lubang
+// berikutnya yang bentuknya sama ketahuan di sini dan bukan di UI demo.
+const CONTRACT_STEP_FIELDS = [
+  "stepNo",
+  "actionType",
+  "title",
+  "instructions",
+  "successCriteria",
+  "durationDays",
+  "discountPercent",
+  "belowCostPercent",
+  "bundleProduct",
+  "bundlePrice",
+  "oldPrice",
+  "newPrice",
+  "profitPerUnit",
+  "isLoss",
+  "cashBackEstimate",
+  "shareText",
+  "outcome",
+  "startedOn",
+  "dueOn",
+  "endedOn",
+] as const;
+
+describe("POST /products/{id}/plans — respons step memenuhi kontrak", () => {
+  // Satu generate dibagi untuk semua tes di describe ini: PLAN_GENERATE_RULE
+  // = 20/hari per store, dan file ini sudah memakainya hampir penuh. Satu
+  // pemanggilan per tes akan membuat tes DI BAWAH file ini kena 429.
+  let created: Plan;
+
+  it("menyiapkan rencana sekarat (dipakai tes kontrak di bawah)", async () => {
+    const res = await generate(sekaratId, { regenerate: true });
+    expect(res.status).toBe(201);
+    created = (await res.json()) as Plan;
+    expect(created.steps).toHaveLength(3);
+  });
+
+  it("setiap tahap membawa SELURUH 20 field required", () => {
+    for (const step of created.steps) {
+      for (const field of CONTRACT_STEP_FIELDS) {
+        expect(
+          Object.hasOwn(step, field),
+          `tahap ${step.stepNo} kehilangan field kontrak: ${field}`,
+        ).toBe(true);
+      }
+      // `additionalProperties: false` — properti liar = pelanggaran kontrak.
+      expect(Object.keys(step).sort()).toEqual(
+        [...CONTRACT_STEP_FIELDS].sort(),
+      );
+    }
+  });
+
+  it("oldPrice = harga jual barang SAAT rencana dibuat (bukan undefined)", () => {
+    // Barang Sekarat dijual 18.000 (fixture seedProducts).
+    for (const step of created.steps) {
+      expect(step.oldPrice).toBe(18_000);
+    }
+  });
+
+  it("tahap bundle membawa bundleProduct {id,name,sellPrice} + bundlePrice", () => {
+    const bundleStep = created.steps.find((s) => s.actionType === "bundle");
+    if (bundleStep === undefined) return; // tanpa pasangan sah → discount, sah
+
+    expect(bundleStep.bundleProduct).not.toBeNull();
+    expect(bundleStep.bundleProduct!.id).toBe(sehatId); // pasangan sah = Barang Laku
+    expect(bundleStep.bundleProduct!.name).toBe("Barang Laku");
+    expect(bundleStep.bundleProduct!.sellPrice).toBe(10_000);
+    // Harga paket = harga A setelah diskon + harga B (SPEC §5.4).
+    expect(bundleStep.bundlePrice).toBe(
+      bundleStep.newPrice + bundleStep.bundleProduct!.sellPrice,
+    );
+  });
+
+  it("tahap non-bundle membawa bundleProduct null + bundlePrice null", () => {
+    for (const step of created.steps.filter((s) => s.actionType !== "bundle")) {
+      expect(step.bundleProduct).toBeNull();
+      expect(step.bundlePrice).toBeNull();
+    }
   });
 });
 

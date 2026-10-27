@@ -103,6 +103,7 @@ export function bundleCandidatesOf(
     .filter((item) => item.id !== productId && !item.isComplementary)
     .map((item) => ({
       productId: item.id,
+      name: item.name,
       status: item.status,
       isComplementary: item.isComplementary,
       sellPrice: item.sellPrice,
@@ -276,8 +277,11 @@ export async function composeAndSave(deps: PlanDeps, input: ComposeInput) {
       sellPrice: summary.sellPrice,
       lastCost: summary.lastCost,
       stock: summary.stock,
-      bundleSellPrices: new Map(
-        candidates.map((item) => [item.productId, item.sellPrice]),
+      bundlePartners: new Map(
+        candidates.map((item) => [
+          item.productId,
+          { name: item.name, sellPrice: item.sellPrice },
+        ]),
       ),
       now: deps.now(),
     },

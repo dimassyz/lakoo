@@ -389,6 +389,10 @@ export const planSteps = pgTable(
     startedOn: date("started_on"),
     dueOn: date("due_on"),
     endedOn: date("ended_on"),
+    oldPrice: integer("old_price").notNull().default(0),
+    bundlePrice: integer("bundle_price"),
+    bundleProductName: text("bundle_product_name"),
+    bundleProductSellPrice: integer("bundle_product_sell_price"),
   },
   (t) => [
     uniqueIndex("plan_steps_plan_id_step_no_key").on(t.planId, t.stepNo),

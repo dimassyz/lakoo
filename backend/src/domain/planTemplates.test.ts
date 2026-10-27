@@ -21,6 +21,7 @@ function contextFor(status: ProductStatus): ValidationContext {
     bundleCandidates: [
       {
         productId: "b1",
+        name: "Minyak Goreng",
         status: "sehat",
         isComplementary: false,
         sellPrice: 10_000,
