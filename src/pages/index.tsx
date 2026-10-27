@@ -147,7 +147,7 @@ function TombolDemo() {
   async function coba() {
     setMemproses(true);
     setPesan(null);
-    const res = await api.POST("/auth/demo").catch(() => null);
+    const res = await api.POST("/auth/demo", { body: {} }).catch(() => null);
 
     if (res?.response.ok) {
       await router.push("/toko");

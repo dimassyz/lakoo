@@ -58,6 +58,7 @@ export function useAksiRiwayat(muat: () => Promise<void>) {
     async (id: string): Promise<string | null> => {
       const { response } = await api.DELETE("/stock-ins/{stockInId}", {
         params: { path: { stockInId: id } },
+        body: {},
       });
       if (!response.ok) return pesanRiwayat(response.status);
       await muat();

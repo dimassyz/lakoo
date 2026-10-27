@@ -168,6 +168,7 @@ export function useAksiRencana(id: string, segarkan: () => Promise<void>) {
       jalankan(async () => {
         const r = await api.POST("/plans/{planId}/start", {
           params: { path: { planId } },
+          body: {},
         });
         await segarkan();
         return r as Res;
@@ -180,6 +181,7 @@ export function useAksiRencana(id: string, segarkan: () => Promise<void>) {
       jalankan(async () => {
         const r = await api.POST("/plans/{planId}/stop", {
           params: { path: { planId } },
+          body: {},
         });
         await segarkan();
         return r as Res;
@@ -210,6 +212,7 @@ export function useAksiTahap(segarkan: () => Promise<void>) {
       jalankan(async () => {
         const r = await api.POST("/plans/{planId}/steps/{stepNo}/apply-price", {
           params: { path: { planId, stepNo } },
+          body: {},
         });
         await segarkan();
         return r as Res;

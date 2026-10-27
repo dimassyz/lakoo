@@ -127,7 +127,13 @@ paths:
       tags: [auth]
       operationId: auth_logout
       summary: Keluar
-      description: Menghapus sesi di server dan mengosongkan cookie. Idempoten.
+      description: Menghapus sesi di server dan mengosongkan cookie. Idempoten. Body boleh kosong `{}` (memenuhi CSRF Content-Type).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         "204":
           description: Sesi dihapus.
@@ -511,7 +517,13 @@ paths:
       tags: [stock-ins]
       operationId: stock_ins_delete
       summary: Hapus baris barang masuk (≤ 7 hari sejak dibuat)
-      description: Aturan sama dengan PATCH.
+      description: Aturan sama dengan PATCH. Body boleh kosong `{}` (memenuhi CSRF Content-Type).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         "204":
           description: Terhapus.
@@ -775,6 +787,13 @@ paths:
       description: |
         Mencatat `startedOn` = hari ini dan `lockedValueAtStart`; tahap 1 → `in_progress`.
         State bukan `suggested` → `409 plan_invalid_state`. `shareText` diisi ulang dengan tanggal berlaku nyata.
+        Body boleh kosong `{}` (memenuhi CSRF Content-Type).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         "200":
           description: Rencana aktif.
@@ -831,6 +850,13 @@ paths:
       description: |
         Hanya untuk tahap `in_progress` milik rencana `active`. Mengubah `products.sellPrice` menjadi `newPrice` tahap.
         Tidak pernah dipanggil otomatis (BRD O-9). Tahap dengan `newPrice` sama dengan harga jual sekarang → `409 step_invalid_state`.
+        Body boleh kosong `{}` (memenuhi CSRF Content-Type).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         "200":
           description: Barang setelah harga diubah.
@@ -849,7 +875,13 @@ paths:
       tags: [plans]
       operationId: plans_stop
       summary: Hentikan rencana aktif
-      description: active → stopped; tahap `in_progress` → `skipped`. State lain → `409 plan_invalid_state`.
+      description: active → stopped; tahap `in_progress` → `skipped`. State lain → `409 plan_invalid_state`. Body boleh kosong `{}` (memenuhi CSRF Content-Type).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         "200":
           description: Rencana dihentikan.
