@@ -2,7 +2,14 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createTestDb } from "../../../../database/src/test/pglite.ts";
 import type { AnyDb } from "../../../../database/src/db.ts";
-import { products, stores, users } from "../../../../database/src/schema.ts";
+import {
+  actionPlans,
+  planSteps,
+  products,
+  stores,
+  users,
+} from "../../../../database/src/schema.ts";
+import { eq } from "drizzle-orm";
 import { createApp } from "../app.ts";
 import { DEMO_RULE } from "../rate-limit.ts";
 
@@ -50,6 +57,47 @@ async function seedTemplate(): Promise<void> {
       isComplementary: false,
     },
   ]);
+
+  await seedTemplatePlan();
+}
+
+/**
+ * Rencana template supaya jalur clone `plan_steps` ikut teruji. `oldPrice`
+ * sengaja beda dari `newPrice`: kalau clone kehilangan field kontrak, step
+ * lahir dengan `old_price` 0 dan layar rencana menampilkan "Rp0 → Rp18.000".
+ */
+async function seedTemplatePlan(): Promise<void> {
+  const kecap = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(eq(products.nameKey, "kecap manis"));
+  const plan = await db
+    .insert(actionPlans)
+    .values({
+      storeId: templateStoreId,
+      productId: kecap[0]!.id,
+      source: "template",
+      state: "suggested",
+      productStatusAtGeneration: "mati",
+      rationale: "Uang terkunci di rak.",
+    })
+    .returning();
+  await db.insert(planSteps).values({
+    planId: plan[0]!.id,
+    stepNo: 1,
+    actionType: "discount",
+    title: "Turunkan harga",
+    instructions: "Pasang harga promo di rak depan.",
+    successCriteria: "Barang laku lagi.",
+    durationDays: 7,
+    discountPercent: 10,
+    newPrice: 18_000,
+    profitPerUnit: 6_000,
+    cashBackEstimate: 180_000,
+    isLoss: false,
+    outcome: "pending",
+    oldPrice: 20_000,
+  });
 }
 
 const post = (
@@ -155,6 +203,33 @@ describe("POST /auth/demo — setelah template tersedia", () => {
       "Kecap Manis",
       "Sabun Mandi",
     ]);
+  });
+
+  // Jalur ini NOL tes sebelum fix ini: kloning produk sudah teruji, kloning
+  // RENCANA tidak. Tanpa tes, `oldPrice` bisa hilang dari clone tanpa ada
+  // yang gagal — dan itu yang membuat demo tampil "Harga Rp0 → Rp18.000".
+});
+
+describe("POST /auth/demo — clone mempertahankan field kontrak rencana", () => {
+  beforeAll(async () => {
+    await seedTemplate();
+  }, 60_000);
+
+  it("klon mempertahankan oldPrice pada step rencana", async () => {
+    const res = await post("/auth/demo", {}, { "x-forwarded-for": "10.9.0.9" });
+    expect(res.status).toBe(201);
+    const clonedStoreId = ((await res.json()) as MeBody).store.id;
+
+    const rows = await db
+      .select({ oldPrice: planSteps.oldPrice })
+      .from(planSteps)
+      .innerJoin(actionPlans, eq(actionPlans.id, planSteps.planId))
+      .where(eq(actionPlans.storeId, clonedStoreId));
+
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(row.oldPrice).toBe(20_000);
+    }
   });
 });
 

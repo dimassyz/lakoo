@@ -186,6 +186,7 @@ async function insertPlans(
         startedOn: step.startedOn,
         dueOn: step.dueOn,
         endedOn: step.endedOn,
+        oldPrice: step.oldPrice,
       })),
     );
     count += 1;
