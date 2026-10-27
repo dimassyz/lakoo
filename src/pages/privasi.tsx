@@ -21,6 +21,25 @@ const BAGIAN = [
   },
 ];
 
+/** SPEC §7b — metadata lengkap untuk halaman publik; dipisah agar `Privasi` tetap pendek. */
+function MetaPrivasi({ origin }: { origin: string }) {
+  const deskripsi =
+    "Data apa yang disimpan Lakoo, apa yang tidak, dan cara meminta penghapusan akun.";
+  return (
+    <Head>
+      <title>Privasi — Lakoo</title>
+      <meta name="description" content={deskripsi} />
+      <link rel="canonical" href={`${origin}/privasi`} />
+      <meta property="og:type" content="article" />
+      <meta property="og:title" content="Privasi — Lakoo" />
+      <meta property="og:description" content={deskripsi} />
+      <meta property="og:url" content={`${origin}/privasi`} />
+      <meta property="og:image" content={`${origin}/og.png`} />
+      <meta name="twitter:card" content="summary_large_image" />
+    </Head>
+  );
+}
+
 export default function Privasi({
   kontak,
   origin,
@@ -30,14 +49,7 @@ export default function Privasi({
 }) {
   return (
     <>
-      <Head>
-        <title>Privasi — Lakoo</title>
-        <meta
-          name="description"
-          content="Data apa yang disimpan Lakoo, apa yang tidak, dan cara meminta penghapusan akun."
-        />
-        <link rel="canonical" href={`${origin}/privasi`} />
-      </Head>
+      <MetaPrivasi origin={origin} />
 
       <main className="mx-auto max-w-2xl space-y-6 px-4 py-8">
         <div className="space-y-2">
