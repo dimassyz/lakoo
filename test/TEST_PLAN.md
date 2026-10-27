@@ -568,10 +568,17 @@ sampel) — ambang 300 ms, margin 143.1 ms`. Diff = +8/−0 satu file
         — persis sha yang diumumkan backend-dev; verifikasi pembaca:
         `git cat-file -p origin/artefak/bench-k1:database/src/queries/bench-k1.test.ts | sha256sum`;
         (b) **git blob sha1: `d83620994bb3f7498818ed6a7fc97c16c67f5157`**
-        (identitas objek di git) — verifikasi:
+        (identitas objek di git — PELENGKAP, bukan pengganti; sha1 git
+        memang hash dari konten, jadi sha1 sama = konten sama = sha256
+        sama) — verifikasi:
         `git rev-parse origin/artefak/bench-k1:database/src/queries/bench-k1.test.ts`.
-        Objek kuverifikasi JALAN sendiri (1 passed, best=225,5 ms). Tanpa
-        ambang 300 ms di dalam (tak akan pernah merah-kan gate).
+        **Garis sha:** `ca52c8b` (88 baris, pra-konsolidasi — RETIRED,
+        sejarah) · `8b3086efed93230b` (sha256 KONTEN, 90 baris —
+        CONFIRMED di objek) · `d8362099` (git blob sha1 objek yang sama —
+        pelengkap untuk pembaca yang memverifikasi dengan alat git).
+        Objek kuverifikasi JALAN sendiri (1 passed, best=225,5 ms) —
+        artefak ini bukan kelas "ada", tapi kelas **terbukti dieksekusi**.
+        Tanpa ambang 300 ms di dalam (tak akan pernah merah-kan gate).
         **KOREKSI MILIKKU (dicatat, bukan disembunyikan):** amendemen
         pertamaku di blok ini menyatakan sha announced `8b3086e` "DITARIK —
         tidak cocok dengan blob" — **ITU SALAH**. Aku membandingkan
