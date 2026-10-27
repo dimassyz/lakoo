@@ -55,7 +55,7 @@ export interface paths {
     put?: never;
     /**
      * Keluar
-     * @description Menghapus sesi di server dan mengosongkan cookie. Idempoten.
+     * @description Menghapus sesi di server dan mengosongkan cookie. Idempoten. Body boleh kosong `{}` (memenuhi CSRF Content-Type).
      */
     post: operations["auth_logout"];
     delete?: never;
@@ -267,7 +267,7 @@ export interface paths {
     post?: never;
     /**
      * Hapus baris barang masuk (≤ 7 hari sejak dibuat)
-     * @description Aturan sama dengan PATCH.
+     * @description Aturan sama dengan PATCH. Body boleh kosong `{}` (memenuhi CSRF Content-Type).
      */
     delete: operations["stock_ins_delete"];
     options?: never;
@@ -459,6 +459,7 @@ export interface paths {
      * Jalankan rencana (suggested → active)
      * @description Mencatat `startedOn` = hari ini dan `lockedValueAtStart`; tahap 1 → `in_progress`.
      *     State bukan `suggested` → `409 plan_invalid_state`. `shareText` diisi ulang dengan tanggal berlaku nyata.
+     *     Body boleh kosong `{}` (memenuhi CSRF Content-Type).
      */
     post: operations["plans_start"];
     delete?: never;
@@ -508,6 +509,7 @@ export interface paths {
      * Pemilik setuju mengubah harga jual ke harga tahap ini
      * @description Hanya untuk tahap `in_progress` milik rencana `active`. Mengubah `products.sellPrice` menjadi `newPrice` tahap.
      *     Tidak pernah dipanggil otomatis (BRD O-9). Tahap dengan `newPrice` sama dengan harga jual sekarang → `409 step_invalid_state`.
+     *     Body boleh kosong `{}` (memenuhi CSRF Content-Type).
      */
     post: operations["plans_step_apply_price"];
     delete?: never;
@@ -529,7 +531,7 @@ export interface paths {
     put?: never;
     /**
      * Hentikan rencana aktif
-     * @description active → stopped; tahap `in_progress` → `skipped`. State lain → `409 plan_invalid_state`.
+     * @description active → stopped; tahap `in_progress` → `skipped`. State lain → `409 plan_invalid_state`. Body boleh kosong `{}` (memenuhi CSRF Content-Type).
      */
     post: operations["plans_stop"];
     delete?: never;
@@ -1263,7 +1265,11 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody?: {
+      content: {
+        "application/json": Record<string, never>;
+      };
+    };
     responses: {
       /** @description Sesi dihapus. */
       204: {
@@ -1613,7 +1619,11 @@ export interface operations {
       };
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody?: {
+      content: {
+        "application/json": Record<string, never>;
+      };
+    };
     responses: {
       /** @description Terhapus. */
       204: {
@@ -1906,7 +1916,11 @@ export interface operations {
       };
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody?: {
+      content: {
+        "application/json": Record<string, never>;
+      };
+    };
     responses: {
       /** @description Rencana aktif. */
       200: {
@@ -1968,7 +1982,11 @@ export interface operations {
       };
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody?: {
+      content: {
+        "application/json": Record<string, never>;
+      };
+    };
     responses: {
       /** @description Barang setelah harga diubah. */
       200: {
@@ -1994,7 +2012,11 @@ export interface operations {
       };
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody?: {
+      content: {
+        "application/json": Record<string, never>;
+      };
+    };
     responses: {
       /** @description Rencana dihentikan. */
       200: {

@@ -34,7 +34,7 @@ export function Keluar({ antrean }: { antrean: Antrean }) {
   const [tanya, setTanya] = useState(false);
 
   async function keluar() {
-    await api.POST("/auth/logout");
+    await api.POST("/auth/logout", { body: {} });
     await router.push("/");
   }
 
