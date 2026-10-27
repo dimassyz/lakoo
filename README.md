@@ -5,10 +5,31 @@ toko kelontong melihat berapa uangnya terkunci di barang tidak laku,
 mengklasifikasikan kesehatan barang, menjalankan rencana likuidasi 3 tahap
 (AI dengan cadangan template), lalu mengukur kas yang pulih.
 
-> **Status: dalam pengembangan.** Staging belum live — prasyarat deploy ada
-> di bagian [Deploy](#deploy). URL demo mengikuti alias staging
-> (`staging-lakoo.vercel.app`) dan akan dicantumkan di sini saat deploy
-> pertama jalan.
+> **Status: LIVE.** Produksi berjalan di
+> **[lakoo-gold.vercel.app](https://lakoo-gold.vercel.app)** dengan akun demo
+> siap pakai — tanpa daftar. Lihat [Cara jalan demo](#cara-jalan-demo).
+
+## Cara jalan demo
+
+1. Buka **<https://lakoo-gold.vercel.app>**
+2. Klik **"Coba akun demo"** (tombol di halaman depan — tanpa daftar, tanpa email)
+3. Sistem menyiapkan **toko contoh** dengan data siap pakai: 100 produk,
+   ribuan catatan penjualan harian, riwayat barang masuk, dan rencana
+   likuidasi per barang
+
+Yang bisa langsung diperagakan:
+
+| Layar        | Apa yang muncul                                                          |
+| ------------ | ------------------------------------------------------------------------ |
+| Dashboard    | Uang terkunci per kategori, klasifikasi kesehatan, progres kas pulih     |
+| Barang       | Daftar produk ber-status **sehat / waspada / sekarat** + filter          |
+| Rencana      | Rencana likuidasi 3 tahap per barang (bundel → jual modal → cuci gudang) |
+| Barang masuk | Input stok masuk + riwayat 30 hari                                       |
+
+Sesi demo berumur **30 menit**; toko contoh dibersihkan otomatis oleh cron
+harian, jadi tidak ada data yang menumpuk. Kalau AI Gemini aktif, rencana
+dihasilkan model; kalau tidak, rencana memakai template bawaan — hasilnya
+tetap tampil dan bisa dijalankan (perbedaan ada di kolom "sumber" rencana).
 
 ## Apa yang bisa dilakukan
 
@@ -21,6 +42,21 @@ mengklasifikasikan kesehatan barang, menjalankan rencana likuidasi 3 tahap
   sesudah
 - **Catat barang masuk** — input barang masuk + riwayat 30 hari
 - **Toko demo** — data contoh siap pakai untuk dicoba tanpa setup
+
+## Arsitektur (ringkas)
+
+```
+Browser ──> Next.js 15 (pages router, React 19, Tailwind v4)
+              │  route handler memount backend
+              ▼
+            Hono v4 API (TypeScript strict, validasi Zod)
+              │
+              ├──> Neon Postgres (Drizzle ORM) — runtime pooled, migrasi direct
+              └──> Google Gemini (rencana AI, fallback template) — opsional
+```
+
+Hosting: Vercel (preview + produksi, dua environment terpisah). Sumber kebenaran
+kontrak API: `docs/api/openapi.yaml`.
 
 ## Quick start
 
@@ -54,15 +90,36 @@ memakai template, tanpa perlu key Gemini.
 | `DEV_SEED_PASSWORD`                            | seed saja | hanya lokal/preview — **jangan** dipakai di produksi |
 
 Rahasia **tidak boleh** berawalan `NEXT_PUBLIC_`. Nilai asli untuk
-staging/produksi disimpan di Vercel Environment Variables (Preview &
+preview/produksi disimpan di Vercel Environment Variables (Preview &
 Production terpisah), tidak di repo.
+
+## Status verifikasi
+
+Yang sudah terbukti (bukan klaim — buktinya bisa diulang):
+
+| Area                          | Status                                                         |
+| ----------------------------- | -------------------------------------------------------------- |
+| CI gates (frontend + backend) | **hijau** di `main` — format, lint, typecheck, test, build     |
+| Kontrak API PlanStep          | **20/20 field wajib, nol properti liar** — terverifikasi live  |
+| Keamanan (black-box)          | **14/14 lolos, 0 temuan** — laporan `docs/SECURITY.md`         |
+| Demo produksi                 | **jalan** — akun demo 201, dashboard memuat data               |
+| Migrasi & seed DB             | produksi + staging **konsisten** (journal migrasi cocok repo)  |
+| Lingkungan                    | preview & produksi pada commit yang sama (alias terverifikasi) |
+
+Yang **belum** (jujur di catatkan):
+
+- **Rencana AI (Gemini) belum aktif** — nilai `GEMINI_API_KEY` Preview belum
+  terverifikasi dan Produksi belum memasang key. Sampai itu beres, rencana
+  memakai template (fitur tetap berfungsi, kolom "sumber" rencana menunjukkan
+  `template`).
+- **Re-run QA e2e (level browser) sedang berjalan** — laporan mengikuti.
 
 ## Tech stack
 
-TypeScript (strict) di semua paket — Next.js 15 (App Router) + React 19 +
-Tailwind CSS v4 di atas Hono v4 (route handler), Drizzle ORM + Neon
-PostgreSQL, Zod untuk validasi, Google Gemini untuk rencana AI (dengan
-cadangan template), hosting Vercel. Detail & alasan: SPEC §3.3.
+TypeScript (strict) di semua paket — Next.js 15 + React 19 + Tailwind CSS v4
+di atas Hono v4 (route handler), Drizzle ORM + Neon PostgreSQL, Zod untuk
+validasi, Google Gemini untuk rencana AI (dengan cadangan template), hosting
+Vercel. Detail & alasan: SPEC §3.3.
 
 ## Skrip
 
@@ -94,6 +151,8 @@ cadangan template), hosting Vercel. Detail & alasan: SPEC §3.3.
   yang sama adalah penyebab keadaan ini.
 - **Test gagal hanya di CI, lolos lokal**: cek dulu line-ending
   (`core.autocrlf`) sebelum curiga kode.
+- **Tombol demo lambat sekali pertama**: cold start serverless — coba lagi,
+  biasanya beberapa detik.
 
 ## Dokumen
 
@@ -123,11 +182,14 @@ cadangan template), hosting Vercel. Detail & alasan: SPEC §3.3.
 
 ## Deploy
 
-Lingkungan (preview / staging / produksi), variabel env, migrasi cron, dan
-prosedur rollback ada di runbook deploy internal tim (`DEPLOY.md` — lihat
-§Dokumen). Alurnya: merge ke `main` → Vercel build staging →
-`pnpm db:migrate` ke Neon branch `staging` → verifikasi → produksi lewat
-branch `release` setelah acceptance.
+Lingkungan (preview / produksi), variabel env, migrasi, dan prosedur rollback
+ada di runbook deploy internal tim (`DEPLOY.md` — lihat §Dokumen).
+
+Alur saat ini: merge ke `main` → **produksi auto-deploy** (Vercel, project
+`lakoo`, domain `lakoo-gold.vercel.app`) → migrasi DB diverifikasi lewat
+journal sebelum deploy → preview di-deploy + alias di-point manual ke commit
+yang sama. Keputusan mengunci auto-deploy (Production Branch → `release`)
+masih terbuka dan akan diambil sekali, dengan gambaran lengkap.
 
 ## Struktur repo
 
