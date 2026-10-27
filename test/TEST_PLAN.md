@@ -436,22 +436,151 @@ memasukkan `test/**`**
         `6a96295`, PR #11 `7ea39c8` — 5/5 HIJAU, nol ms tercetak** →
         **angka native yang MERAH: NOL. Angka native yang tercetak: NOL.**
         Margin native = TIDAK DIKETAHUI.
-      - **Konsekuensi jujur:** pertanyaan "berapa ms dari gap = lingkungan
-        vs query" **MASIH TERBUKA** — justru itu yang native jawab nanti.
-        Klaim "plafon WASM pals" = **BELUM TERBUKTI** (perbandingannya
-        PGlite-vs-PGlite, tidak menyinggung WASM sama sekali).
-      - **Kerangka keputusan: cabang BELUM BISA DIPILIH** (margin nyata vs
-        295–305) karena angka native belum ada. **Re-adjudikasi tech-lead
-        SELESAI (26 Okt 2026): kandidat 1 KONDISIONAL** — ditentukan angka
-        native; bukti PGlite (query sistematis 302–307 ms, tepat ambang,
-        pola coin flip) adalah alasan MENGAPA margin native perlu diukur,
-        BUKAN dasar keputusan. Kalau angka native jatuh 290-an → kandidat 1
-        ditutup dengan data (keputusan berbasis bukti, bukan kegagalan
-        optimasi). Log-timing-saat-sukses = prioritas pertama.
-      - **Status klaim perf: TIDAK TUTUP** (tetap) — nol klaim tutup sampai
-        ada angka native yang lolos dengan margin > variance antar-run
-        (~4 ms). Follow-up kritis: **log-timing-saat-sukses** (backend-dev)
-        — sumber data native pertama yang akan menjawab semuanya.
+      - **Konsekuensi jujur (saat itu):** pertanyaan "berapa ms dari gap =
+        lingkungan vs query" masih terbuka; klaim "plafon WASM pals" belum
+        terbukti. **[SUPERSEDED 26 Okt — dijawab, lihat PENUTUP SAGA]**
+      - **Kerangka keputusan (saat itu):** cabang belum bisa dipilih karena
+        angka native belum ada. **Re-adjudikasi tech-lead SELESAI: kandidat 1
+        KONDISIONAL** — ditentukan angka native; bukti PGlite = alasan
+        MENGAPA margin native perlu diukur, BUKAN dasar keputusan.
+        **[SUPERSEDED 26 Okt — angka native datang, cabang MARGIN NYATA
+        terpilih; lihat PENUTUP SAGA]**
+      - **Status klaim perf: TIDAK TUTUP (saat itu)** — nol klaim tutup
+        sampai ada angka native yang lolos dengan margin > variance
+        antar-run (~4 ms). **[SUPERSEDED 26 Okt — angka native datang,
+        lihat PENUTUP SAGA]**
+    - **PENUTUP SAGA QA-04 (26 Okt 2026) — ANGKA NATIVE PERTAMA, dan
+      kerangka keputusan tereksekusi:**
+      - **PR #14 (`6f23a03` → main): log-timing-saat-sukses MENDARAT** —
+        `process.stdout.write` (console.log ditekan Vitest v5 saat lolos),
+        output default reporter: `perf query stats: 156.9 ms (min dari 3
+sampel) — ambang 300 ms, margin 143.1 ms`. Diff = +8/−0 satu file
+        (`productStats.test.ts`); ambang (`toBeLessThan(300)`), cara ukur,
+        dan `retry:0` TIDAK disentuh. **§9 QA: LULUS** — fixture guard 5
+        file test/ SAMA, suite 484/484 di tree ter-commit (worktree), CI
+        run 69 (branch PR) + run 70 (main) SUKSES.
+      - **KRITIS — atribusi terverifikasi level KODE (aturan yang
+        diratifikasi):** commit membawa harness (`native-pg.ts` ADA di
+        main ✓), test membaca `createPerfDb` ✓, log membawa jejak
+        `PERF_DATABASE_URL` ✓ (via pembacaan log devops) → **156,9 ms =
+        NATIVE, bukan PGlite.** Bedanya dengan run 61: kali ini commit-nya
+        benar-benar membawa jalur ukur native.
+      - **SERI ANGKA NATIVE (4 run, via pembacaan log devops; jalur ukur
+        terverifikasi level KODE di semua run):**
+        ```
+        PR #14 run   : 156.9 ms  (margin 143.1)
+        main 6f23a03 :  89.0 ms  (margin 211.0)
+        main 9e0ed55 : 171.0 ms  (margin 129.0)   ← terburuk teramati
+        main 392a856 :  91.3 ms  (margin 208.7)
+        ```
+        **Native lolos 4/4 run dengan angka tercetak; margin terukur
+        129–211 ms.** **KLAIM YANG DIKUNCI (koreksi framing tech-lead):
+        "native lolos 4/4 run dengan angka tercetak; kasus terburuk
+        171 ms (57% ambang); margin terukur 129–211 ms; sebaran
+        antar-run 82 ms, tampak bimodal."** Framing lama ">30× variance
+        antar-run" SALAH (dikoreksi tech-lead): ~4 ms itu variance DALAM
+        satu run (3 sampel); sebaran ANTAR-RUN = 82 ms (89,0–171,0) dan
+        tampak BIMODAL (kluster ~89–91 dan ~157–171, kemungkinan dua
+        kondisi runner). Margin 129 ms MELEBIHI sebaran 82 ms (1,6×) tapi
+        BUKAN 36×. Ini naik tingkat dari "5/5 hijau margin belum
+        terukur" — sekarang ADA angkanya.
+      - **KRITIS — PR #14 = log-timing SAJA; KANDIDAT 1 TIDAK MENDARAT.**
+        Kuverifikasi: CTE `fs` MASIH ada di main (`fs AS` baris 145,
+        `LEFT JOIN fs` baris 119, `COALESCE(fs.first_stock_date...)` baris
+        109); commit PR #14 satu file +8 baris. **Jadi 156,9 ms = query
+        ORIGINAL (dengan fs CTE) di native** — bukan query terkoptimasi.
+      - **Pertanyaan "berapa ms dari gap = lingkungan vs query"
+        TERJAWAB: LINGKUNGAN (~145 ms).** Native 156,9 vs PGlite-CI
+        302–307 ms pada query yang SAME → hipotesis "plafon WASM" kini
+        **DIDUKUNG** perbandingan yang benar (yang membantahnya dulu =
+        303,7 yang salah klasifikasi sebagai native). Atribusi hanya
+        memakai perbandingan BERSIH: **native-CI vs PGlite-CI (runner
+        sama)** — perbandingan native-CI vs PGlite-LOKAL mengonflasi
+        lingkungan + mesin dan tidak boleh dipakai untuk atribusi (arah
+        tech-lead). Ironi sesi ini: klaim pertamaku ("margin nyata →
+        kandidat 1 tidak perlu") pernah salah dasar (hijau tanpa angka),
+        kini benar dengan bukti.
+      - **Kerangka keputusan tereksekusi: cabang MARGIN NYATA → kandidat 1
+        TUTUP DENGAN DATA.** Empat alasan penutupan (arah tech-lead):
+        (1) kebutuhan tidak ada — ambang sudah lolos dengan margin;
+        (2) transfer ke native DIRAGUKAN — angka lokal PGlite belum
+        terbukti transfer; (3) mendaratkannya = perubahan query plan yang
+        ekuivalensnya tidak diuji di native; (4) maintainability sekunder.
+        Ruling kondisional tech-lead ("ditentukan angka native") dieksekusi
+        data ini. **Yang TERUKUR (fakta):** perubahan kandidat 1 membuat
+        query ~30–44 ms lebih cepat dalam kondisi terkontrol — estimasi
+        awal ≈ −3%/−9 ms vs terukur −30…−44 ms (4–5× estimasi).
+        **Interpretasi "query punya pemborosan struktural" + mekanisme
+        "hapus CTE + LEFT JOIN mengubah join order" = HIPOTESIS, TIDAK
+        diverifikasi** (tanpa EXPLAIN ANALYZE sebelum/sesudah di DB yang
+        sama) — koreksi tech-lead: itu BUKAN temuan; kalau disebut, disebut
+        sebagai hipotesis. Yang terukur hanya angkanya, bukan penyebabnya
+        (pola run 61).
+        **Catatan finalitas:** konfirmasi akhir formal tech-lead masih
+        di jalur (nuansa bench-k1 ikut di sana) — kalau berubah jadi "PR
+        jalan" (insentif headroom ekstra, bukan ambang — keputusan yang
+        sah), §9 berlaku dan artefak benchmark wajib ikut.
+      - **KOREKSI PENGUKURAN KANDIDAT 1 (26 Okt 2026, backend-dev menarik
+        angka mereka sendiri — ini yang berlaku):** pengukuran ulang
+        **back-to-back, kondisi beban sama** memberi gain **−30…−44 ms**
+        (baseline 6 run: 241,9/232,8/234,5/227,6/234,0/241,1 ms → kandidat 1
+        198,1 ms). Angka lama **−114…−117 ms DITARIK** — itu artefak
+        membandingkan baseline dan "sesudah" di **kondisi beban berbeda**:
+        "sesudah" STABIL (~196–203 ms di dua sesi), "sebelum" BERGERAK
+        (227–317 ms tergantung beban). Gain besar itu karena itu didominasi
+        variansi beban mesin, bukan perbaikan stabil. **Pelajaran (satu
+        kelas dengan run 61 dan "hijau tanpa angka" — penutup
+        backend-dev):** yang harus diverifikasi bukan cuma kode, tapi
+        KONDISI pengukuran — label yang diterima alih-alih kondisi yang
+        diperiksa adalah pola yang sama (nama step aspirasional · hijau
+        tanpa angka · beban berbeda). Bandingkan back-to-back dalam beban
+        sama. Yang boleh dikutip: gain −30…−44 ms terkontrol; "sesudah"
+        ~196–203 ms stabil; "sebelum" 227–317 ms bergerak.
+      - **Catatan epistemik kandidat 1 (diperbarui):** yang TERUKUR &
+        STABIL = angka "sesudah" (~196–203 ms) dan gain terkontrol
+        (−30…−44 ms); penyebab ("query plan berubah") **TETAP HIPOTESIS,
+        tidak diverifikasi** (tanpa EXPLAIN ANALYZE sebelum/sesudah di DB
+        yang sama) — mustahil diverifikasi statis, tidak boleh masuk record
+        sebagai fakta (pola run 61). Framing rasio (klarifikasi
+        backend-dev, supaya mustahil salah baca): **"Estimasi −9 ms;
+        terukur −30…−44 ms (4–5× estimasi); klaim lama −115 ms (12×
+        estimasi) DITARIK."** — "4–5×" membandingkan terukur-vs-estimasi
+        (terukur 4–5× LEBIH BESAR), "12×" membandingkan
+        klaim-ditarik-vs-estimasi; dua pembanding berbeda, tanpa subjek
+        kalimatnya bisa dibaca terbalik. Kesimpulan (tutup-dengan-data)
+        TIDAK berubah: margin native 129 ms+ mendominasi gain lokal apa
+        pun.
+      - **Artefak benchmark (permintaan devops, DIPULIHKAN backend-dev):**
+        `database/src/queries/bench-k1.test.ts` di tree backend-dev —
+        **sha FINAL `8b3086efed93230b`, 90 baris** (sha lama
+        `ca52c8b8ee11d1f9` = versi SEBELUM dua baseline run tambahan
+        dikonsolidasi — JANGAN dipakai verifikasi, angkanya tidak akan
+        cocok dengan record), terverifikasi JALAN (1 passed), tanpa ambang
+        300 ms di dalam (tak akan pernah merah-kan gate), prettier bersih,
+        productStats.ts identik main. TIDAK di main (kandidat 1 tidak
+        diterapkan — kuverifikasi). Angka-angka kini reproducible siapa
+        pun dengan artefak itu. **Status: JANGAN didaratkan SEKARANG** —
+        verdict tercatat di PROJECT_LOG; file UNTRACKED, secara struktural
+        tidak bisa masuk CI tanpa `git add` eksplisit. **Kendaraan PR =
+        devops SAAT artefak mendarat — dan mendaratnya PASCA-DEMO**,
+        bersama cleanup kandidat 1 dengan naming/exclusion yang benar.
+        BUKAN sekarang (qualifier tech-lead: entri ambigu dibaca sebagai
+        izin — kelas kesalahan yang sesi ini bayar berulang).
+      - **Status klaim perf: pertanyaan QA-04 TERJAWAB (BUKAN "perf tutup"
+        sebagai klaim proyek).** Klaim yang dikunci tech-lead: _"native
+        lolos 4/4 run dengan angka tercetak; kasus terburuk 171 ms (57%
+        ambang); margin terukur 129–211 ms; sebaran antar-run 82 ms,
+        tampak bimodal."_ Setiap run hijau sekarang cetak angka
+        (log-timing) — "hijau = nol informasi margin" resmi berakhir.
+      - **Item terakhir jalur perf — PR #16 (`392a856`, JSDoc relocation):
+        §9 LULUS.** Diff komentar saja; bukti terkuat: buang komentar,
+        bandingkan kode → 64 baris vs 64 baris, IDENTIK (nol perubahan
+        perilaku; numstat +0/−97 vs +0/−100 tidak konsisten = artefak
+        algoritma diff pada blok komentar yang pindah — yang dipakai
+        bukti kode, bukan numstat). Fixture guard 5 file SAMA; suite 41
+        file/492 test hijau di tree ter-commit (bertambah dari 40/484 lewat
+        PR #15 frontend); CI run 73 (branch) + run 74 (main) SUKSES.
+        **State backend di jalur perf: NOL — semua item tutup.**
       - **PELAJARAN BERDIRING (dicatat sebagai aturan):** nama step CI itu
         ASPIRASIONAL — yang menentukan pengukuran adalah KODE di commit
         itu (apakah commit membawa harness + apakah test membaca env). Aku
@@ -526,6 +655,10 @@ ada, aplikasi belum lengkap). Suite QA sendiri: **ALL GREEN**.
      lingkungan pengukuran, BUKAN bukti aman) — guard W-2/urutan lock hanya
      terbukti di Postgres bersengkala sungguhan.
    - Rate-limit absence (sudah di checklist black-box devops).
+   - **Input e2e dari tech-lead (26 Okt 2026, untuk briefing saat URL
+     staging ada):** (a) **jalur XLSX WAJIB diuji manual di staging** —
+     fiturnya ada, tapi gate tidak membacanya; (b) **3 defekt self-review
+     frontend → backlog test komponen pasca-demo**, BUKAN blocker staging.
 3. **API layer lengkap** → verifikasi kontrak (Ajv) & IDOR matrix; smoke
    post-merge di staging.
 4. **Cron/demo** → skrip cek harian AC-SYS-10 (3 hari berturut sebelum 10 Nov).
