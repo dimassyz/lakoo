@@ -5,13 +5,13 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 
 /**
- * FSD §1 — landing publik. Angka contoh di-hardcode saat build dari data demo
- * (FSD §1.2); halaman ini tidak memanggil API selain tombol demo.
+ * FSD §1 — landing publik. Angka contoh diverifikasi terhadap data seed demo
+ * oleh tes pengunci (backend); tidak di-fetch saat runtime.
  */
 const ANGKA_CONTOH = {
-  terkunci: "Rp1.284.000",
-  mati: 9,
-  sekarat: 8,
+  terkunci: "Rp27.963.900",
+  mati: 12,
+  sekarat: 11,
 };
 
 const LANGKAH = [
