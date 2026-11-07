@@ -5,18 +5,13 @@ export default function Document() {
   return (
     <Html lang="id">
       <Head>
-        {/* DESIGN.md v2.0 §3 — Plus Jakarta Sans, satu font untuk seluruh app,
-            dimuat lewat <link> di sini. */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
+        {/* DESIGN.md v2.0 §3 — Plus Jakarta Sans. Di-self-host lewat
+            @font-face di tokens.css, BUKAN <link> Google Fonts: CSP
+            next.config.ts (default-src 'self', nol font-src) memblokir
+            stylesheet DAN berkas font dari domain Google, jadi <link> tidak
+            pernah dimuat dan aplikasi jatuh ke system-ui tanpa error.
+            Preconnect juga dihapus — preconnect tanpa resource yang dimuat
+            adalah beban mati. */}
       </Head>
       <body>
         <Main />

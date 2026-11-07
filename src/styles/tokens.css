@@ -70,6 +70,31 @@
   --color-danger: var(--color-mati-chip);
 }
 
+/* §3 Tipografi — Plus Jakarta Sans di-self-host. CSP di next.config.ts
+   (`default-src 'self'` · `style-src 'self' 'unsafe-inline'` · nol `font-src`)
+   memblokir stylesheet DAN berkas font dari domain Google, jadi <link>
+   Google Fonts TIDAK PERNAH dimuat dan aplikasi jatuh ke
+   system-ui — tanpa nol error, tanpa nol yang merah. Self-host menutup
+   lubang itu TANPA melonggarkan CSP: `default-src 'self'` sudah mengizinkan
+   font same-origin.
+
+   SATU berkas, bukan lima weight: keluarga ini VARIABLE FONT — Google Fonts
+   mengirim URL woff2 yang SAMA untuk weight 400/500/600/700/800, dan
+   berkasnya memuat tabel HVAR/MVAR/STAT (hanya ada di variable font; tag
+   fvar tersimpan sebagai indeks known-table WOFF2, bukan 4 byte literal).
+   Maka rentang `400 800` cukup satu @font-face; lima blok terpisah hanya
+   akan mengulang berkas yang sama lima kali.
+
+   Subset `latin` saja (U+0000-00FF): aplikasi berbahasa Indonesia
+   (lang="id"), nol Cyrillic/Vietinese yang perlu dimuat. */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+}
+
 /* §4 MOTION — tiga animasi terbatas. Di luar @theme karena bukan namespace
    utility Tailwind; dipakai sebagai duration-[var(--durasi-*)]. */
 :root {
