@@ -1,3 +1,11 @@
+import {
+  AlertTriangle,
+  CircleCheck,
+  CircleX,
+  PackageX,
+  TrendingDown,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import type { Dashboard, ProductStatus } from "@/lib/api";
 import { rupiah } from "@/lib/ui";
@@ -27,7 +35,7 @@ export function KpiHero({ totals }: { totals: Dashboard["totals"] }) {
 type Ubin = {
   status: ProductStatus;
   label: string;
-  ikon: string;
+  ikon: LucideIcon;
   warna: string;
 };
 
@@ -38,22 +46,29 @@ type Ubin = {
  * Token CHIP (bukan dasar) untuk angka ubin: latar kartu adalah
  * `--color-surface`, dan token dasar Waspada hanya 2,97:1 di sana — gagal 3:1.
  * Chip 4,68:1 lolos. Lihat komentar tokens.css §2 untuk angka lengkap.
+ * Ikon Lucide 20px / stroke 1.75px (DESIGN.md §3) — emoji render beda per OS
+ * dan merusak ramp status.
  */
 const ubin: Ubin[] = [
-  { status: "sehat", label: "Sehat", ikon: "✓", warna: "text-sehat-chip" },
+  {
+    status: "sehat",
+    label: "Sehat",
+    ikon: CircleCheck,
+    warna: "text-sehat-chip",
+  },
   {
     status: "waspada",
     label: "Waspada",
-    ikon: "⚠",
+    ikon: AlertTriangle,
     warna: "text-waspada-chip",
   },
   {
     status: "sekarat",
     label: "Sekarat",
-    ikon: "⏳",
+    ikon: TrendingDown,
     warna: "text-sekarat-chip",
   },
-  { status: "mati", label: "Mati", ikon: "⊗", warna: "text-mati-chip" },
+  { status: "mati", label: "Mati", ikon: CircleX, warna: "text-mati-chip" },
 ];
 
 function SatuUbin({
@@ -69,10 +84,13 @@ function SatuUbin({
       className="rounded-card border-muted border p-3"
       aria-label={`${item.label}: ${bucket.count} barang, ${rupiah(bucket.lockedValue)} terkunci`}
     >
-      <span className="text-muted text-[15px]">
-        <span aria-hidden="true" className={item.warna}>
-          {item.ikon}
-        </span>{" "}
+      <span className="text-muted flex items-center gap-2 text-[15px]">
+        <item.ikon
+          size={20}
+          strokeWidth={1.75}
+          aria-hidden="true"
+          className={item.warna}
+        />
         {item.label}
       </span>
       <span className={`mt-1 block text-2xl font-bold ${item.warna}`}>
@@ -105,7 +123,8 @@ export function StatusTiles({
         ))}
       </div>
       {habis.count > 0 ? (
-        <p className="text-muted mt-2 text-[15px]">
+        <p className="text-muted mt-2 flex items-center gap-2 text-[15px]">
+          <PackageX size={20} strokeWidth={1.75} aria-hidden="true" />
           {habis.count} barang stok habis
         </p>
       ) : null}

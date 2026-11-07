@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CircleCheck, CircleX, Minus, type LucideIcon } from "lucide-react";
 import type { Plan, PlanStep, ProductDetail } from "@/lib/api";
 import { useAksiRencana, useAksiTahap } from "@/lib/detailBarang";
 import { rupiah, tanggalPendek } from "@/lib/ui";
@@ -9,12 +10,13 @@ const tombolGaris = "rounded-card border-muted border px-4 py-3 font-semibold";
 const tombolUtama =
   "rounded-card bg-safe px-4 py-3 font-semibold text-white disabled:opacity-40";
 
-const TANDA: Record<PlanStep["outcome"], string> = {
-  succeeded: "✓",
-  failed: "✗",
-  skipped: "–",
-  pending: "",
-  in_progress: "",
+/** Ikon outcome tahap — Lucide, emoji render beda per OS. */
+const TANDA: Record<PlanStep["outcome"], LucideIcon | null> = {
+  succeeded: CircleCheck,
+  failed: CircleX,
+  skipped: Minus,
+  pending: null,
+  in_progress: null,
 };
 
 const AKHIR: Record<string, string> = {
@@ -70,12 +72,15 @@ function KotakHitungan({ s }: { s: PlanStep }) {
 }
 
 function KartuTahap({ s, redup }: { s: PlanStep; redup?: boolean }) {
+  const Ikon = TANDA[s.outcome];
+
   return (
     <li
       className={`rounded-card border-muted border p-3 ${redup ? "opacity-60" : ""}`}
     >
-      <p className="text-muted text-[13px] font-semibold">
-        {TANDA[s.outcome]} Tahap {s.stepNo} · {s.durationDays} hari
+      <p className="text-muted flex items-center gap-2 text-[13px] font-semibold">
+        {Ikon ? <Ikon size={16} strokeWidth={1.75} aria-hidden="true" /> : null}
+        Tahap {s.stepNo} · {s.durationDays} hari
       </p>
       <p className="font-semibold">{s.title}</p>
       <p className="text-[15px]">{s.instructions}</p>
