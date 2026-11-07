@@ -212,7 +212,7 @@ function Hero() {
 function AngkaContoh() {
   return (
     <section className={`${kartu} space-y-1`}>
-      <p className="text-[17px] font-semibold">
+      <p className="angka text-4xl font-extrabold tracking-tight">
         {ANGKA_CONTOH.terkunci} terkunci
       </p>
       <p className="text-muted text-[15px]">
