@@ -1,27 +1,21 @@
 @import "tailwindcss";
+@import "./tokens.css";
 
-/* Token DESIGN.md §2–§5. Satu sumber warna; tidak ada warna lain di src/. */
-@theme {
-  --color-surface: #f8f7f4;
-  --color-ink: #1f1f1f;
-  --color-muted: #6b7280;
-  --color-safe: #10b981;
-  --color-danger: #dc2626;
-  --color-warn: #f59e0b;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --radius-card: 8px;
-}
-
+/*
+ * DESIGN.md v2.0 — §2 navy sebagai teks utama, §3 isi utama 16px.
+ * Nol hex di berkas ini: semua nilai lewat token di tokens.css.
+ */
 @layer base {
   body {
     background-color: var(--color-surface);
-    color: var(--color-ink);
-    font-size: 17px;
+    color: var(--color-navy);
+    font-family: var(--font-sans);
+    font-size: 16px;
     line-height: 1.5;
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-safe);
+    outline: 2px solid var(--color-emerald);
     outline-offset: 2px;
   }
 }

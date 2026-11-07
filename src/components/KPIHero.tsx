@@ -2,24 +2,21 @@ import Link from "next/link";
 import type { Dashboard, ProductStatus } from "@/lib/api";
 import { rupiah } from "@/lib/ui";
 
-/** FSD §6 blok 1 — "Uang terkunci di rak". */
+/** FSD §6 blok 1 — "Uang terkunci di rak". DESIGN.md §4 RHYTHM: hero satu blok navy + satu angka besar. */
 export function KpiHero({ totals }: { totals: Dashboard["totals"] }) {
   return (
-    <section
-      aria-labelledby="hero-label"
-      className="rounded-card border-muted border p-4"
-    >
-      <h1 id="hero-label" className="text-muted text-[15px]">
+    <section aria-labelledby="hero-label" className="rounded-card bg-navy p-4">
+      <h1 id="hero-label" className="text-surface/70 text-[15px]">
         Uang terkunci di rak
       </h1>
-      <p className="mt-1 text-4xl font-bold tracking-tight">
+      <p className="angka text-surface mt-1 text-4xl font-extrabold tracking-tight">
         {rupiah(totals.lockedValue)}
       </p>
-      <p className="text-muted mt-1 text-[15px]">
+      <p className="text-surface/70 mt-1 text-[15px]">
         {rupiah(totals.problemLockedValue)} di barang bermasalah
       </p>
       {totals.complementaryLockedValue > 0 ? (
-        <p className="text-muted text-[15px]">
+        <p className="text-surface/70 text-[15px]">
           termasuk {rupiah(totals.complementaryLockedValue)} di barang pelengkap
         </p>
       ) : null}
@@ -27,13 +24,36 @@ export function KpiHero({ totals }: { totals: Dashboard["totals"] }) {
   );
 }
 
-type Ubin = { status: ProductStatus; label: string; ikon: string };
+type Ubin = {
+  status: ProductStatus;
+  label: string;
+  ikon: string;
+  warna: string;
+};
 
+/**
+ * Kelas warna ditulis literal di sini, BUKAN disusun dari `item.status`:
+ * Tailwind v4 memindai sumber untuk string kelas, jadi `text-${status}-chip`
+ * tidak pernah jadi utility. Nol hex di berkas ini — semuanya lewat tokens.css.
+ * Token CHIP (bukan dasar) untuk angka ubin: latar kartu adalah
+ * `--color-surface`, dan token dasar Waspada hanya 2,97:1 di sana — gagal 3:1.
+ * Chip 4,68:1 lolos. Lihat komentar tokens.css §2 untuk angka lengkap.
+ */
 const ubin: Ubin[] = [
-  { status: "sehat", label: "Sehat", ikon: "✓" },
-  { status: "waspada", label: "Waspada", ikon: "⚠" },
-  { status: "sekarat", label: "Sekarat", ikon: "⏳" },
-  { status: "mati", label: "Mati", ikon: "⊗" },
+  { status: "sehat", label: "Sehat", ikon: "✓", warna: "text-sehat-chip" },
+  {
+    status: "waspada",
+    label: "Waspada",
+    ikon: "⚠",
+    warna: "text-waspada-chip",
+  },
+  {
+    status: "sekarat",
+    label: "Sekarat",
+    ikon: "⏳",
+    warna: "text-sekarat-chip",
+  },
+  { status: "mati", label: "Mati", ikon: "⊗", warna: "text-mati-chip" },
 ];
 
 function SatuUbin({
@@ -50,14 +70,15 @@ function SatuUbin({
       aria-label={`${item.label}: ${bucket.count} barang, ${rupiah(bucket.lockedValue)} terkunci`}
     >
       <span className="text-muted text-[15px]">
-        <span aria-hidden="true">{item.ikon}</span> {item.label}
+        <span aria-hidden="true" className={item.warna}>
+          {item.ikon}
+        </span>{" "}
+        {item.label}
       </span>
-      <span
-        className={`mt-1 block text-2xl font-bold ${item.status === "sehat" ? "text-safe" : "text-ink"}`}
-      >
+      <span className={`mt-1 block text-2xl font-bold ${item.warna}`}>
         {bucket.count}
       </span>
-      <span className="text-muted block text-[15px]">
+      <span className="text-muted angka block text-[15px]">
         {rupiah(bucket.lockedValue)}
       </span>
     </Link>

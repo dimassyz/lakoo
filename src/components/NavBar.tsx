@@ -24,9 +24,9 @@ const lainnya: Item[] = [
   { href: "/toko/pengaturan", label: "Pengaturan" },
 ];
 
-const tautan = "block rounded-card px-3 py-2 text-[15px]";
+const tautan = "block rounded-card px-3 py-3 text-[15px]";
 const tombolKecil =
-  "rounded-card border-muted border px-2 py-1 text-[13px] font-semibold";
+  "rounded-card border-muted border px-3 py-3 text-[13px] font-semibold";
 
 /** FSD §0.4 — keluar ditahan bila masih ada isian di antrean. */
 export function Keluar({ antrean }: { antrean: Antrean }) {
@@ -86,7 +86,7 @@ function DaftarItem({ items, pathname }: { items: Item[]; pathname: string }) {
           <Link
             href={item.href}
             aria-current={pathname === item.href ? "page" : undefined}
-            className={`${tautan} ${pathname === item.href ? "text-safe font-semibold" : "text-ink"}`}
+            className={`${tautan} ${pathname === item.href ? "text-navy font-semibold" : "text-muted"}`}
           >
             {item.label}
           </Link>
@@ -130,7 +130,7 @@ function BottomNav({ antrean }: { antrean: Antrean }) {
             <Link
               href={item.href}
               aria-current={pathname === item.href ? "page" : undefined}
-              className={`${sel} ${pathname === item.href ? "text-safe font-semibold" : "text-ink"}`}
+              className={`${sel} ${pathname === item.href ? "text-navy font-semibold" : "text-muted"}`}
             >
               {item.label}
             </Link>
@@ -216,7 +216,7 @@ function DaftarAntrean({ antrean }: { antrean: Antrean }) {
         type="button"
         disabled={antrean.mengirim}
         onClick={() => void antrean.kirimSekarang()}
-        className="rounded-card bg-safe px-3 py-2 text-[15px] font-semibold text-white disabled:opacity-50"
+        className="rounded-card bg-navy text-surface px-3 py-3 text-[15px] font-semibold disabled:opacity-50"
       >
         {antrean.mengirim ? "Mengirim…" : "Kirim sekarang"}
       </button>
@@ -248,7 +248,7 @@ function Kepala({
             type="button"
             aria-expanded={buka}
             onClick={() => setBuka(!buka)}
-            className="rounded-card border-danger text-danger px-3 py-1 text-[13px] font-semibold"
+            className="rounded-card border-danger text-danger px-3 py-3 text-[13px] font-semibold"
           >
             {n} belum terkirim
           </button>
