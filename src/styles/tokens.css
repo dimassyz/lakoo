@@ -1,0 +1,86 @@
+/*
+ * DESIGN.md v2.0 "Kas" (amendemen 28 Okt 2026) — SATU-SATUAN sumber nilai visual.
+ * Nol hex di luar berkas ini (AC T-14.1). Tailwind v4 CSS-first: berkas ini
+ * menggantikan tailwind.config.ts, jadi token tidak terdefinisi dua kali.
+ *
+ * Semua angka kontras di komentar ini DIHITUNG (WCAG 2.x relative luminance),
+ * bukan diklaim — angka lengkap ada di DESIGN.md §2 dan §5. Dua token per status
+ * karena token dasar terlalu terang untuk teks 14px.
+ */
+
+/* §2 Core — 3 warna + 1 aksen, masing-masing dengan alasan di DESIGN.md.
+   `static` dipakai supaya Tailwind tidak membuang token yang belum dipakai
+   kelas mana pun (v4 melakukan tree-shake): token T-14.4 seperti Sekarat dan
+   shadow/radius harus ADA sebelum halaman pemakainya masuk. Tanpa static,
+   "terdefinisi sekali" hanya benar di sumber, bukan di CSS hasil build. */
+@theme static {
+  --color-navy: #0b1f3a; /* merek + teks utama + latar tombol utama (putih di atasnya 16,5:1) */
+  --color-surface: #f6f7f9; /* kertas dingin — surface */
+  --color-muted: #475569; /* abu-arctic — teks bantu + label; 7,1:1 di atas kertas */
+  --color-emerald: #059669; /* kas kembali: angka uang BESAR (≥24px, 3,5:1), ikon, dot,
+                               status Sehat. BUKAN teks kecil, BUKAN latar tombol
+                               (putih di atasnya 3,8:1 — gagal AA untuk teks 16px). */
+
+  /* §2 Ramp status — token DASAR: ikon · dot · angka besar (≥24px). */
+  --color-sehat: #059669;
+  --color-waspada: #d97706;
+  --color-sekarat: #ea580c;
+  --color-mati: #dc2626;
+
+  /* §2 Ramp status — token CHIP: teks label 14px. Kontras di atas kertas
+     dingin, semuanya lolos WCAG AA (DESIGN.md §5). */
+  --color-sehat-chip: #047857; /* 5,1:1 */
+  --color-waspada-chip: #b45309; /* 4,7:1 */
+  --color-sekarat-chip: #c2410c; /* 4,8:1 */
+  --color-mati-chip: #b91c1c; /* 6,0:1 */
+
+  /* §5 Border kartu 1px. */
+  --color-line: #e2e8f0;
+
+  /* §3 Tipografi — satu font untuk seluruh aplikasi, nol font kedua. */
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* §5 Radius — tiga nilai saja. */
+  --radius-card: 12px;
+  --radius-btn: 10px;
+  --radius-pill: 9999px;
+
+  /* §4 ENERGY — shadow dua tingkat saja, nol shadow pada teks. */
+  --shadow-card: 0 1px 2px rgb(11 31 58 / 0.06);
+  --shadow-float: 0 4px 12px rgb(11 31 58 / 0.1);
+
+  /* §4 RHYTHM — skala spasi 4/8/12/16/24/32, nol nilai arbitrari. */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+
+  /* Alias legacy → token CHIP, bukan token dasar. Alasannya terukur: setiap
+     pemakaian sekarang adalah teks kecil (14–16px) atau tombol berteks putih,
+     dan token dasar GAGAL AA di posisi itu (#059669 3,5:1 · #D97706 3,0:1).
+     Dengan alias ke chip, aplikasi yang ADA sekarang lolos AA:
+     text-safe 5,1:1 · text-warn 4,7:1 · text-danger 6,0:1 ·
+     putih di atas bg-safe 5,5:1. Dihapus di T-14.5 ketika semua halaman
+     memakai nama ramp §2 dan tombol utama pindah ke navy. */
+  --color-ink: var(--color-navy);
+  --color-safe: var(--color-sehat-chip);
+  --color-warn: var(--color-waspada-chip);
+  --color-danger: var(--color-mati-chip);
+}
+
+/* §4 MOTION — tiga animasi terbatas. Di luar @theme karena bukan namespace
+   utility Tailwind; dipakai sebagai duration-[var(--durasi-*)]. */
+:root {
+  --durasi-fade: 150ms; /* transisi halaman */
+  --durasi-press: 120ms; /* tombol ditekan */
+  --durasi-count: 400ms; /* count-up angka kas kembali */
+}
+
+/* §3 Angka uang: tabular-nums supaya angka berbaris lurus saat berubah —
+   angka uang yang bergerak tidak boleh goyang. Satu kelas untuk semua angka
+   uang (T-14.3 hero, T-14.5 sisa halaman). */
+@utility angka {
+  font-variant-numeric: tabular-nums;
+}
