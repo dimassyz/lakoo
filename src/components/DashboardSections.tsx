@@ -10,12 +10,12 @@ export function HariIni({ today }: { today: D["today"] }) {
     ...today.dueSteps.map((s) => ({
       key: `step-${s.planId}-${s.stepNo}`,
       teks: `Tahap ${s.stepNo} ${s.title} untuk ${s.productName} sudah waktunya dicek`,
-      href: `/barang/${s.productId}#rencana`,
+      href: `/toko/barang/${s.productId}#rencana`,
     })),
     ...today.statusChanges.map((c) => ({
       key: `change-${c.productId}-${c.to}`,
       teks: `${c.name}: ${labelStatus(c.from)} → ${labelStatus(c.to)}`,
-      href: `/barang/${c.productId}`,
+      href: `/toko/barang/${c.productId}`,
     })),
   ];
 
@@ -42,7 +42,7 @@ export function HariIni({ today }: { today: D["today"] }) {
       )}
       {baris.length > 5 ? (
         <Link
-          href="/rencana"
+          href="/toko/rencana"
           className="text-muted mt-1 block text-[15px] underline"
         >
           lihat semua
@@ -72,7 +72,10 @@ export function RingkasanMinggu({ summary }: { summary: D["weeklySummary"] }) {
           {s}
         </p>
       ))}
-      <Link href="/hasil" className="mt-2 inline-block text-[15px] underline">
+      <Link
+        href="/toko/hasil"
+        className="mt-2 inline-block text-[15px] underline"
+      >
         Lihat hasil
       </Link>
     </section>
@@ -101,7 +104,7 @@ export function TanganiDulu({ items }: { items: D["topPriority"] }) {
               </p>
               {p.reason ? <p className="text-[15px]">{p.reason}</p> : null}
               <Link
-                href={`/barang/${p.id}#rencana`}
+                href={`/toko/barang/${p.id}#rencana`}
                 className="rounded-card border-safe text-safe mt-2 inline-block border px-3 py-2 text-[15px] font-semibold"
               >
                 Lihat rencana
@@ -171,13 +174,13 @@ export function BerandaKosong() {
       </p>
       <div className="mt-3 flex gap-2">
         <Link
-          href="/barang/baru"
+          href="/toko/barang/baru"
           className="rounded-card bg-safe px-4 py-3 font-semibold text-white"
         >
           Tambah barang
         </Link>
         <Link
-          href="/import"
+          href="/toko/import"
           className="rounded-card border-muted border px-4 py-3 font-semibold"
         >
           Import dari file
