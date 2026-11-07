@@ -5,9 +5,8 @@ export default function Document() {
   return (
     <Html lang="id">
       <Head>
-        {/* DESIGN.md v2.0 §3 — Plus Jakarta Sans, satu font untuk seluruh app.
-            Lewat <link> (bukan next/font) karena _app.tsx adalah berkas T-14.2;
-            di sana pemanggilan next/font Inter yang sekarang dihapus. */}
+        {/* DESIGN.md v2.0 §3 — Plus Jakarta Sans, satu font untuk seluruh app,
+            dimuat lewat <link> di sini. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
