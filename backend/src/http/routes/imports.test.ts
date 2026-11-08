@@ -93,6 +93,65 @@ beforeAll(async () => {
 afterAll(async () => {
   await close();
 });
+/**
+ * Sesi toko kedua untuk suite QA-8 (F-03/F-02): kuota import 20/jam berlaku
+ * per toko, jadi panggilan ekstra suite baru tidak boleh menggerus kuota
+ * toko utama — kalau tidak, tes lama di bawahnya ikut kena 429.
+ */
+let sesiBCache: { req: typeof req; storeId: string } | undefined;
+async function sesiB(): Promise<{ req: typeof req; storeId: string }> {
+  if (sesiBCache) return sesiBCache;
+  const registered = await app.request("/api/v1/auth/register", {
+    method: "POST",
+    headers: { origin: ORIGIN, "content-type": "application/json" },
+    body: JSON.stringify({
+      storeName: "Toko Uji B",
+      email: "b@contoh.id",
+      password: "sandi-uji-12345",
+    }),
+  });
+  const cookieB = (
+    registered.headers
+      .getSetCookie()
+      .find((c) => c.startsWith("lakoo_session=")) ?? ""
+  ).split(";")[0] as string;
+  const semua = await db.select().from(stores);
+  const storeIdB = semua.find((x) => x.id !== storeId)!.id;
+  const inserted = await db
+    .insert(products)
+    .values({
+      storeId: storeIdB,
+      name: "Kopi Bubuk",
+      nameKey: "kopi bubuk",
+      unit: "pcs",
+      sellPrice: 15_000,
+    })
+    .returning();
+  await db.insert(stockIns).values({
+    storeId: storeIdB,
+    productId: inserted[0]!.id,
+    batchId: crypto.randomUUID(),
+    receivedOn: "2026-08-01",
+    qty: 20,
+    unitCost: 10_000,
+    kind: "opening",
+  });
+  const reqB = (path: string, body: unknown) =>
+    Promise.resolve(
+      app.request(`/api/v1${path}`, {
+        method: "POST",
+        headers: {
+          origin: ORIGIN,
+          "content-type": "application/json",
+          cookie: cookieB,
+        },
+        body: JSON.stringify(body),
+      }),
+    );
+  sesiBCache = { req: reqB, storeId: storeIdB };
+  return sesiBCache;
+}
+
 
 describe("POST /imports/products — preview", () => {
   it("tidak menulis apa pun", async () => {
@@ -134,6 +193,10 @@ describe("POST /imports/products — preview", () => {
 });
 
 describe("POST /imports/products — angka pratinjau (QA-8 F-03)", () => {
+  let sesi: Awaited<ReturnType<typeof sesiB>>;
+  beforeAll(async () => {
+    sesi = await sesiB();
+  });
   it("mode Lewati: dibuat dan dilewati saling lepas, commit menepatinya", async () => {
     const rows = [
       {
@@ -145,7 +208,7 @@ describe("POST /imports/products — angka pratinjau (QA-8 F-03)", () => {
       { name: "Permen Karet", costPrice: 500, sellPrice: 1000, stock: 12 },
     ];
     const body = (await (
-      await req("/imports/products", {
+      await sesi.req("/imports/products", {
         mode: "preview",
         onDuplicate: "skip",
         rows,
@@ -157,7 +220,7 @@ describe("POST /imports/products — angka pratinjau (QA-8 F-03)", () => {
     expect(body.skipped).toBe(1);
 
     const commit = (await (
-      await req("/imports/products", {
+      await sesi.req("/imports/products", {
         mode: "commit",
         onDuplicate: "skip",
         rows,
@@ -170,7 +233,7 @@ describe("POST /imports/products — angka pratinjau (QA-8 F-03)", () => {
 
   it("mode Perbarui harga: duplikat dihitung akan diperbarui, bukan '0 sudah ada'", async () => {
     const body = (await (
-      await req("/imports/products", {
+      await sesi.req("/imports/products", {
         mode: "preview",
         onDuplicate: "update_price",
         rows: [
@@ -547,10 +610,11 @@ describe("harga modal terakhir setelah import update_price", () => {
 
 describe("POST /imports/sales — penjualan sebelum barang dibuat (QA-8 F-02)", () => {
   it("pesan menyebut tanggal pembuatan barang, bukan sekadar 'stok 0'", async () => {
+    const sesi = await sesiB();
     const inserted = await db
       .insert(products)
       .values({
-        storeId,
+        storeId: sesi.storeId,
         name: "Susu UHT",
         nameKey: "susu uht",
         unit: "pcs",
@@ -560,7 +624,7 @@ describe("POST /imports/sales — penjualan sebelum barang dibuat (QA-8 F-02)", 
       })
       .returning();
     await db.insert(stockIns).values({
-      storeId,
+      storeId: sesi.storeId,
       productId: inserted[0]!.id,
       batchId: crypto.randomUUID(),
       receivedOn: TODAY,
@@ -570,7 +634,7 @@ describe("POST /imports/sales — penjualan sebelum barang dibuat (QA-8 F-02)", 
     });
 
     const body = (await (
-      await req("/imports/sales", {
+      await sesi.req("/imports/sales", {
         mode: "preview",
         rows: [{ date: "2026-11-08", productName: "Susu UHT", qty: 1 }],
       })
@@ -584,7 +648,7 @@ describe("POST /imports/sales — penjualan sebelum barang dibuat (QA-8 F-02)", 
 
     // Penjualan pada hari pembuatan tetap diterima.
     const ok = (await (
-      await req("/imports/sales", {
+      await sesi.req("/imports/sales", {
         mode: "preview",
         rows: [{ date: TODAY, productName: "Susu UHT", qty: 1 }],
       })
