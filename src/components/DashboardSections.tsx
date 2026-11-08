@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Dashboard } from "@/lib/api";
+import { tautanTeks, tombolHantu, tombolUtama } from "@/lib/tombol";
 import { labelStatus as labelStatusTeks, rupiah } from "@/lib/ui";
 import { ChipStatus, kelasTeksStatus } from "@/components/ChipStatus";
 
@@ -44,7 +45,7 @@ export function HariIni({ today }: { today: D["today"] }) {
             <li key={b.key} className="text-sm">
               <Link
                 href={b.href}
-                className="decoration-muted underline underline-offset-2"
+                className={`${tautanTeks} decoration-muted underline-offset-2`}
               >
                 {b.teks}
               </Link>
@@ -55,7 +56,7 @@ export function HariIni({ today }: { today: D["today"] }) {
       {baris.length > 5 ? (
         <Link
           href="/toko/rencana"
-          className="text-muted mt-1 block text-base underline"
+          className={`${tautanTeks} text-muted mt-1 block text-base`}
         >
           lihat semua
         </Link>
@@ -71,7 +72,7 @@ export function RingkasanMinggu({ summary }: { summary: D["weeklySummary"] }) {
   return (
     <section
       aria-labelledby="ringkasan-minggu"
-      className="rounded-card border-garis bg-card shadow-card border p-6"
+      className="rounded-card border-garis bg-pasir shadow-card border p-6"
     >
       <h2 id="ringkasan-minggu" className="mb-3 text-base font-bold">
         Minggu lalu
@@ -83,7 +84,7 @@ export function RingkasanMinggu({ summary }: { summary: D["weeklySummary"] }) {
       ))}
       <Link
         href="/toko/hasil"
-        className="text-navy mt-3 inline-block text-sm font-semibold underline underline-offset-[3px]"
+        className={`${tautanTeks} text-navy mt-3 inline-block text-sm font-semibold underline-offset-[3px]`}
       >
         Lihat hasil
       </Link>
@@ -107,18 +108,23 @@ export function TanganiDulu({ items }: { items: D["topPriority"] }) {
               key={p.id}
               className="rounded-card border-garis bg-card shadow-card border px-6 py-5"
             >
-              <p className="text-navy font-bold">{p.name}</p>
-              <p className="text-slate mt-2 flex items-center gap-2 text-sm">
+              <div className="flex items-start justify-between gap-4">
+                <p className="text-navy font-bold">{p.name}</p>
                 <ChipStatus status={p.status} />
-                <span>
-                  <span className="angka">{rupiah(p.lockedValue)}</span>{" "}
-                  terkunci
-                </span>
+              </div>
+              <p className="text-slate mt-2 text-sm">
+                <span className="angka">{rupiah(p.lockedValue)}</span> terkunci
+                {typeof p.daysSinceLastSale === "number" ? (
+                  <>
+                    {" "}
+                    · <span className="angka">{p.daysSinceLastSale}</span> hari
+                    tidak laku
+                  </>
+                ) : null}
               </p>
-              {p.reason ? <p className="mt-1 text-sm">{p.reason}</p> : null}
               <Link
                 href={`/toko/barang/${p.id}#rencana`}
-                className="rounded-btn border-navy text-navy mt-4 inline-flex min-h-11 items-center border px-4 text-sm font-semibold"
+                className={`${tombolUtama} rounded-btn mt-4 inline-flex min-h-11 items-center px-4 text-sm`}
               >
                 Lihat rencana
               </Link>
@@ -136,17 +142,38 @@ export function SegeraKulakan({ items }: { items: D["restockSoon"] }) {
   if (siap.length === 0) return null;
 
   return (
-    <section aria-labelledby="kulakan">
-      <h2 id="kulakan" className="mb-4 text-xl font-extrabold">
+    <section
+      aria-labelledby="kulakan"
+      className="rounded-card border-garis bg-pasir shadow-card border p-6"
+    >
+      <h2 id="kulakan" className="mb-3 text-base font-bold">
         Segera kulakan
       </h2>
-      <ul className="space-y-1">
+      <ul className="divide-garis divide-y">
         {siap.map((p) => (
-          <li key={p.id} className="text-base">
-            {p.name} — ±{p.daysUntilEmpty} hari lagi habis
+          <li
+            key={p.id}
+            className="flex items-baseline justify-between gap-4 py-2.5"
+          >
+            <span className="text-navy text-sm font-semibold">{p.name}</span>
+            {p.daysUntilEmpty === 0 ? (
+              <span className="text-mati-chip text-[13px] font-semibold whitespace-nowrap">
+                Stok habis
+              </span>
+            ) : (
+              <span className="text-muted text-[13px] font-semibold whitespace-nowrap">
+                ±{p.daysUntilEmpty} hari lagi habis
+              </span>
+            )}
           </li>
         ))}
       </ul>
+      <Link
+        href="/toko/barang"
+        className={`${tautanTeks} text-navy mt-3 inline-block text-sm font-semibold underline-offset-[3px]`}
+      >
+        Lihat semua barang
+      </Link>
     </section>
   );
 }
@@ -188,13 +215,13 @@ export function BerandaKosong() {
       <div className="mt-4 flex flex-wrap gap-2">
         <Link
           href="/toko/barang/baru"
-          className="rounded-btn bg-navy inline-flex min-h-11 items-center px-4 font-semibold text-white"
+          className={`${tombolUtama} rounded-btn inline-flex min-h-11 items-center px-4`}
         >
           Tambah barang
         </Link>
         <Link
           href="/toko/import"
-          className="rounded-btn border-line inline-flex min-h-11 items-center border px-4 font-semibold"
+          className={`${tombolHantu} rounded-btn inline-flex min-h-11 items-center px-4`}
         >
           Import dari file
         </Link>

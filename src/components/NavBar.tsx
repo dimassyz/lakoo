@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { useState, type ReactNode } from "react";
 import { api, type Dashboard } from "@/lib/api";
 import type { OutboxItem } from "@/lib/outbox";
+import { dasarInteraktif, tombolHantu, tombolUtama } from "@/lib/tombol";
 import { tanggalPendek, useOnline } from "@/lib/ui";
 import { useAntrean, type Antrean } from "@/lib/worker";
 
@@ -25,9 +26,14 @@ const lainnya: Item[] = [
   { href: "/toko/pengaturan", label: "Pengaturan" },
 ];
 
-const tautan = "flex items-center gap-2 rounded-btn px-3 py-3 text-[15px]";
-const tombolKecil =
-  "rounded-btn border-muted border px-3 py-3 text-[13px] font-semibold";
+const tautan =
+  "flex cursor-pointer items-center gap-2 rounded-btn px-3 py-3 text-[15px] transition-colors duration-150";
+/** Varian KHUSUS sidebar desktop (mockup Beranda): baris 40px (py-2).
+    Menu "Lainnya" mobile tetap `tautan` — target sentuh ≥44px di HP. */
+const tautanSidebar =
+  "flex cursor-pointer items-center gap-2 rounded-btn px-3 py-2 text-[15px] transition-colors duration-150";
+/** Tombol kecil ghost — affordance terpusat di @/lib/tombol (v6). */
+const tombolKecil = `${tombolHantu} rounded-btn px-3 py-3 text-[13px]`;
 
 /** FSD §0.4 — keluar ditahan bila masih ada isian di antrean. */
 export function Keluar({ antrean }: { antrean: Antrean }) {
@@ -46,7 +52,7 @@ export function Keluar({ antrean }: { antrean: Antrean }) {
         onClick={() =>
           antrean.items.length > 0 ? setTanya(true) : void keluar()
         }
-        className={`${tautan} text-muted w-full text-left`}
+        className={`${tautan} text-muted hover:bg-marigold/15 hover:text-navy w-full text-left`}
       >
         Keluar
       </button>
@@ -63,7 +69,7 @@ export function Keluar({ antrean }: { antrean: Antrean }) {
         <button
           type="button"
           onClick={() => void keluar()}
-          className={`${tombolKecil} border-danger text-danger`}
+          className={`${dasarInteraktif} rounded-btn border-danger text-danger hover:bg-danger border px-3 py-3 text-[13px] font-semibold hover:text-white`}
         >
           Tetap keluar
         </button>
@@ -83,27 +89,37 @@ function DaftarItem({
   items,
   pathname,
   penanda = false,
+  sidebar = false,
 }: {
   items: Item[];
   pathname: string;
-  /** DESIGN-V3 §4 — item aktif di sidebar ditandai dot marigold. */
+  /** PALETTE-V6 — item aktif sidebar: pill marigold solid + dot ink. */
   penanda?: boolean;
+  /** Sidebar desktop: baris 40px + aktif font-bold (mockup Beranda). */
+  sidebar?: boolean;
 }) {
   return (
     <ul className="space-y-1">
       {items.map((item) => {
         const aktif = pathname === item.href;
+        const kelasAktif = sidebar
+          ? aktif
+            ? "bg-marigold text-navy font-bold"
+            : "text-muted hover:bg-marigold/15 hover:text-navy"
+          : aktif
+            ? "text-navy font-semibold hover:bg-marigold/15"
+            : "text-muted hover:bg-marigold/15 hover:text-navy";
         return (
           <li key={item.href}>
             <Link
               href={item.href}
               aria-current={aktif ? "page" : undefined}
-              className={`${tautan} ${aktif ? "text-navy font-semibold" : "text-muted"}`}
+              className={`${sidebar ? tautanSidebar : tautan} ${kelasAktif}`}
             >
               {penanda ? (
                 <span
                   aria-hidden
-                  className={`${aktif ? "bg-marigold-kuat" : "bg-transparent"} h-2 w-2 shrink-0 rounded-full`}
+                  className={`${aktif ? "bg-navy" : "bg-transparent"} h-2 w-2 shrink-0 rounded-full`}
                 />
               ) : null}
               {item.label}
@@ -131,7 +147,7 @@ function Sidebar({
       className="border-line bg-card hidden w-60 shrink-0 border-r lg:block"
     >
       <div className="sticky top-0 flex h-screen flex-col p-4">
-        <p className="text-navy mb-4 flex items-center gap-1.5 px-3 text-2xl font-bold">
+        <p className="text-navy mb-4 flex items-center gap-1.5 px-3 text-2xl font-extrabold">
           Lakoo
           <span aria-hidden className="bg-marigold h-2.5 w-2.5 rounded-full" />
         </p>
@@ -139,12 +155,13 @@ function Sidebar({
           items={[...utama, ...lainnya]}
           pathname={pathname}
           penanda
+          sidebar
         />
         <div className="mt-auto">
           <div className="border-line flex items-center gap-3 border-t px-3 pt-4 pb-3">
             <span
               aria-hidden
-              className="bg-navy text-card flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[15px] font-bold"
+              className="bg-marigold text-navy flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[15px] font-bold"
             >
               {namaToko.charAt(0)}
             </span>
@@ -157,7 +174,8 @@ function Sidebar({
   );
 }
 
-const selBawah = "flex flex-col items-center py-3 text-[15px]";
+const selBawah =
+  "flex cursor-pointer flex-col items-center py-3 text-[15px] transition-colors duration-150";
 
 function SelBawah({ item, pathname }: { item: Item; pathname: string }) {
   const aktif = pathname === item.href;
@@ -166,7 +184,7 @@ function SelBawah({ item, pathname }: { item: Item; pathname: string }) {
       <Link
         href={item.href}
         aria-current={aktif ? "page" : undefined}
-        className={`${selBawah} ${aktif ? "text-navy font-semibold" : "text-muted"}`}
+        className={`${selBawah} ${aktif ? "text-navy font-semibold" : "text-muted hover:text-navy"}`}
       >
         {item.label}
       </Link>
@@ -200,7 +218,7 @@ function BottomNav({ antrean }: { antrean: Antrean }) {
             aria-current={
               pathname === "/toko/barang-masuk" ? "page" : undefined
             }
-            className="bg-navy text-card flex h-11 w-11 items-center justify-center rounded-full"
+            className={`${dasarInteraktif} bg-navy text-card hover:bg-navy/90 hover:shadow-float flex h-11 w-11 items-center justify-center rounded-full`}
           >
             <Plus aria-hidden size={24} />
           </Link>
@@ -212,7 +230,7 @@ function BottomNav({ antrean }: { antrean: Antrean }) {
         <li>
           <details className="relative">
             <summary
-              className={`${selBawah} text-muted cursor-pointer list-none [&::-webkit-details-marker]:hidden`}
+              className={`${selBawah} text-muted hover:text-navy list-none [&::-webkit-details-marker]:hidden`}
             >
               Lainnya
             </summary>
@@ -260,11 +278,7 @@ function BarisAntrean({
             Buka &amp; perbaiki
           </Link>
         ) : null}
-        <button
-          type="button"
-          onClick={onBuang}
-          className={`${tombolKecil} text-muted`}
-        >
+        <button type="button" onClick={onBuang} className={tombolKecil}>
           Buang
         </button>
       </div>
@@ -289,7 +303,7 @@ function DaftarAntrean({ antrean }: { antrean: Antrean }) {
         type="button"
         disabled={antrean.mengirim}
         onClick={() => void antrean.kirimSekarang()}
-        className="rounded-btn bg-navy text-surface px-3 py-3 text-[15px] font-semibold disabled:opacity-50"
+        className={`${tombolUtama} rounded-btn px-3 py-3 text-[15px]`}
       >
         {antrean.mengirim ? "Mengirim…" : "Kirim sekarang"}
       </button>
@@ -321,7 +335,7 @@ function Kepala({
             type="button"
             aria-expanded={buka}
             onClick={() => setBuka(!buka)}
-            className="rounded-btn border-danger text-danger px-3 py-3 text-[13px] font-semibold"
+            className={`${dasarInteraktif} rounded-btn border-danger text-danger hover:bg-danger border px-3 py-3 text-[13px] font-semibold hover:text-white`}
           >
             {n} belum terkirim
           </button>
@@ -366,7 +380,7 @@ export function AppShell({
           <Pita>Tidak ada sinyal — isian tetap disimpan di HP</Pita>
         )}
         <Kepala store={store} antrean={antrean} />
-        <main className="mx-auto w-full max-w-[1200px] px-5 py-5 md:px-8 md:py-8 lg:px-10 lg:py-10">
+        <main className="mx-auto w-full max-w-[1200px] px-5 py-5 md:px-8 md:py-8 lg:px-10 lg:pt-8 lg:pb-10">
           {children}
         </main>
       </div>
