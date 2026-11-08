@@ -36,7 +36,7 @@ export default function UbahBarangPage() {
           <p className="font-semibold">Barang tidak ditemukan.</p>
           <Link
             href="/toko/barang"
-            className="rounded-card bg-safe mt-3 inline-block px-4 py-3 font-semibold text-white"
+            className="rounded-card bg-navy mt-3 inline-block px-4 py-3 font-semibold text-white"
           >
             Kembali ke daftar
           </Link>

@@ -58,7 +58,7 @@ const FAQ = [
 ];
 
 const tombolUtama =
-  "rounded-card bg-safe px-4 py-3 text-[16px] font-semibold text-white disabled:opacity-60";
+  "rounded-card bg-navy px-4 py-3 text-[16px] font-semibold text-white disabled:opacity-60";
 const kartu = "rounded-card border-muted border p-4";
 
 /** SPEC §7b — JSON-LD: SoftwareApplication, Organization, WebSite, FAQPage. */

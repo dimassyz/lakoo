@@ -33,7 +33,7 @@ function usePulihkanAntrean(l: LayarMasuk) {
 }
 
 const tombolUtama =
-  "rounded-card bg-safe px-4 py-3 font-semibold text-white disabled:opacity-40";
+  "rounded-card bg-navy px-4 py-3 font-semibold text-white disabled:opacity-40";
 const tombolGaris = "rounded-card border-muted border px-4 py-3 font-semibold";
 
 /** FSD §8 — tanggal nota: bawaan hari ini, boleh mundur sampai 365 hari. */
@@ -148,7 +148,7 @@ function IsiRiwayat({ l }: { l: LayarMasuk }) {
         <button
           type="button"
           onClick={() => void l.riwayat.muat()}
-          className="rounded-card bg-safe mt-3 px-4 py-3 font-semibold text-white"
+          className="rounded-card bg-navy mt-3 px-4 py-3 font-semibold text-white"
         >
           Coba lagi
         </button>

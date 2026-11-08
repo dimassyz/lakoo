@@ -183,7 +183,7 @@ function Kosong({ adaFilter }: { adaFilter: boolean }) {
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
           href="/toko/barang/baru"
-          className="rounded-card bg-safe px-4 py-3 font-semibold text-white"
+          className="rounded-card bg-navy px-4 py-3 font-semibold text-white"
         >
           Tambah barang
         </Link>
@@ -219,7 +219,7 @@ function IsiDaftar({
         <button
           type="button"
           onClick={onMuat}
-          className="rounded-card bg-safe mt-3 px-4 py-3 font-semibold text-white"
+          className="rounded-card bg-navy mt-3 px-4 py-3 font-semibold text-white"
         >
           Coba lagi
         </button>
@@ -256,7 +256,7 @@ function KepalaDaftar({
         <div className="flex gap-2">
           <Link
             href="/toko/barang/baru"
-            className="rounded-card bg-safe px-3 py-2 text-[15px] font-semibold text-white"
+            className="rounded-card bg-navy px-3 py-2 text-[15px] font-semibold text-white"
           >
             + Tambah barang
           </Link>
