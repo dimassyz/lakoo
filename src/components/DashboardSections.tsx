@@ -187,15 +187,25 @@ export function PelengkapKebanyakan({
   if (items.length === 0) return null;
 
   return (
-    <section aria-labelledby="pelengkap">
-      <h2 id="pelengkap" className="mb-4 text-xl font-extrabold">
+    <section
+      aria-labelledby="pelengkap"
+      className="rounded-card border-garis bg-pasir shadow-card border p-6"
+    >
+      <h2 id="pelengkap" className="mb-3 text-base font-bold">
         Pelengkap kebanyakan
       </h2>
-      <ul className="space-y-1">
+      <ul className="divide-garis divide-y">
         {items.map((p) => (
-          <li key={p.id} className="text-base">
-            {p.name}: stok {p.stock}, jangan kulakan dulu sampai tinggal{" "}
-            {p.complementaryThreshold}
+          <li key={p.id} className="py-2.5">
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="text-navy text-sm font-semibold">{p.name}</span>
+              <span className="text-muted text-[13px] font-semibold whitespace-nowrap">
+                stok {p.stock}
+              </span>
+            </div>
+            <p className="text-muted mt-0.5 text-sm">
+              Jangan kulakan dulu sampai tinggal {p.complementaryThreshold}
+            </p>
           </li>
         ))}
       </ul>
