@@ -33,15 +33,15 @@ export function HariIni({ today }: { today: D["today"] }) {
 
   return (
     <section aria-labelledby="hari-ini">
-      <h2 id="hari-ini" className="mb-4 text-[19px] font-semibold">
+      <h2 id="hari-ini" className="mb-4 text-xl font-extrabold">
         Hari ini
       </h2>
       {baris.length === 0 ? (
         <p className="text-base">Tidak ada yang perlu dicek hari ini</p>
       ) : (
-        <ul className="space-y-1">
+        <ul className="rounded-card border-garis bg-card shadow-card space-y-1 border p-6">
           {baris.slice(0, 5).map((b) => (
-            <li key={b.key} className="text-base">
+            <li key={b.key} className="text-sm">
               <Link
                 href={b.href}
                 className="decoration-muted underline underline-offset-2"
@@ -71,19 +71,19 @@ export function RingkasanMinggu({ summary }: { summary: D["weeklySummary"] }) {
   return (
     <section
       aria-labelledby="ringkasan-minggu"
-      className="rounded-card border-garis bg-card shadow-card border p-4"
+      className="rounded-card border-garis bg-card shadow-card border p-6"
     >
-      <h2 id="ringkasan-minggu" className="mb-4 text-[19px] font-semibold">
+      <h2 id="ringkasan-minggu" className="mb-3 text-base font-bold">
         Minggu lalu
       </h2>
       {summary.sentences.map((s) => (
-        <p key={s} className="text-base">
+        <p key={s} className="mt-2 text-sm first-of-type:mt-0">
           {s}
         </p>
       ))}
       <Link
         href="/toko/hasil"
-        className="mt-2 inline-block text-base underline"
+        className="text-navy mt-3 inline-block text-sm font-semibold underline underline-offset-[3px]"
       >
         Lihat hasil
       </Link>
@@ -95,7 +95,7 @@ export function RingkasanMinggu({ summary }: { summary: D["weeklySummary"] }) {
 export function TanganiDulu({ items }: { items: D["topPriority"] }) {
   return (
     <section aria-labelledby="tangani-dulu">
-      <h2 id="tangani-dulu" className="mb-4 text-[19px] font-semibold">
+      <h2 id="tangani-dulu" className="mb-4 text-xl font-extrabold">
         Tangani dulu
       </h2>
       {items.length === 0 ? (
@@ -105,20 +105,20 @@ export function TanganiDulu({ items }: { items: D["topPriority"] }) {
           {items.slice(0, 3).map((p) => (
             <li
               key={p.id}
-              className="rounded-card border-garis bg-card shadow-card border p-4"
+              className="rounded-card border-garis bg-card shadow-card border px-6 py-5"
             >
-              <p className="text-navy font-semibold">{p.name}</p>
-              <p className="text-muted mt-1 flex items-center gap-2 text-base">
+              <p className="text-navy font-bold">{p.name}</p>
+              <p className="text-slate mt-2 flex items-center gap-2 text-sm">
                 <ChipStatus status={p.status} />
                 <span>
                   <span className="angka">{rupiah(p.lockedValue)}</span>{" "}
                   terkunci
                 </span>
               </p>
-              {p.reason ? <p className="mt-1 text-base">{p.reason}</p> : null}
+              {p.reason ? <p className="mt-1 text-sm">{p.reason}</p> : null}
               <Link
                 href={`/toko/barang/${p.id}#rencana`}
-                className="rounded-btn border-navy text-navy mt-4 inline-flex min-h-11 items-center border px-4 text-base font-semibold"
+                className="rounded-btn border-navy text-navy mt-4 inline-flex min-h-11 items-center border px-4 text-sm font-semibold"
               >
                 Lihat rencana
               </Link>
@@ -137,7 +137,7 @@ export function SegeraKulakan({ items }: { items: D["restockSoon"] }) {
 
   return (
     <section aria-labelledby="kulakan">
-      <h2 id="kulakan" className="mb-4 text-[19px] font-semibold">
+      <h2 id="kulakan" className="mb-4 text-xl font-extrabold">
         Segera kulakan
       </h2>
       <ul className="space-y-1">
@@ -161,7 +161,7 @@ export function PelengkapKebanyakan({
 
   return (
     <section aria-labelledby="pelengkap">
-      <h2 id="pelengkap" className="mb-4 text-[19px] font-semibold">
+      <h2 id="pelengkap" className="mb-4 text-xl font-extrabold">
         Pelengkap kebanyakan
       </h2>
       <ul className="space-y-1">

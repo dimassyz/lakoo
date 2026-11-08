@@ -24,14 +24,14 @@ export function KpiHero({ totals }: { totals: Dashboard["totals"] }) {
       <h1 id="hero-label" className="text-slate text-sm font-semibold">
         Uang terkunci di rak
       </h1>
-      <p className="angka text-navy mt-2 text-[34px] leading-[1.15] font-bold tracking-[-0.01em] md:text-[40px] lg:text-[48px]">
+      <p className="angka text-navy mt-2 text-[34px] leading-[1.1] font-extrabold tracking-[-0.02em] md:text-[40px] lg:text-[48px]">
         {rupiah(totals.lockedValue)}
       </p>
       <p className="angka text-mati-chip mt-2 text-base font-semibold">
         {rupiah(totals.problemLockedValue)} di barang bermasalah
       </p>
       {totals.complementaryLockedValue > 0 ? (
-        <p className="angka text-muted mt-1 text-base">
+        <p className="angka text-muted mt-1 text-sm">
           termasuk {rupiah(totals.complementaryLockedValue)} di barang pelengkap
         </p>
       ) : null}
@@ -88,7 +88,7 @@ function SatuUbin({
   return (
     <Link
       href={`/toko/barang?status=${item.status}`}
-      className="rounded-card border-garis bg-card shadow-card border p-4"
+      className="rounded-card border-garis bg-card shadow-card border px-6 py-5"
       aria-label={`${item.label}: ${bucket.count} barang, ${rupiah(bucket.lockedValue)} terkunci`}
     >
       <span className="text-muted flex items-center gap-2 text-sm font-semibold">
@@ -100,10 +100,10 @@ function SatuUbin({
         />
         {item.label}
       </span>
-      <span className={`angka mt-2 block text-2xl font-bold ${item.warna}`}>
+      <span className="angka text-navy mt-3 block text-[32px] leading-[1.15] font-extrabold">
         {bucket.count}
       </span>
-      <span className="text-muted angka mt-1 block text-base">
+      <span className="text-slate angka mt-1 block text-sm">
         {rupiah(bucket.lockedValue)}
       </span>
     </Link>
@@ -133,7 +133,7 @@ export function StatusTiles({
         ))}
       </div>
       {habis.count > 0 ? (
-        <p className="text-muted mt-4 flex items-center gap-2 text-base">
+        <p className="text-muted mt-3 flex items-center gap-2 text-[13px]">
           <PackageX size={20} strokeWidth={1.75} aria-hidden="true" />
           {habis.count} barang stok habis
         </p>

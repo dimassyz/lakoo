@@ -47,15 +47,15 @@ function Isi({ data }: { data: Dashboard }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* DESIGN-V3 §5 — md: hero dan ubin berdampingan; lg: hero selebar
           halaman, ubin 4 sebaris di bawahnya (grid ubin di KPIHero). */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
         <KpiHero totals={data.totals} />
         <StatusTiles byStatus={data.totals.byStatus} />
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+        <div className="space-y-8">
           <TanganiDulu items={data.topPriority} />
           <HariIni today={data.today} />
         </div>
