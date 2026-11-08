@@ -24,6 +24,18 @@ export interface ProductsDeps {
 
 const boolString = z.enum(["true", "false"]);
 
+/** Batas harga kontrak: Rp100 juta. Di atas ini int4 Postgres meluap → 500 (QA-9 F1). */
+export const MAX_PRICE = 100_000_000;
+
+/**
+ * Nama disimpan sudah ter-trim: validasi panjang & "wajib diisi" menilai
+ * nilai yang benar-benar tersimpan, jadi nama hanya-spasi tertolak (QA-9 F3).
+ */
+export const productName = z
+  .string()
+  .transform((value) => value.trim())
+  .pipe(z.string().min(1).max(80));
+
 const listQuery = z.object({
   status: z
     .enum(["sehat", "waspada", "sekarat", "mati", "stok_habis"])
@@ -32,15 +44,16 @@ const listQuery = z.object({
   complementary: boolString.optional(),
   includeArchived: boolString.optional(),
   sort: z.enum(["priority", "name", "frequent"]).default("priority"),
+  limit: z.coerce.number().int().min(1).max(500).optional(),
 });
 
 const createBody = z
   .object({
-    name: z.string().min(1).max(80),
+    name: productName,
     unit: z.string().min(1).max(16).default("pcs"),
     category: z.string().max(40).nullable().default(null),
-    costPrice: z.number().int().min(0),
-    sellPrice: z.number().int().min(0),
+    costPrice: z.number().int().min(0).max(MAX_PRICE),
+    sellPrice: z.number().int().min(0).max(MAX_PRICE),
     openingStock: z.number().int().min(0).max(100_000),
     isComplementary: z.boolean().default(false),
   })
@@ -53,12 +66,16 @@ export function todayIso(now: Date): string {
   return new Date(now.getTime() + 7 * 3_600_000).toISOString().slice(0, 10);
 }
 
+/** Urutan prioritas SPEC §5.3: skor turun → uang terkunci turun → nama naik. */
 function byPriority(a: ProductSummary, b: ProductSummary): number {
   const aScored = a.priorityScore !== null;
   const bScored = b.priorityScore !== null;
   if (aScored !== bScored) return aScored ? -1 : 1;
-  if (aScored && bScored)
-    return (b.priorityScore as number) - (a.priorityScore as number);
+  if (aScored && bScored) {
+    const byScore = (b.priorityScore as number) - (a.priorityScore as number);
+    if (byScore !== 0) return byScore;
+    if (b.lockedValue !== a.lockedValue) return b.lockedValue - a.lockedValue;
+  }
   return a.name.localeCompare(b.name, "id");
 }
 
@@ -113,7 +130,10 @@ async function handleList(c: Context, deps: ProductsDeps) {
 
   const filtered = items.filter((item) => matches(item, query));
   sortItems(filtered, query.sort);
-  return c.json({ asOf, items: filtered });
+  // `limit` dihormati setelah saring + urut; tanpa limit semua dikembalikan (QA-8 F-10).
+  const limited =
+    query.limit === undefined ? filtered : filtered.slice(0, query.limit);
+  return c.json({ asOf, items: limited });
 }
 
 async function handleCreate(c: Context, deps: ProductsDeps) {
@@ -163,10 +183,10 @@ async function handleCreate(c: Context, deps: ProductsDeps) {
 
 const patchBody = z
   .object({
-    name: z.string().min(1).max(80).optional(),
+    name: productName.optional(),
     unit: z.string().min(1).max(16).optional(),
     category: z.string().max(40).nullable().optional(),
-    sellPrice: z.number().int().min(0).max(1_000_000_000).optional(),
+    sellPrice: z.number().int().min(0).max(MAX_PRICE).optional(),
     isComplementary: z.boolean().optional(),
     complementaryMaxStock: z
       .number()

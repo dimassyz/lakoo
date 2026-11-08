@@ -658,6 +658,56 @@ export async function recordStepOutcome(
   });
 }
 
+/**
+ * Harga katalog yang dipasang tahap rencana harus kembali saat rencana
+ * dihentikan (QA-6 F3). `plan_steps` tidak punya penanda "harga terpasang" —
+ * satu-satunya penulis harga tahap ke katalog adalah `applyStepPrice`, yang
+ * memasang persis `newPrice` tahap yang sedang berjalan. Jadi tahap terpasang
+ * terakhir disimpulkan: tahap ber-stepNo tertinggi yang sudah dimulai dan
+ * `newPrice`-nya sama dengan harga jual produk saat ini. Harga dikembalikan
+ * ke `old_price` tahap terpasang paling awal (semua tahap menyimpan harga
+ * yang sama: harga saat rencana dibuat). Bila harga sekarang tidak cocok
+ * dengan tahap terpasang mana pun, pemilik sudah mengubah harga sendiri
+ * setelahnya — jangan ditimpa.
+ */
+async function revertAppliedPrice(db: AnyDb, plan: PlanRow): Promise<void> {
+  const steps = await db
+    .select()
+    .from(planSteps)
+    .where(eq(planSteps.planId, plan.id));
+  const started = steps
+    .filter((step) => step.startedOn !== null)
+    .sort((a, b) => a.stepNo - b.stepNo);
+  if (started.length === 0) return;
+
+  const product = await db
+    .select({ sellPrice: products.sellPrice })
+    .from(products)
+    .where(
+      and(eq(products.id, plan.productId), eq(products.storeId, plan.storeId)),
+    )
+    .limit(1);
+  const current = product[0]?.sellPrice;
+  if (current === undefined) return;
+
+  const lastApplied = [...started]
+    .reverse()
+    .find((step) => step.newPrice === current);
+  if (lastApplied === undefined) return;
+
+  // Tahap terpasang membentuk rantai awalan dari tahap yang sudah dimulai;
+  // yang paling awal menentukan harga sebelum rencana menyentuh katalog.
+  const target = num(started[0]!.oldPrice);
+  if (target === current) return;
+
+  await db
+    .update(products)
+    .set({ sellPrice: target, updatedAt: new Date() })
+    .where(
+      and(eq(products.id, plan.productId), eq(products.storeId, plan.storeId)),
+    );
+}
+
 /** `active` → `stopped`; tahap yang sedang berjalan jadi `skipped`. */
 export async function stopPlan(
   db: AnyDb,
@@ -682,6 +732,7 @@ export async function stopPlan(
       );
     }
 
+    await revertAppliedPrice(typed, plan[0]);
     await typed.execute(
       sql`UPDATE plan_steps SET outcome = 'skipped'
           WHERE plan_id IN (SELECT id FROM action_plans

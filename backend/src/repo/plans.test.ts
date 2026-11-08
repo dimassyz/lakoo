@@ -11,7 +11,13 @@ import {
 } from "../../../database/src/schema.ts";
 import { templatePlan } from "../domain/planTemplates.ts";
 import type { PlanDraft } from "../domain/planValidation.ts";
-import { recordStepOutcome, savePlan, startPlan } from "./plans.ts";
+import {
+  applyStepPrice,
+  recordStepOutcome,
+  savePlan,
+  startPlan,
+  stopPlan,
+} from "./plans.ts";
 
 const NOW = new Date("2026-11-09T03:00:00Z");
 const GEN_TODAY = "2026-11-09";
@@ -156,6 +162,93 @@ describe("shareText setelah rencana berjalan", () => {
     expect(second.shareText).toContain("Rp12.000");
     expect(second.shareText).toContain("18 November 2026");
     expect(second.shareText).not.toContain("{");
+  });
+});
+
+/** Produk mati + rencana template tersimpan, untuk skenario stopPlan. */
+async function produkDanRencana(label: string): Promise<{
+  productId: string;
+  planId: string;
+}> {
+  const created = await db
+    .insert(products)
+    .values({
+      storeId,
+      name: label,
+      nameKey: label.toLowerCase(),
+      unit: "pcs",
+      sellPrice: 20_000,
+    })
+    .returning();
+  const productId = created[0]!.id;
+  const draft = templatePlan({
+    status: "mati",
+    sellPrice: 20_000,
+    lastCost: 12_000,
+    stock: 10,
+    bundleProductId: null,
+  });
+  const plan = await savePlan(
+    db,
+    {
+      storeId,
+      productId,
+      draft,
+      source: "template",
+      status: "mati",
+      aiModel: null,
+      sellPrice: 20_000,
+      lastCost: 12_000,
+      stock: 10,
+      bundlePartners: new Map(),
+      now: NOW,
+    },
+    GEN_TODAY,
+  );
+  return { productId, planId: plan.id };
+}
+
+async function hargaJual(productId: string): Promise<number> {
+  const rows = await db
+    .select({ sellPrice: products.sellPrice })
+    .from(products)
+    .where(eq(products.id, productId));
+  return rows[0]!.sellPrice;
+}
+
+describe("stopPlan mengembalikan harga tahap yang terpasang (QA-6 F3)", () => {
+  it("berhenti setelah harga tahap terpasang → harga kembali ke sebelum rencana", async () => {
+    const { productId, planId } = await produkDanRencana("Barang Stop A");
+    await startPlan(db, storeId, planId, START_TODAY, 120_000);
+    await applyStepPrice(db, storeId, planId, 1, NOW);
+    expect(await hargaJual(productId)).toBe(17_000);
+
+    const stopped = await stopPlan(db, storeId, planId, START_TODAY);
+    expect(stopped.state).toBe("stopped");
+    expect(await hargaJual(productId)).toBe(20_000);
+  });
+
+  it("harga diubah manual setelah terpasang → berhenti TIDAK menimpa harga manual", async () => {
+    const { productId, planId } = await produkDanRencana("Barang Stop B");
+    await startPlan(db, storeId, planId, START_TODAY, 120_000);
+    await applyStepPrice(db, storeId, planId, 1, NOW);
+    expect(await hargaJual(productId)).toBe(17_000);
+
+    await db
+      .update(products)
+      .set({ sellPrice: 19_000 })
+      .where(eq(products.id, productId));
+
+    await stopPlan(db, storeId, planId, START_TODAY);
+    expect(await hargaJual(productId)).toBe(19_000);
+  });
+
+  it("berhenti tanpa harga terpasang → harga tidak berubah", async () => {
+    const { productId, planId } = await produkDanRencana("Barang Stop C");
+    await startPlan(db, storeId, planId, START_TODAY, 120_000);
+
+    await stopPlan(db, storeId, planId, START_TODAY);
+    expect(await hargaJual(productId)).toBe(20_000);
   });
 });
 

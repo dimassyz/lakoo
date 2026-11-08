@@ -141,6 +141,18 @@ export async function minStockEver(
   return num(row?.min_stock);
 }
 
+/** Barang ada di toko ini? (Baris stok masuk dengan productId asing harus 422, bukan FK 500.) */
+export async function productExistsInStore(
+  db: AnyDb,
+  storeId: string,
+  productId: string,
+): Promise<boolean> {
+  const result = await db.execute(
+    sql`SELECT 1 AS ada FROM products WHERE store_id = ${storeId} AND id = ${productId} LIMIT 1`,
+  );
+  return result.rows.length > 0;
+}
+
 /** Nama barang unik per toko (partial index pada `name_key` untuk baris aktif). */
 export async function nameKeyTaken(
   db: AnyDb,
