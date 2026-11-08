@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CircleCheck, CircleX, Minus, type LucideIcon } from "lucide-react";
 import type { Plan, PlanStep, ProductDetail } from "@/lib/api";
 import { useAksiRencana, useAksiTahap } from "@/lib/detailBarang";
@@ -39,7 +39,7 @@ function KotakHitungan({ s }: { s: PlanStep }) {
     <dl className="text-muted mt-2 space-y-1 text-[13px]">
       <div className="flex justify-between gap-2">
         <dt>Harga</dt>
-        <dd className="text-ink font-semibold">
+        <dd className="angka text-ink font-semibold">
           {rupiah(s.oldPrice)} → {rupiah(s.newPrice)}
         </dd>
       </div>
@@ -47,7 +47,9 @@ function KotakHitungan({ s }: { s: PlanStep }) {
         <dt>Per unit</dt>
         <dd
           className={
-            s.isLoss ? "text-danger font-semibold" : "text-safe font-semibold"
+            s.isLoss
+              ? "angka text-danger font-semibold"
+              : "angka text-safe font-semibold"
           }
         >
           {s.isLoss
@@ -57,12 +59,12 @@ function KotakHitungan({ s }: { s: PlanStep }) {
       </div>
       <div className="flex justify-between gap-2">
         <dt>Bila stok habis terjual</dt>
-        <dd>±{rupiah(s.cashBackEstimate)} kembali</dd>
+        <dd className="angka">±{rupiah(s.cashBackEstimate)} kembali</dd>
       </div>
       {s.bundleProduct ? (
         <div className="flex justify-between gap-2">
           <dt>Paket</dt>
-          <dd>
+          <dd className="angka">
             {s.bundleProduct.name} · {rupiah(s.bundlePrice ?? 0)}
           </dd>
         </div>
@@ -392,25 +394,6 @@ function SelesaiRencana({ plan, onBaru }: { plan: Plan; onBaru: () => void }) {
   );
 }
 
-function TeksBergilir() {
-  const [i, setI] = useState(0);
-  const teks = ["Membaca riwayat penjualan…", "Menyusun langkah…"];
-
-  useEffect(() => {
-    const t = setInterval(() => setI((n) => (n + 1) % teks.length), 2500);
-    return () => clearInterval(t);
-  }, [teks.length]);
-
-  return (
-    <div className="space-y-2" aria-live="polite">
-      <p className="text-muted text-[15px]">{teks[i]}</p>
-      {[1, 2, 3].map((n) => (
-        <div key={n} className="rounded-card border-muted h-20 border" />
-      ))}
-    </div>
-  );
-}
-
 type Jenis =
   | "memuat"
   | "pelengkap"
@@ -479,7 +462,7 @@ function IsiTanpaRencana({ jenis, produk, pesan, onBuat }: PropsTanpaRencana) {
         </p>
       );
     case "membuat":
-      return <TeksBergilir />;
+      return <p className="text-muted text-[15px]">Memuat…</p>;
     default:
       return <TombolBuat pesan={pesan} onBuat={() => onBuat(false)} />;
   }
