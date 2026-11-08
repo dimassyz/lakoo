@@ -65,7 +65,7 @@ function ChipFilter({
           type="checkbox"
           checked={arsip}
           onChange={(e) => onArsip(e.target.checked)}
-          className="cursor-pointer"
+          className="accent-marigold h-5 w-5 cursor-pointer"
         />
         Tampilkan arsip
       </label>
@@ -133,8 +133,55 @@ function KepalaTabel({
   );
 }
 
+/** Baris tabel desktop — seluruh baris menavigasi ke detail (mock.css
+    `.table tbody tr.clickable`); nama tetap <Link> asli untuk keyboard. */
+function BarisTabel({
+  p,
+  onBuka,
+}: {
+  p: ProductSummary;
+  onBuka: (p: ProductSummary) => void;
+}) {
+  return (
+    <tr
+      onClick={(e) => {
+        /* Klik pada elemen interaktif di dalam baris tidak ikut navigasi. */
+        if (
+          (e.target as HTMLElement).closest(
+            "a, button, input, select, textarea, [role='button']",
+          )
+        )
+          return;
+        onBuka(p);
+      }}
+      className="border-garis cursor-pointer border-b transition-colors duration-150 last:border-b-0 hover:bg-[#F3EFE7]"
+    >
+      <td className="px-2 py-3">
+        <Link
+          href={`/toko/barang/${p.id}`}
+          className="text-navy focus-visible:outline-navy cursor-pointer font-semibold hover:underline hover:underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          {p.name}
+        </Link>
+      </td>
+      <td className="px-2 py-3">
+        <ChipStatus status={p.status} />
+      </td>
+      <td className="angka px-2 py-3">{p.stock}</td>
+      <td className="angka px-2 py-3">{rupiah(p.lastCost)}</td>
+      <td className="angka px-2 py-3">{rupiah(p.sellPrice)}</td>
+      <td className="angka px-2 py-3">{rupiah(p.lockedValue)}</td>
+      <td className="px-2 py-3">
+        {p.lastSaleDate ? tanggalPendek(p.lastSaleDate) : "Belum"}
+      </td>
+      <td className="angka px-2 py-3">{p.priorityScore ?? "–"}</td>
+    </tr>
+  );
+}
+
 /** FSD §9 — tabel desktop, kolom bisa diurutkan di sisi klien. */
 function TabelBarang({ items }: { items: ProductSummary[] }) {
+  const router = useRouter();
   const [kolom, setKolom] = useState<Kolom>("priorityScore");
   const [naik, setNaik] = useState(false);
   const baris = useMemo(
@@ -158,30 +205,11 @@ function TabelBarang({ items }: { items: ProductSummary[] }) {
         <KepalaTabel kolom={kolom} naik={naik} onKlik={klik} />
         <tbody>
           {baris.map((p) => (
-            <tr
+            <BarisTabel
               key={p.id}
-              className="border-garis border-b transition-colors duration-150 last:border-b-0 hover:bg-[#F3EFE7]"
-            >
-              <td className="px-2 py-3">
-                <Link
-                  href={`/toko/barang/${p.id}`}
-                  className="text-navy focus-visible:outline-navy cursor-pointer font-semibold hover:underline hover:underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2"
-                >
-                  {p.name}
-                </Link>
-              </td>
-              <td className="px-2 py-3">
-                <ChipStatus status={p.status} />
-              </td>
-              <td className="angka px-2 py-3">{p.stock}</td>
-              <td className="angka px-2 py-3">{rupiah(p.lastCost)}</td>
-              <td className="angka px-2 py-3">{rupiah(p.sellPrice)}</td>
-              <td className="angka px-2 py-3">{rupiah(p.lockedValue)}</td>
-              <td className="px-2 py-3">
-                {p.lastSaleDate ? tanggalPendek(p.lastSaleDate) : "Belum"}
-              </td>
-              <td className="angka px-2 py-3">{p.priorityScore ?? "–"}</td>
-            </tr>
+              p={p}
+              onBuka={(x) => void router.push(`/toko/barang/${x.id}`)}
+            />
           ))}
         </tbody>
       </table>
@@ -192,9 +220,11 @@ function TabelBarang({ items }: { items: ProductSummary[] }) {
 function Kosong({ adaFilter }: { adaFilter: boolean }) {
   if (adaFilter) {
     return (
-      <p className="text-muted text-base">
-        Tidak ada barang yang cocok dengan filter atau pencarian ini.
-      </p>
+      <div className="rounded-card border-garis bg-card shadow-card border p-6">
+        <p className="text-muted text-base">
+          Tidak ada barang yang cocok dengan filter atau pencarian ini.
+        </p>
+      </div>
     );
   }
 
@@ -278,7 +308,7 @@ function KepalaDaftar({
         <div className="flex gap-2">
           <Link
             href="/toko/barang/baru"
-            className={`${tombolUtama} hidden text-base md:inline-flex`}
+            className={`${tombolUtama} text-base max-md:hidden`}
           >
             + Tambah barang
           </Link>

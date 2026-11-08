@@ -40,7 +40,7 @@ function kalimatStatus(p: ProductDetail): string {
 
 function Baris({ label, nilai }: { label: string; nilai: string }) {
   return (
-    <div className="flex flex-col text-base md:flex-row md:justify-between md:gap-2">
+    <div className="flex flex-col text-base md:flex-row md:justify-between md:gap-2 md:py-2.5">
       <dt className="text-muted">{label}</dt>
       <dd className="angka text-navy font-semibold">{nilai}</dd>
     </div>
@@ -51,7 +51,7 @@ function Baris({ label, nilai }: { label: string; nilai: string }) {
 function Judul({ p }: { p: ProductDetail }) {
   return (
     <div className="space-y-2">
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex items-baseline justify-between gap-2 md:justify-start md:gap-4">
         <h1 className="text-2xl font-bold tracking-[-0.01em] md:text-[28px] lg:text-[32px]">
           {p.name}
         </h1>
@@ -67,7 +67,7 @@ function Judul({ p }: { p: ProductDetail }) {
 function KartuTerkunci({ p }: { p: ProductDetail }) {
   return (
     <div className="rounded-card border-garis bg-emerald/15 shadow-card border p-6">
-      <p className="angka text-emerald-teks text-[34px] leading-[1.15] font-bold tracking-[-0.01em]">
+      <p className="angka text-emerald-teks text-[28px] leading-[1.15] font-extrabold tracking-[-0.01em]">
         {rupiah(p.lockedValue)}
       </p>
       <p className="mt-1 text-[13px] text-[#096B4A]">uang terkunci di rak</p>
@@ -78,7 +78,7 @@ function KartuTerkunci({ p }: { p: ProductDetail }) {
 /** FSD §11.1 — statistik barang; kolom kiri bersama grafik mingguan. */
 function Statistik({ p }: { p: ProductDetail }) {
   return (
-    <dl className="rounded-card border-garis bg-card shadow-card grid grid-cols-2 gap-4 border p-4 md:flex md:flex-col md:gap-2">
+    <dl className="rounded-card border-garis bg-card shadow-card md:divide-garis grid grid-cols-2 gap-4 border p-4 md:flex md:flex-col md:gap-0 md:divide-y">
       <Baris label="Stok" nilai={`${p.stock} ${p.unit}`} />
       <Baris label="Harga beli terakhir" nilai={rupiah(p.lastCost)} />
       <Baris label="Harga jual" nilai={rupiah(p.sellPrice)} />
@@ -107,7 +107,7 @@ function KotakPelengkap({
   );
 
   return (
-    <div className="rounded-card border-garis bg-card space-y-2 border p-4">
+    <div className="rounded-card border-garis bg-card shadow-card space-y-2 border p-4">
       <p className="text-base">
         Barang pelengkap.
         {p.complementaryOverstock && p.complementaryThreshold !== null
@@ -178,7 +178,7 @@ function KonfirmasiArsip({
   onBatal: () => void;
 }) {
   return (
-    <div className="rounded-card border-navy bg-card space-y-2 border p-4">
+    <div className="rounded-card border-navy bg-card shadow-card space-y-2 border p-4">
       <p className="text-base">
         Barang tidak muncul lagi di rekap &amp; beranda. Riwayat tetap
         tersimpan.
