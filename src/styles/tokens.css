@@ -1,55 +1,63 @@
 /*
- * DESIGN.md v2.0 "Kas" (amendemen 28 Okt 2026) — SATU-SATUAN sumber nilai visual.
- * Nol hex di luar berkas ini (AC T-14.1). Tailwind v4 CSS-first: berkas ini
- * menggantikan tailwind.config.ts, jadi token tidak terdefinisi dua kali.
+ * DESIGN.md v2.0 "Kas" + amendemen DESIGN v3.0 "Boards" (2026-11-08) —
+ * SATU-SATUAN sumber nilai visual. Nol hex di luar berkas ini (AC T-14.1).
+ * Tailwind v4 CSS-first: berkas ini menggantikan tailwind.config.ts, jadi
+ * token tidak terdefinisi dua kali.
  *
- * Semua angka kontras di komentar ini DIHITUNG (WCAG 2.x relative luminance),
- * bukan diklaim — angka lengkap ada di DESIGN.md §2 dan §5. Dua token per status
- * karena token dasar terlalu terang untuk teks 14px.
+ * Nilai v3 dikunci DESIGN-V3 §1; nama token TIDAK berubah, hanya nilainya,
+ * supaya semua kelas yang ada tetap bekerja. Angka kontras di komentar ini
+ * DIHITUNG (WCAG 2.x relative luminance), bukan diklaim.
  */
 
-/* §2 Core — 3 warna + 1 aksen, masing-masing dengan alasan di DESIGN.md.
+/* §2 Core v3 — ink/paper/slate + emerald + marigold, peran di DESIGN-V3 §1.
    `static` dipakai supaya Tailwind tidak membuang token yang belum dipakai
-   kelas mana pun (v4 melakukan tree-shake): token T-14.4 seperti Sekarat dan
-   shadow/radius harus ADA sebelum halaman pemakainya masuk. Tanpa static,
-   "terdefinisi sekali" hanya benar di sumber, bukan di CSS hasil build. */
+   kelas mana pun (v4 melakukan tree-shake). */
 @theme static {
-  --color-navy: #0b1f3a; /* merek + teks utama + latar tombol utama (putih di atasnya 16,5:1) */
-  --color-surface: #f6f7f9; /* kertas dingin — surface */
-  --color-muted: #475569; /* abu-arctic — teks bantu + label; 7,1:1 di atas kertas */
-  --color-emerald: #059669; /* kas kembali: angka uang BESAR (≥24px, 3,5:1), ikon, dot,
-                               status Sehat. BUKAN teks kecil, BUKAN latar tombol
-                               (putih di atasnya 3,8:1 — gagal AA untuk teks 16px). */
+  --color-navy: #0a2540; /* ink — merek + heading + tombol utama (putih di atasnya 15,5:1; di atas paper 14,7:1) */
+  --color-surface: #faf8f5; /* paper — latar halaman */
+  --color-card: #ffffff; /* kartu — permukaan putih di atas paper (ink di atasnya 15,5:1) */
+  --color-slate: #425466; /* teks isi (7,4:1 di atas paper) */
+  --color-muted: #5e6b7f; /* teks bantu + label (5,1:1 di atas paper — Amendemen A1) */
+  --color-emerald: #0b8a5f; /* kas kembali + status Sehat SAJA: angka besar (≥24px), fill, dot.
+                               BUKAN teks kecil, BUKAN latar tombol (putih di atasnya 4,4:1). */
+  --color-emerald-teks: #0a825a; /* teks emerald <24px (4,6:1 di atas paper — Amendemen A1) */
+  --color-marigold: #e8a33d; /* aksen merek DEKORATIF saja: dot logo */
+  --color-marigold-kuat: #c78118; /* marigold FUNGSIONAL: thumb slider, penanda menu aktif (Amendemen A1) */
 
-  /* §2 Ramp status — token DASAR: ikon · dot · angka besar (≥24px). */
+  /* Ramp status — token DASAR (vivid): ikon · dot · bar · angka besar. Set
+     ini TIDAK berubah di v3 (DESIGN-V3 §1). */
   --color-sehat: #059669;
   --color-waspada: #d97706;
   --color-sekarat: #ea580c;
   --color-mati: #dc2626;
 
-  /* §2 Ramp status — token CHIP: teks label 14px. Kontras di atas kertas
-     dingin, semuanya lolos WCAG AA (DESIGN.md §5). */
-  --color-sehat-chip: #047857; /* 5,1:1 */
-  --color-waspada-chip: #b45309; /* 4,7:1 */
-  --color-sekarat-chip: #c2410c; /* 4,8:1 */
-  --color-mati-chip: #b91c1c; /* 6,0:1 */
+  /* Ramp status — token CHIP v3: teks label chip di atas tint 10% hue yang
+     sama di atas kartu putih (terhitung: sehat 4,7:1 · waspada 4,7:1 ·
+     sekarat 4,7:1 · mati 4,8:1 — Amendemen A1). stok_habis memakai muted. */
+  --color-sehat-chip: #0a7954;
+  --color-waspada-chip: #9d5b00;
+  --color-sekarat-chip: #b74521;
+  --color-mati-chip: #c32e3a;
 
-  /* §5 Border kartu 1px. */
-  --color-line: #e2e8f0;
+  /* Hairline di atas paper (hangat). `--color-garis` adalah nama DESIGN-V3;
+     `--color-line` nama lama yang masih dipakai kelas yang ada — nilai sama. */
+  --color-garis: #e7e2da;
+  --color-line: #e7e2da;
 
   /* §3 Tipografi — satu font untuk seluruh aplikasi, nol font kedua. */
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 
-  /* §5 Radius — tiga nilai saja. */
-  --radius-card: 12px;
-  --radius-btn: 10px;
+  /* Radius v3 (DESIGN-V3 §3): kartu 16, tombol & input 12, chip pill. */
+  --radius-card: 16px;
+  --radius-btn: 12px;
   --radius-pill: 9999px;
 
   /* §4 ENERGY — shadow dua tingkat saja, nol shadow pada teks. */
-  --shadow-card: 0 1px 2px rgb(11 31 58 / 0.06);
-  --shadow-float: 0 4px 12px rgb(11 31 58 / 0.1);
+  --shadow-card: 0 1px 2px rgb(10 37 64 / 0.06);
+  --shadow-float: 0 4px 12px rgb(10 37 64 / 0.1);
 
-  /* §4 RHYTHM — skala spasi 4/8/12/16/24/32, nol nilai arbitrari. */
+  /* §4 RHYTHM — skala spasi existing; penyesuaian ke kelipatan 8 murni
+     (DESIGN-V3 §3) menyentuh semua halaman, di luar cakupan T1. */
   --spacing-1: 4px;
   --spacing-2: 8px;
   --spacing-3: 12px;
@@ -57,15 +65,12 @@
   --spacing-6: 24px;
   --spacing-8: 32px;
 
-  /* Alias legacy → token CHIP, bukan token dasar. Alasannya terukur: setiap
-     pemakaian sekarang adalah teks kecil (14–16px) atau tombol berteks putih,
-     dan token dasar GAGAL AA di posisi itu (#059669 3,5:1 · #D97706 3,0:1).
-     Dengan alias ke chip, aplikasi yang ADA sekarang lolos AA:
-     text-safe 5,1:1 · text-warn 4,7:1 · text-danger 6,0:1 ·
-     putih di atas bg-safe 5,5:1. Dihapus di T-14.5 ketika semua halaman
-     memakai nama ramp §2 dan tombol utama pindah ke navy. */
+  /* Alias legacy. `safe` menunjuk emerald TEKS (Amendemen A1) untuk
+     pemakaian TEKS <24px; angka besar memakai --color-emerald langsung.
+     Satu-satunya pemakaian border (`border-safe` di Rencana) ditangani
+     Pages B sebagai `border-emerald`. `warn`/`danger` menunjuk token CHIP ramp. */
   --color-ink: var(--color-navy);
-  --color-safe: var(--color-sehat-chip);
+  --color-safe: var(--color-emerald-teks);
   --color-warn: var(--color-waspada-chip);
   --color-danger: var(--color-mati-chip);
 }
