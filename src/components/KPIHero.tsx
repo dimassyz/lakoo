@@ -10,21 +10,28 @@ import Link from "next/link";
 import type { Dashboard, ProductStatus } from "@/lib/api";
 import { rupiah } from "@/lib/ui";
 
-/** FSD §6 blok 1 — "Uang terkunci di rak". DESIGN.md §4 RHYTHM: hero satu blok navy + satu angka besar. */
+/**
+ * FSD §6 blok 1 — "Uang terkunci di rak". DESIGN-V3 §9 R-HERO: kartu PUTIH,
+ * angka tinta (navy) 34/40/48px, subbaris merah tenang (token chip Mati).
+ * Blok navy penuh ditinggalkan — board v2-02 yang menang.
+ */
 export function KpiHero({ totals }: { totals: Dashboard["totals"] }) {
   return (
-    <section aria-labelledby="hero-label" className="rounded-card bg-navy p-4">
-      <h1 id="hero-label" className="text-surface/70 text-[15px]">
+    <section
+      aria-labelledby="hero-label"
+      className="rounded-card border-garis bg-card shadow-card border p-6"
+    >
+      <h1 id="hero-label" className="text-slate text-sm font-semibold">
         Uang terkunci di rak
       </h1>
-      <p className="angka text-surface mt-1 text-4xl font-extrabold tracking-tight">
+      <p className="angka text-navy mt-2 text-[34px] leading-[1.15] font-bold tracking-[-0.01em] md:text-[40px] lg:text-[48px]">
         {rupiah(totals.lockedValue)}
       </p>
-      <p className="text-surface/70 mt-1 text-[15px]">
+      <p className="angka text-mati-chip mt-2 text-base font-semibold">
         {rupiah(totals.problemLockedValue)} di barang bermasalah
       </p>
       {totals.complementaryLockedValue > 0 ? (
-        <p className="text-surface/70 text-[15px]">
+        <p className="angka text-muted mt-1 text-base">
           termasuk {rupiah(totals.complementaryLockedValue)} di barang pelengkap
         </p>
       ) : null}
@@ -81,10 +88,10 @@ function SatuUbin({
   return (
     <Link
       href={`/toko/barang?status=${item.status}`}
-      className="rounded-card border-muted border p-3"
+      className="rounded-card border-garis bg-card shadow-card border p-4"
       aria-label={`${item.label}: ${bucket.count} barang, ${rupiah(bucket.lockedValue)} terkunci`}
     >
-      <span className="text-muted flex items-center gap-2 text-[15px]">
+      <span className="text-muted flex items-center gap-2 text-sm font-semibold">
         <item.ikon
           size={20}
           strokeWidth={1.75}
@@ -93,17 +100,20 @@ function SatuUbin({
         />
         {item.label}
       </span>
-      <span className={`mt-1 block text-2xl font-bold ${item.warna}`}>
+      <span className={`angka mt-2 block text-2xl font-bold ${item.warna}`}>
         {bucket.count}
       </span>
-      <span className="text-muted angka block text-[15px]">
+      <span className="text-muted angka mt-1 block text-base">
         {rupiah(bucket.lockedValue)}
       </span>
     </Link>
   );
 }
 
-/** FSD §6 blok 2 — 4 ubin status, 2×2 di HP dan 4 kolom di desktop. */
+/**
+ * FSD §6 blok 2 — 4 ubin status. DESIGN-V3 §5: 2×2 di HP, 2 kolom di samping
+ * hero pada md (grid halaman yang mengatur), 4 sebaris pada lg.
+ */
 export function StatusTiles({
   byStatus,
 }: {
@@ -113,7 +123,7 @@ export function StatusTiles({
 
   return (
     <section aria-label="Status barang">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {ubin.map((item) => (
           <SatuUbin
             key={item.status}
@@ -123,7 +133,7 @@ export function StatusTiles({
         ))}
       </div>
       {habis.count > 0 ? (
-        <p className="text-muted mt-2 flex items-center gap-2 text-[15px]">
+        <p className="text-muted mt-4 flex items-center gap-2 text-base">
           <PackageX size={20} strokeWidth={1.75} aria-hidden="true" />
           {habis.count} barang stok habis
         </p>

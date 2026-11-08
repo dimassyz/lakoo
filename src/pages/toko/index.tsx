@@ -39,7 +39,7 @@ function useDashboard() {
 function Isi({ data }: { data: Dashboard }) {
   if (tanpaBarang(data.totals)) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         <KpiHero totals={data.totals} />
         <BerandaKosong />
       </div>
@@ -48,13 +48,11 @@ function Isi({ data }: { data: Dashboard }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <KpiHero totals={data.totals} />
-        </div>
-        <div className="lg:col-span-2">
-          <StatusTiles byStatus={data.totals.byStatus} />
-        </div>
+      {/* DESIGN-V3 §5 — md: hero dan ubin berdampingan; lg: hero selebar
+          halaman, ubin 4 sebaris di bawahnya (grid ubin di KPIHero). */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+        <KpiHero totals={data.totals} />
+        <StatusTiles byStatus={data.totals.byStatus} />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-6">
@@ -73,14 +71,14 @@ function Isi({ data }: { data: Dashboard }) {
 
 function Kerangka() {
   return (
-    <div aria-busy="true" className="space-y-3">
-      <p className="text-muted text-[15px]">Memuat…</p>
-      <div className="rounded-card border-muted h-28 border" />
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-card border-muted h-24 border" />
-        <div className="rounded-card border-muted h-24 border" />
-        <div className="rounded-card border-muted h-24 border" />
-        <div className="rounded-card border-muted h-24 border" />
+    <div aria-busy="true" className="space-y-4">
+      <p className="text-muted text-base">Memuat…</p>
+      <div className="rounded-card border-garis bg-card h-28 border" />
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="rounded-card border-garis bg-card h-24 border" />
+        <div className="rounded-card border-garis bg-card h-24 border" />
+        <div className="rounded-card border-garis bg-card h-24 border" />
+        <div className="rounded-card border-garis bg-card h-24 border" />
       </div>
     </div>
   );
@@ -88,14 +86,14 @@ function Kerangka() {
 
 function Gagal({ muat }: { muat: () => void }) {
   return (
-    <div className="rounded-card border-muted border p-4">
-      <p className="font-semibold">
+    <div className="rounded-card border-garis bg-card border p-4">
+      <p className="text-navy font-semibold">
         Gagal memuat. Periksa sinyal lalu coba lagi.
       </p>
       <button
         type="button"
         onClick={muat}
-        className="rounded-card bg-navy mt-3 px-4 py-3 font-semibold text-white"
+        className="rounded-btn bg-navy mt-4 inline-flex min-h-11 items-center px-4 font-semibold text-white"
       >
         Coba lagi
       </button>
@@ -118,7 +116,7 @@ export default function BerandaPage() {
       </AppShell>
       <Link
         href="/toko/rekap"
-        className="rounded-card bg-navy fixed right-4 bottom-20 px-4 py-3 font-semibold text-white lg:hidden"
+        className="rounded-btn bg-navy shadow-float fixed right-4 bottom-20 inline-flex min-h-11 items-center px-4 font-semibold text-white lg:hidden"
       >
         Rekap hari ini
       </Link>
