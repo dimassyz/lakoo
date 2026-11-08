@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Dashboard } from "@/lib/api";
-import { labelStatus, rupiah } from "@/lib/ui";
+import { labelStatus as labelStatusTeks, rupiah } from "@/lib/ui";
+import { ChipStatus, kelasTeksStatus } from "@/components/ChipStatus";
 
 type D = Dashboard;
 
@@ -9,12 +10,23 @@ export function HariIni({ today }: { today: D["today"] }) {
   const baris = [
     ...today.dueSteps.map((s) => ({
       key: `step-${s.planId}-${s.stepNo}`,
-      teks: `Tahap ${s.stepNo} ${s.title} untuk ${s.productName} sudah waktunya dicek`,
+      teks: (
+        <>
+          Tahap {s.stepNo} {s.title} untuk {s.productName} sudah waktunya dicek
+        </>
+      ),
       href: `/toko/barang/${s.productId}#rencana`,
     })),
     ...today.statusChanges.map((c) => ({
       key: `change-${c.productId}-${c.to}`,
-      teks: `${c.name}: ${labelStatus(c.from)} → ${labelStatus(c.to)}`,
+      teks: (
+        <>
+          {c.name}: {labelStatusTeks(c.from)} →{" "}
+          <span className={`font-semibold ${kelasTeksStatus[c.to]}`}>
+            {labelStatusTeks(c.to)}
+          </span>
+        </>
+      ),
       href: `/toko/barang/${c.productId}`,
     })),
   ];
@@ -99,8 +111,12 @@ export function TanganiDulu({ items }: { items: D["topPriority"] }) {
           {items.slice(0, 3).map((p) => (
             <li key={p.id} className="rounded-card border-muted border p-3">
               <p className="font-semibold">{p.name}</p>
-              <p className="text-muted text-[15px]">
-                {labelStatus(p.status)} · {rupiah(p.lockedValue)} terkunci
+              <p className="text-muted flex items-center gap-2 text-[15px]">
+                <ChipStatus status={p.status} />
+                <span>
+                  <span className="angka">{rupiah(p.lockedValue)}</span>{" "}
+                  terkunci
+                </span>
               </p>
               {p.reason ? <p className="text-[15px]">{p.reason}</p> : null}
               <Link

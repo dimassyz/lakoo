@@ -15,7 +15,8 @@ import {
   useProduk,
   useRencana,
 } from "@/lib/detailBarang";
-import { labelStatus, rupiah, tanggalPendek } from "@/lib/ui";
+import { rupiah, tanggalPendek } from "@/lib/ui";
+import { ChipStatus } from "@/components/ChipStatus";
 
 const tombolGaris =
   "rounded-card border-muted border px-3 py-2 text-[15px] font-semibold";
@@ -38,7 +39,7 @@ function Baris({ label, nilai }: { label: string; nilai: string }) {
   return (
     <div className="flex justify-between gap-2 text-[15px]">
       <dt className="text-muted">{label}</dt>
-      <dd className="font-semibold">{nilai}</dd>
+      <dd className="angka font-semibold">{nilai}</dd>
     </div>
   );
 }
@@ -49,10 +50,10 @@ function Ringkasan({ p }: { p: ProductDetail }) {
     <div className="space-y-2">
       <div className="flex items-baseline justify-between gap-2">
         <h1 className="text-2xl font-bold">{p.name}</h1>
-        <p className="text-muted text-[13px]">{labelStatus(p.status)}</p>
+        <ChipStatus status={p.status} />
       </div>
       <p className="text-muted text-[15px]">{kalimatStatus(p)}</p>
-      <p className="text-3xl font-bold">{rupiah(p.lockedValue)}</p>
+      <p className="angka text-3xl font-bold">{rupiah(p.lockedValue)}</p>
       <p className="text-muted text-[13px]">uang terkunci di rak</p>
       <dl className="rounded-card border-muted space-y-1 border p-3">
         <Baris label="Stok" nilai={`${p.stock} ${p.unit}`} />
