@@ -2,9 +2,9 @@ import { useState } from "react";
 
 /* Palet v6 + affordance (mock.css .btn-primary/.btn-ghost). */
 const tombolUtama =
-  "rounded-card cursor-pointer bg-[#E8A33D] px-4 py-3 font-semibold text-navy transition duration-150 hover:bg-[#D9932B] focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
+  "rounded-btn cursor-pointer bg-[#E8A33D] px-4 py-3 font-semibold text-navy transition duration-150 hover:bg-[#D9932B] focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
 const tombolGaris =
-  "rounded-card border-muted cursor-pointer border px-4 py-3 font-semibold transition duration-150 hover:border-slate hover:text-navy focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
+  "rounded-btn border-muted cursor-pointer border px-4 py-3 font-semibold transition duration-150 hover:border-slate hover:text-navy focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
 
 function bisaPakaiShare(): boolean {
   return (

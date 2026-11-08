@@ -84,7 +84,7 @@ function KartuTahap({ s, redup }: { s: PlanStep; redup?: boolean }) {
 
   return (
     <li
-      className={`rounded-card border-line border bg-white p-4 ${redup ? "opacity-60" : ""}`}
+      className={`rounded-card border-line shadow-card border bg-white p-4 ${redup ? "opacity-60" : ""}`}
     >
       <p className="text-muted flex items-center gap-2 text-[13px] font-semibold">
         {Ikon ? <Ikon size={16} strokeWidth={1.75} aria-hidden="true" /> : null}
@@ -310,7 +310,7 @@ function TahapBerjalan(props: PropsTahap) {
 /** FSD §11.2 state C — kas pulih dan bar progres. */
 function KasPulih({ plan }: { plan: Plan }) {
   return (
-    <div>
+    <div className="rounded-card border-line shadow-card border bg-white p-4">
       <p className="angka font-semibold">
         {rupiah(plan.recovered)} dari {rupiah(plan.lockedValueAtStart ?? 0)}{" "}
         kembali
@@ -391,7 +391,7 @@ function AktifRencana({
 
 function SelesaiRencana({ plan, onBaru }: { plan: Plan; onBaru: () => void }) {
   return (
-    <div className="rounded-card border-line space-y-2 border bg-white p-4">
+    <div className="rounded-card border-line shadow-card space-y-2 border bg-white p-4">
       <p className="angka">
         {pesanAkhir(plan)} {rupiah(plan.recovered)} kembali.
       </p>
@@ -455,15 +455,21 @@ function IsiTanpaRencana({ jenis, produk, pesan, onBuat }: PropsTanpaRencana) {
     case "memuat":
       return <p className="text-muted">Memuat…</p>;
     case "pelengkap":
-      return <p>Barang pelengkap tidak diberi saran obral.</p>;
+      return (
+        <div className="rounded-card border-line shadow-card border bg-white p-4">
+          <p>Barang pelengkap tidak diberi saran obral.</p>
+        </div>
+      );
     case "sehat":
       return (
-        <p>
-          Barang ini sehat.
-          {produk.daysUntilEmpty !== null
-            ? ` ±${produk.daysUntilEmpty} hari lagi habis.`
-            : ""}
-        </p>
+        <div className="rounded-card border-line shadow-card border bg-white p-4">
+          <p>
+            Barang ini sehat.
+            {produk.daysUntilEmpty !== null
+              ? ` ±${produk.daysUntilEmpty} hari lagi habis.`
+              : ""}
+          </p>
+        </div>
       );
     case "membuat":
       return <p className="text-muted">Memuat…</p>;
