@@ -265,7 +265,7 @@ function PertanyaanUmum() {
   return (
     <section className="space-y-4">
       <h2 className="text-[19px] font-semibold">Pertanyaan umum</h2>
-      <dl className="space-y-4">
+      <dl className="grid items-start gap-4 lg:grid-cols-2">
         {FAQ.map((f) => (
           <div key={f.tanya} className={kartu}>
             <dt className="text-navy text-base font-semibold">{f.tanya}</dt>
@@ -299,17 +299,18 @@ export default function Landing({ origin }: { origin: string }) {
       <Kepala origin={origin} />
       {/* DESIGN-V3 §3/§5 — padding halaman 20/32/40px, konten maks 1200px;
           hero dua kolom di lg (teks kiri, kartu angka kanan); teks bacaan
-          panjang (Definisi, FAQ) tetap di kolom 672px supaya enak dibaca. */}
+          panjang (Definisi) tetap di kolom 672px supaya enak dibaca; FAQ
+          selebar konten dalam grid dua kolom di lg (mockup landing). */}
       <main className="mx-auto w-full max-w-2xl space-y-10 px-5 py-8 md:px-8 lg:max-w-[1200px] lg:px-10 lg:py-12">
         <div className="lg:rounded-card grid items-start gap-6 lg:grid-cols-2 lg:gap-10 lg:bg-[#0B4A32] lg:p-10">
           <Hero />
           <AngkaContoh />
         </div>
         <CaraKerja />
-        <div className="max-w-2xl space-y-10">
+        <div className="max-w-2xl">
           <Definisi />
-          <PertanyaanUmum />
         </div>
+        <PertanyaanUmum />
         <Kaki />
       </main>
     </>
