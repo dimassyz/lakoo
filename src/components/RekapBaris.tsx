@@ -8,7 +8,7 @@ type Baris = SalesRecap["lines"][number];
 const tombol =
   "rounded-btn border-line h-11 w-11 cursor-pointer border text-lg font-semibold transition duration-150 hover:border-slate hover:bg-[#f3efe7] hover:text-navy focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
 const angka =
-  "rounded-btn border-line h-11 border px-2 text-center text-lg transition duration-150 focus:border-marigold-kuat focus:ring-[3px] focus:ring-marigold/25 focus:outline-none";
+  "rounded-btn border-line h-11 border px-2 text-center text-lg transition duration-150 focus:border-marigold-kuat focus:ring-4 focus:ring-marigold/25 focus:outline-none";
 
 function Stepper({
   nama,
@@ -89,7 +89,7 @@ export function BarisQuantity({
           <button
             type="button"
             onClick={onPerbaiki}
-            className="hover:text-marigold-kuat cursor-pointer underline transition duration-150 hover:decoration-2"
+            className="hover:text-marigold-kuat focus-visible:outline-navy cursor-pointer underline transition duration-150 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             Perbaiki stok
           </button>
@@ -147,7 +147,7 @@ export function BarisOpname({
           {error}{" "}
           <Link
             href={`/toko/barang-masuk?date=${tanggal}`}
-            className="hover:text-marigold-kuat underline transition duration-150 hover:decoration-2"
+            className="hover:text-marigold-kuat focus-visible:outline-navy cursor-pointer underline transition duration-150 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             catat barang masuk
           </Link>

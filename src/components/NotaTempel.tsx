@@ -16,7 +16,7 @@ export function NotaTempel({ produk, onIsi, onTutup }: Props) {
   const [teks, setTeks] = useState("");
 
   return (
-    <div className="rounded-card border-line space-y-4 border p-4">
+    <div className="rounded-card border-line bg-card shadow-card space-y-4 border p-4">
       <label
         htmlFor="teks-nota"
         className="text-muted block text-[13px] font-semibold"
@@ -29,7 +29,7 @@ export function NotaTempel({ produk, onIsi, onTutup }: Props) {
         value={teks}
         onChange={(e) => setTeks(e.target.value)}
         placeholder={"Teh Celup 10 6.200\nKopi Sachet 24 3.100"}
-        className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 w-full border px-3 py-2 font-mono text-[16px] transition duration-150 focus:ring-[3px] focus:outline-none"
+        className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 w-full border px-3 py-2 font-mono text-[16px] transition duration-150 focus:ring-4 focus:outline-none"
       />
       <p className="text-muted text-[13px]">
         Pola per baris: nama, jumlah, harga beli. Baris yang tidak terbaca tetap

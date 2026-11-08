@@ -46,7 +46,7 @@ function useAwalAntrean(): Awal | undefined {
 }
 
 const tombolGeser =
-  "rounded-btn border-line h-11 w-11 cursor-pointer border text-lg font-semibold transition duration-150 focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 enabled:hover:border-slate enabled:hover:bg-[#f3efe7] enabled:hover:text-navy enabled:active:translate-y-px disabled:cursor-not-allowed disabled:text-muted";
+  "rounded-btn border-line h-11 w-11 cursor-pointer border text-lg font-semibold transition duration-150 focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 enabled:hover:border-slate enabled:hover:bg-[#f3efe7] enabled:hover:text-navy enabled:active:translate-y-px disabled:cursor-not-allowed disabled:text-muted disabled:opacity-55";
 
 /** FSD §7 — geser per hari + pemilih ≤ hari ini dan ≥ 365 hari lalu. */
 function KontrolTanggal({
@@ -76,7 +76,7 @@ function KontrolTanggal({
         min={min}
         max={max}
         onChange={(e) => ubah(e.target.value || hariIniWib())}
-        className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 h-[52px] border px-3 transition duration-150 focus:ring-[3px] focus:outline-none"
+        className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 h-[52px] border px-3 transition duration-150 focus:ring-4 focus:outline-none"
       />
       <button
         type="button"
@@ -267,7 +267,7 @@ function KepalaRekap({ r }: { r: RekapLayar }) {
         placeholder="Cari barang…"
         value={r.cari}
         onChange={(e) => r.setCari(e.target.value)}
-        className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 h-[52px] w-full border px-3 transition duration-150 focus:ring-[3px] focus:outline-none"
+        className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 h-[52px] w-full border px-3 transition duration-150 focus:ring-4 focus:outline-none"
       />
       {r.toast ? (
         <p role="status" className="rounded-card border-line border p-3">

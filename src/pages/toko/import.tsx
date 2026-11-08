@@ -24,7 +24,7 @@ const tombolUtama =
 const tombolBiasa =
   "rounded-btn border-line inline-flex min-h-11 cursor-pointer items-center border px-4 text-[15px] font-semibold transition duration-150 hover:border-slate hover:bg-white hover:text-navy focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
 const tautanUnduh =
-  "text-emerald-teks cursor-pointer text-[15px] font-semibold underline transition duration-150 hover:text-marigold-kuat hover:decoration-2";
+  "text-emerald-teks cursor-pointer text-[15px] font-semibold underline transition duration-150 hover:text-marigold-kuat hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy";
 
 const TEMPLATE: Record<Jenis, { label: string; href: string }[]> = {
   barang: [
@@ -203,7 +203,7 @@ function PilihBerkas({
           const f = e.target.files?.[0];
           if (f) onPilih(f);
         }}
-        className="text-[15px]"
+        className="focus-visible:outline-navy file:rounded-btn file:border-garis file:bg-card file:text-navy cursor-pointer text-[15px] transition duration-150 file:mr-3 file:cursor-pointer file:border file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-[#F3EFE7] focus-visible:outline-2 focus-visible:outline-offset-2"
       />
     </div>
   );

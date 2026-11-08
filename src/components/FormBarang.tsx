@@ -11,7 +11,7 @@ const tombolUtama =
 const tombolGaris =
   "rounded-btn border-line inline-flex h-[52px] w-full cursor-pointer items-center justify-center border px-4 font-semibold transition duration-150 focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 enabled:hover:bg-navy enabled:hover:text-white enabled:active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 lg:w-auto";
 const kotakIsian =
-  "rounded-btn border-line h-[52px] w-full border px-3 transition duration-150 focus:border-marigold-kuat focus:ring-[3px] focus:ring-marigold/25 focus:outline-none";
+  "rounded-btn border-line h-[52px] w-full border px-3 transition duration-150 focus:border-marigold-kuat focus:ring-4 focus:ring-marigold/25 focus:outline-none";
 const teksError = "text-danger text-[13px] font-semibold";
 
 type Ubah = (patch: Partial<IsianBarang>) => void;
@@ -37,7 +37,7 @@ function Galat({ pesan, tautan }: { pesan?: string; tautan?: string }) {
           {" "}
           <Link
             href={tautan}
-            className="hover:text-marigold-kuat underline transition duration-150 hover:decoration-2"
+            className="hover:text-marigold-kuat focus-visible:outline-navy cursor-pointer underline transition duration-150 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             Buka barangnya
           </Link>
@@ -207,7 +207,7 @@ function DetailLain({
 }) {
   return (
     <details className="rounded-card border-line border p-4">
-      <summary className="hover:text-navy cursor-pointer font-semibold transition duration-150">
+      <summary className="hover:text-navy focus-visible:outline-navy cursor-pointer font-semibold transition duration-150 focus-visible:outline-2 focus-visible:outline-offset-2">
         Detail lain
       </summary>
       <div className="mt-4 grid gap-6 lg:grid-cols-2">
@@ -256,18 +256,21 @@ function DetailLain({
 
 function TombolSimpan({
   menyimpan,
+  bisaSimpan,
   baru,
   onKirim,
 }: {
   menyimpan: boolean;
+  bisaSimpan: boolean;
   baru: boolean;
   onKirim: (lagi: boolean) => void;
 }) {
+  const nonaktif = menyimpan || !bisaSimpan;
   return (
     <div className="flex flex-col gap-2 lg:flex-row lg:justify-end">
       <button
         type="button"
-        disabled={menyimpan}
+        disabled={nonaktif}
         onClick={() => onKirim(false)}
         className={tombolUtama}
       >
@@ -276,7 +279,7 @@ function TombolSimpan({
       {baru ? (
         <button
           type="button"
-          disabled={menyimpan}
+          disabled={nonaktif}
           onClick={() => onKirim(true)}
           className={tombolGaris}
         >
@@ -319,6 +322,7 @@ export function FormBarang({
       ) : null}
       <TombolSimpan
         menyimpan={f.menyimpan}
+        bisaSimpan={f.bisaSimpan}
         baru={baru}
         onKirim={(lagi) => void f.kirim(lagi)}
       />

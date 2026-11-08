@@ -9,7 +9,7 @@ import {
 import { rupiah, tanggalPendek } from "@/lib/ui";
 
 const input =
-  "rounded-btn border-line h-[52px] w-full border px-3 transition duration-150 focus:border-marigold-kuat focus:ring-[3px] focus:ring-marigold/25 focus:outline-none";
+  "rounded-btn border-line h-[52px] w-full border px-3 transition duration-150 focus:border-marigold-kuat focus:ring-4 focus:ring-marigold/25 focus:outline-none";
 const label = "text-muted block text-[13px] font-semibold";
 const teksError = "text-danger text-[13px] font-semibold";
 const tombolKecil =
@@ -127,7 +127,7 @@ export function BarisNota({
   onBuang,
 }: PropsBaris) {
   return (
-    <li className="rounded-card border-line space-y-4 border p-4">
+    <li className="rounded-card border-line bg-card shadow-card space-y-4 border p-4">
       <div className="flex items-start gap-2">
         <div className="flex-1">
           <PilihBarang baris={baris} produk={produk} onUbah={onUbah} />
@@ -257,7 +257,7 @@ function FormKoreksi({
   onBatal,
 }: PropsKoreksi) {
   return (
-    <li className="rounded-card border-line space-y-4 border p-4">
+    <li className="rounded-card border-line bg-card shadow-card space-y-4 border p-4">
       <p className="font-semibold">{item.productName}</p>
       <AngkaKoreksi item={item} koreksi={koreksi} setKoreksi={setKoreksi} />
       <TanggalKoreksi item={item} koreksi={koreksi} setKoreksi={setKoreksi} />
@@ -358,7 +358,7 @@ export function BarisRiwayat({ item, onUbah, onHapus }: PropsRiwayat) {
   }
 
   return (
-    <li className="rounded-card border-line flex items-center gap-2 border p-4">
+    <li className="rounded-card border-line bg-card shadow-card flex items-center gap-2 border p-4">
       <div className="flex-1">
         <p className="font-semibold">{item.productName}</p>
         <p className="angka text-muted text-[13px]">
