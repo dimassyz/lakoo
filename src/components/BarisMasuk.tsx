@@ -235,7 +235,7 @@ function TombolKoreksi({
       <button
         type="button"
         onClick={onSimpan}
-        className="rounded-card bg-safe px-3 py-2 text-[13px] font-semibold text-white"
+        className="rounded-card bg-navy px-3 py-2 text-[13px] font-semibold text-white"
       >
         Simpan koreksi
       </button>
@@ -360,7 +360,7 @@ export function BarisRiwayat({ item, onUbah, onHapus }: PropsRiwayat) {
     <li className="rounded-card border-muted flex items-center gap-2 border p-3">
       <div className="flex-1">
         <p className="font-semibold">{item.productName}</p>
-        <p className="text-muted text-[13px]">
+        <p className="angka text-muted text-[13px]">
           {item.qty} × {rupiah(item.unitCost)} ·{" "}
           {tanggalPendek(item.receivedOn)}
         </p>

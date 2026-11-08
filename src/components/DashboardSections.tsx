@@ -121,7 +121,7 @@ export function TanganiDulu({ items }: { items: D["topPriority"] }) {
               {p.reason ? <p className="text-[15px]">{p.reason}</p> : null}
               <Link
                 href={`/toko/barang/${p.id}#rencana`}
-                className="rounded-card border-safe text-safe mt-2 inline-block border px-3 py-2 text-[15px] font-semibold"
+                className="rounded-card border-navy text-navy mt-2 inline-block border px-3 py-2 text-[15px] font-semibold"
               >
                 Lihat rencana
               </Link>
@@ -191,7 +191,7 @@ export function BerandaKosong() {
       <div className="mt-3 flex gap-2">
         <Link
           href="/toko/barang/baru"
-          className="rounded-card bg-safe px-4 py-3 font-semibold text-white"
+          className="rounded-card bg-navy px-4 py-3 font-semibold text-white"
         >
           Tambah barang
         </Link>
