@@ -4,11 +4,17 @@ import {
   actionPlans,
   planSteps,
   products,
+  stores,
 } from "../../../database/src/schema.ts";
+import { shiftIsoDate } from "../../../database/src/demo/generator.ts";
 import { ApiError } from "../http/errors.ts";
 import type { PlanDraft, PlanStepDraft } from "../domain/planValidation.ts";
 import { bundlePriceFor, deriveStep } from "../domain/pricing.ts";
 import { recoveredPercent } from "../domain/recovery.ts";
+import {
+  formatTanggalPanjang,
+  substituteShareText,
+} from "../domain/shareText.ts";
 
 export interface PlanStepOut {
   stepNo: number;
@@ -67,14 +73,51 @@ const isoDate = (value: unknown): string | null =>
 const num = (value: unknown): number =>
   value === null || value === undefined ? 0 : Number(value);
 
+/**
+ * Teks bagikan tahap ini dengan placeholder sudah terisi nilai nyata.
+ * Tanggal berlaku: `dueOn` tersimpan; sebelum tahap berjalan, perkiraan dari
+ * tanggal mulai (atau tanggal rencana dibuat) + durasi tahap — begitu tahap
+ * mulai, `dueOn` nyata yang dipakai (kontrak: diisi ulang saat start).
+ */
+function shareTextOf(
+  plan: PlanRow,
+  step: StepRow,
+  names: { storeName: string; productName: string },
+) {
+  if (step.shareText === null || step.shareText === undefined) return null;
+  const startedOn = isoDate(step.startedOn);
+  const dueIso =
+    isoDate(step.dueOn) ??
+    shiftIsoDate(
+      startedOn ?? new Date(plan.generatedAt).toISOString().slice(0, 10),
+      step.durationDays,
+    );
+  return substituteShareText(step.shareText, {
+    storeName: names.storeName,
+    productName: names.productName,
+    oldPrice: num(step.oldPrice),
+    newPrice: step.newPrice,
+    bundlePrice: step.bundlePrice ?? null,
+    bundleProductName: step.bundleProductName ?? null,
+    bundleProductSellPrice:
+      step.bundleProductSellPrice === null ||
+      step.bundleProductSellPrice === undefined
+        ? null
+        : num(step.bundleProductSellPrice),
+    dueText: formatTanggalPanjang(dueIso),
+  });
+}
+
 /** Kas pulih = Σ `cash_back_estimate` tahap yang berhasil (SPEC §5.7). */
 function serialize(
   plan: PlanRow,
   steps: StepRow[],
   productName: string,
   recovered: number,
+  storeName: string,
 ): PlanOut {
   const ordered = [...steps].sort((a, b) => a.stepNo - b.stepNo);
+  const shareNames = { storeName, productName };
 
   return {
     id: plan.id,
@@ -114,7 +157,7 @@ function serialize(
       profitPerUnit: step.profitPerUnit,
       cashBackEstimate: step.cashBackEstimate,
       isLoss: step.isLoss,
-      shareText: step.shareText ?? null,
+      shareText: shareTextOf(plan, step, shareNames),
       outcome: step.outcome,
       startedOn: isoDate(step.startedOn),
       dueOn: isoDate(step.dueOn),
@@ -141,10 +184,20 @@ async function recoveredOf(
   return num((result.rows[0] as { recovered: unknown } | undefined)?.recovered);
 }
 
+async function storeNameOf(db: AnyDb, storeId: string): Promise<string> {
+  const found = await db
+    .select({ name: stores.name })
+    .from(stores)
+    .where(eq(stores.id, storeId))
+    .limit(1);
+  return found[0]?.name ?? "";
+}
+
 async function withProduct(
   db: AnyDb,
   plan: PlanRow,
   today: string,
+  storeName?: string,
 ): Promise<PlanOut> {
   const steps = await db
     .select()
@@ -160,6 +213,7 @@ async function withProduct(
     steps,
     product[0]?.name ?? "",
     await recoveredOf(db, plan, today),
+    storeName ?? (await storeNameOf(db, plan.storeId)),
   );
 }
 
@@ -269,7 +323,9 @@ export async function listPlans(
       sql`${actionPlans.startedOn} DESC NULLS LAST, ${actionPlans.generatedAt} DESC`,
     );
 
-  return Promise.all(rows.map((row) => withProduct(db, row, today)));
+  // Semua baris milik toko yang sama — nama toko cukup dimuat sekali.
+  const storeName = await storeNameOf(db, storeId);
+  return Promise.all(rows.map((row) => withProduct(db, row, today, storeName)));
 }
 
 /** Pasangan bundel terpilih: nama + harga jual saat rencana dibuat. */
@@ -451,9 +507,22 @@ export async function startPlan(
       })
       .where(and(eq(actionPlans.id, planId), eq(actionPlans.storeId, storeId)));
 
+    // Tenggat tahap 1 = mulai + durasi; due_on nyata ini yang mengisi
+    // {berlaku_sampai} pada teks bagikan (sebelumnya hanya perkiraan).
+    const firstSteps = await typed
+      .select({ durationDays: planSteps.durationDays })
+      .from(planSteps)
+      .where(and(eq(planSteps.planId, planId), eq(planSteps.stepNo, 1)))
+      .limit(1);
     await typed
       .update(planSteps)
-      .set({ outcome: "in_progress", startedOn: today })
+      .set({
+        outcome: "in_progress",
+        startedOn: today,
+        ...(firstSteps[0] === undefined
+          ? {}
+          : { dueOn: shiftIsoDate(today, firstSteps[0].durationDays) }),
+      })
       .where(and(eq(planSteps.planId, planId), eq(planSteps.stepNo, 1)));
 
     const updated = await findPlan(typed, storeId, planId, today);
@@ -573,7 +642,7 @@ export async function recordStepOutcome(
       await finishPlan(typed, storeId, planId, "exhausted", today);
     } else {
       await typed.execute(
-        sql`UPDATE plan_steps SET outcome = 'in_progress', started_on = ${today}::date
+        sql`UPDATE plan_steps SET outcome = 'in_progress', started_on = ${today}::date, due_on = ${today}::date + duration_days
             WHERE plan_id = ${scoped} AND step_no = ${stepNo + 1}`,
       );
       await typed.execute(
