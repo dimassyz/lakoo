@@ -95,7 +95,7 @@ function Gagal({ muat }: { muat: () => void }) {
       <button
         type="button"
         onClick={muat}
-        className="rounded-card bg-safe mt-3 px-4 py-3 font-semibold text-white"
+        className="rounded-card bg-navy mt-3 px-4 py-3 font-semibold text-white"
       >
         Coba lagi
       </button>
@@ -118,7 +118,7 @@ export default function BerandaPage() {
       </AppShell>
       <Link
         href="/toko/rekap"
-        className="rounded-card bg-safe fixed right-4 bottom-20 px-4 py-3 font-semibold text-white lg:hidden"
+        className="rounded-card bg-navy fixed right-4 bottom-20 px-4 py-3 font-semibold text-white lg:hidden"
       >
         Rekap hari ini
       </Link>

@@ -20,7 +20,7 @@ const label = "block text-[15px] font-semibold";
 const input =
   "rounded-card border-muted mt-1 w-full border px-3 py-2 text-[17px]";
 const tombolSimpan =
-  "rounded-card bg-safe px-4 py-3 text-[16px] font-semibold text-white disabled:opacity-60";
+  "rounded-card bg-navy px-4 py-3 text-[16px] font-semibold text-white disabled:opacity-60";
 const tombolBiasa =
   "rounded-card border-muted border px-3 py-2 text-[15px] font-semibold";
 
