@@ -2,16 +2,23 @@
 @import "./tokens.css";
 
 /*
- * DESIGN.md v2.0 — §2 navy sebagai teks utama, §3 isi utama 16px.
+ * DESIGN v3.0 §2 — isi utama 16px/1.55 slate di atas paper; heading ink.
  * Nol hex di berkas ini: semua nilai lewat token di tokens.css.
  */
 @layer base {
   body {
     background-color: var(--color-surface);
-    color: var(--color-navy);
+    color: var(--color-slate);
     font-family: var(--font-sans);
     font-size: 16px;
-    line-height: 1.5;
+    line-height: 1.55;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--color-navy);
   }
 
   :focus-visible {
