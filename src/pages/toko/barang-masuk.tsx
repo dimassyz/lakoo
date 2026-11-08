@@ -60,7 +60,7 @@ function KepalaNota({ l, onTempel }: { l: LayarMasuk; onTempel: () => void }) {
           min={min}
           max={max}
           onChange={(e) => l.form.setTanggal(e.target.value)}
-          className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 h-[52px] border px-3 transition duration-150 focus:ring-[3px] focus:outline-none"
+          className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 h-[52px] border px-3 transition duration-150 focus:ring-4 focus:outline-none"
         />
       </div>
       <button type="button" onClick={onTempel} className={tombolGaris}>
@@ -79,7 +79,7 @@ function KepalaNota({ l, onTempel }: { l: LayarMasuk; onTempel: () => void }) {
           Belum ada barang.{" "}
           <Link
             href="/toko/barang"
-            className="hover:text-marigold-kuat font-semibold underline transition duration-150 hover:decoration-2"
+            className="hover:text-marigold-kuat focus-visible:outline-navy cursor-pointer font-semibold underline transition duration-150 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             Tambah barang
           </Link>{" "}
@@ -117,7 +117,7 @@ function FooterNota({ l }: { l: LayarMasuk }) {
   const kurang = Object.keys(l.error).length;
 
   return (
-    <div className="rounded-card border-line bg-surface sticky bottom-16 z-10 border p-4 md:top-6 md:bottom-auto">
+    <div className="rounded-card border-line bg-card shadow-card sticky bottom-16 z-10 border p-4 md:top-6 md:bottom-auto">
       <p className="angka text-muted">
         {l.angka.baris} baris · {rupiah(l.angka.total)}
       </p>

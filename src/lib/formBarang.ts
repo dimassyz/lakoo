@@ -219,6 +219,10 @@ export function useFormBarang(
   const ubah = (patch: Partial<IsianBarang>) =>
     setIsian((lama) => ({ ...lama, ...patch }));
 
+  // Tombol simpan hanya aktif bila validasi lokal yang sama dengan saat
+  // kirim (cekIsian) lolos — galat server tetap tampil lewat kirim.
+  const bisaSimpan = Object.keys(cekIsian(isian, mode === "baru")).length === 0;
+
   async function kirim(lagi: boolean) {
     const hasil = await simpan(isian);
     if (!hasil.ok) {
@@ -232,7 +236,7 @@ export function useFormBarang(
     else onSelesai(hasil.id);
   }
 
-  return { isian, galat, tautan, menyimpan, ubah, kirim };
+  return { isian, galat, tautan, menyimpan, bisaSimpan, ubah, kirim };
 }
 
 /** Simpan barang: POST saat tambah, PATCH saat ubah. */
