@@ -18,14 +18,19 @@ import { rupiah, tanggalPendek } from "@/lib/ui";
 import { ChipStatus } from "@/components/ChipStatus";
 
 const tombolGaris =
-  "rounded-btn border-line inline-flex min-h-11 items-center border px-4 font-semibold";
+  "rounded-btn border-line inline-flex min-h-11 cursor-pointer items-center border px-4 font-semibold transition duration-150 hover:border-slate hover:text-navy focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
+
+/* Kelas CTA utama v6 — marigold solid, teks ink, hover lebih gelap
+   (PALETTE-V6: .btn-primary). Dipakai tautan Tambah + tombol Coba lagi. */
+const tombolUtama =
+  "rounded-btn inline-flex min-h-11 cursor-pointer items-center bg-[#E8A33D] px-4 font-semibold text-navy transition duration-150 hover:bg-[#D9932B] focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
 
 function gayaChip(aktif: boolean) {
-  /* DESIGN-V3 §3/§7 — chip filter: pill penuh, target sentuh 44px; nonaktif
-     lunak (bukan pill status jenuh ala board), aktif solid ink (ruling R-T2). */
+  /* Palet v6 (PALETTE-V6 + mock.css .pill) — pill penuh, target sentuh 44px;
+     aktif solid marigold teks ink, nonaktif putih hover border slate. */
   const dasar =
-    "rounded-pill inline-flex min-h-11 items-center border px-4 text-[13px] font-semibold whitespace-nowrap";
-  return `${dasar} ${aktif ? "border-navy bg-navy text-white" : "border-line text-ink"}`;
+    "rounded-pill inline-flex min-h-11 cursor-pointer items-center border px-4 text-[13px] font-semibold whitespace-nowrap transition duration-150 focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
+  return `${dasar} ${aktif ? "border-[#E8A33D] bg-[#E8A33D] text-navy" : "border-line bg-card text-slate hover:border-slate hover:text-navy"}`;
 }
 
 /** FSD §9 — chip status + toggle arsip. */
@@ -55,11 +60,12 @@ function ChipFilter({
           </button>
         ))}
       </div>
-      <label className="flex min-h-11 items-center gap-2 text-base">
+      <label className="flex min-h-11 cursor-pointer items-center gap-2 text-base">
         <input
           type="checkbox"
           checked={arsip}
           onChange={(e) => onArsip(e.target.checked)}
+          className="cursor-pointer"
         />
         Tampilkan arsip
       </label>
@@ -75,7 +81,7 @@ function KartuBarang({ p }: { p: ProductSummary }) {
     <li>
       <Link
         href={`/toko/barang/${p.id}`}
-        className="md:rounded-card md:border-garis md:bg-card md:shadow-card block p-4 md:border"
+        className="md:rounded-card md:border-garis md:bg-card md:shadow-card focus-visible:outline-navy block cursor-pointer p-4 transition duration-150 hover:bg-[#F3EFE7] focus-visible:outline-2 focus-visible:outline-offset-2 md:border"
       >
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-navy font-semibold">{p.name}</p>
@@ -115,7 +121,7 @@ function KepalaTabel({
             <button
               type="button"
               onClick={() => onKlik(c.kunci)}
-              className="font-semibold"
+              className="hover:text-navy focus-visible:outline-navy cursor-pointer font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               {c.label}
               {kolom === c.kunci ? (naik ? " ↑" : " ↓") : ""}
@@ -152,11 +158,14 @@ function TabelBarang({ items }: { items: ProductSummary[] }) {
         <KepalaTabel kolom={kolom} naik={naik} onKlik={klik} />
         <tbody>
           {baris.map((p) => (
-            <tr key={p.id} className="border-garis border-b last:border-b-0">
+            <tr
+              key={p.id}
+              className="border-garis border-b transition-colors duration-150 last:border-b-0 hover:bg-[#F3EFE7]"
+            >
               <td className="px-2 py-3">
                 <Link
                   href={`/toko/barang/${p.id}`}
-                  className="text-navy font-semibold"
+                  className="text-navy focus-visible:outline-navy cursor-pointer font-semibold hover:underline hover:underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2"
                 >
                   {p.name}
                 </Link>
@@ -193,10 +202,7 @@ function Kosong({ adaFilter }: { adaFilter: boolean }) {
     <div className="rounded-card border-garis bg-card shadow-card border p-6">
       <p className="text-navy font-semibold">Belum ada barang.</p>
       <div className="mt-4 flex flex-wrap gap-2">
-        <Link
-          href="/toko/barang/baru"
-          className="rounded-btn bg-navy inline-flex min-h-11 items-center px-4 font-semibold text-white"
-        >
+        <Link href="/toko/barang/baru" className={tombolUtama}>
           Tambah barang
         </Link>
         <Link href="/toko/import" className={tombolGaris}>
@@ -231,7 +237,7 @@ function IsiDaftar({
         <button
           type="button"
           onClick={onMuat}
-          className="rounded-btn bg-navy mt-4 inline-flex min-h-11 items-center px-4 font-semibold text-white"
+          className={`${tombolUtama} mt-4`}
         >
           Coba lagi
         </button>
@@ -272,14 +278,11 @@ function KepalaDaftar({
         <div className="flex gap-2">
           <Link
             href="/toko/barang/baru"
-            className="rounded-btn bg-navy hidden min-h-11 items-center px-4 text-base font-semibold text-white md:inline-flex"
+            className={`${tombolUtama} hidden text-base md:inline-flex`}
           >
             + Tambah barang
           </Link>
-          <Link
-            href="/toko/import"
-            className="rounded-btn border-line inline-flex min-h-11 items-center border px-4 text-base font-semibold"
-          >
+          <Link href="/toko/import" className={`${tombolGaris} text-base`}>
             Import
           </Link>
         </div>
@@ -290,7 +293,7 @@ function KepalaDaftar({
         placeholder="Cari barang…"
         value={cari}
         onChange={(e) => onCari(e.target.value)}
-        className="rounded-btn border-garis bg-card shadow-card w-full border px-4 py-3 text-base"
+        className="rounded-btn border-garis bg-card shadow-card focus:border-marigold-kuat focus:ring-marigold/25 w-full border px-4 py-3 text-base transition duration-150 focus:ring-[3px] focus:outline-none"
       />
     </>
   );

@@ -19,10 +19,12 @@ import {
 import { rupiah, tanggalPendek } from "@/lib/ui";
 import { ChipStatus } from "@/components/ChipStatus";
 
+/* Palet v6 + affordance (mock.css .btn-ghost/.btn-primary): ghost hover
+   border slate + teks ink; utama marigold solid teks ink, hover #D9932B. */
 const tombolGaris =
-  "rounded-btn border-line inline-flex min-h-11 items-center border px-4 text-base font-semibold";
+  "rounded-btn border-line inline-flex min-h-11 cursor-pointer items-center border px-4 text-base font-semibold transition duration-150 hover:border-slate hover:text-navy focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
 const tombolUtama =
-  "rounded-btn bg-navy inline-flex h-[52px] items-center px-4 text-base font-semibold text-white";
+  "rounded-btn inline-flex h-[52px] cursor-pointer items-center bg-[#E8A33D] px-4 text-base font-semibold text-navy transition duration-150 hover:bg-[#D9932B] focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
 
 type Jalan = (fn: () => Promise<string | null>) => void;
 
@@ -64,11 +66,11 @@ function Judul({ p }: { p: ProductDetail }) {
     latar tint emerald 10%, angka emerald-teks. */
 function KartuTerkunci({ p }: { p: ProductDetail }) {
   return (
-    <div className="rounded-card border-garis bg-emerald/10 shadow-card border p-6">
+    <div className="rounded-card border-garis bg-emerald/15 shadow-card border p-6">
       <p className="angka text-emerald-teks text-[34px] leading-[1.15] font-bold tracking-[-0.01em]">
         {rupiah(p.lockedValue)}
       </p>
-      <p className="text-muted mt-1 text-[13px]">uang terkunci di rak</p>
+      <p className="mt-1 text-[13px] text-[#096B4A]">uang terkunci di rak</p>
     </div>
   );
 }
@@ -122,7 +124,7 @@ function KotakPelengkap({
             inputMode="numeric"
             value={nilai}
             onChange={(e) => setNilai(e.target.value.replace(/\D/g, ""))}
-            className="rounded-btn border-garis min-h-11 w-24 border px-3"
+            className="rounded-btn border-garis focus:border-marigold-kuat focus:ring-marigold/25 min-h-11 w-24 border px-3 transition duration-150 focus:ring-[3px] focus:outline-none"
           />
           <button
             type="button"
@@ -289,7 +291,7 @@ function IsiDetail({ p, rencana, aksi, aksiRencana, aksiTahap }: PropsIsi) {
     <div className="space-y-6">
       <Link
         href="/toko/barang"
-        className="text-navy inline-flex min-h-11 items-center gap-1 text-base font-semibold"
+        className="text-navy hover:text-marigold-kuat focus-visible:outline-navy inline-flex min-h-11 cursor-pointer items-center gap-1 text-base font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         <ChevronLeft aria-hidden className="h-5 w-5" />
         Kembali

@@ -6,10 +6,13 @@ import { rupiah, tanggalPendek } from "@/lib/ui";
 
 type Aksi = ReturnType<typeof useAksiRencana> & ReturnType<typeof useAksiTahap>;
 
+/* Palet v6 + affordance (mock.css .btn-ghost/.btn-primary): ghost hover
+   border slate + teks ink; utama marigold solid teks ink, hover #D9932B,
+   nonaktif pudar tanpa hover. */
 const tombolGaris =
-  "rounded-btn border-line inline-flex h-[52px] items-center justify-center border px-4 font-semibold";
+  "rounded-btn border-line inline-flex h-[52px] cursor-pointer items-center justify-center border px-4 font-semibold transition duration-150 hover:border-slate hover:text-navy focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
 const tombolUtama =
-  "rounded-btn bg-navy inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white disabled:opacity-40";
+  "rounded-btn inline-flex h-[52px] cursor-pointer items-center justify-center bg-[#E8A33D] px-4 font-semibold text-navy transition duration-150 hover:bg-[#D9932B] focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:bg-[#E8A33D]";
 
 /** Ikon outcome tahap — Lucide, emoji render beda per OS. */
 const TANDA: Record<PlanStep["outcome"], LucideIcon | null> = {
@@ -377,7 +380,7 @@ function AktifRencana({
         <button
           type="button"
           onClick={() => setTanyaStop(true)}
-          className="underline"
+          className="hover:text-navy focus-visible:outline-navy cursor-pointer underline transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           Hentikan rencana
         </button>

@@ -1,7 +1,10 @@
 import { useState } from "react";
 
-const tombolUtama = "rounded-card bg-navy px-4 py-3 font-semibold text-white";
-const tombolGaris = "rounded-card border-muted border px-4 py-3 font-semibold";
+/* Palet v6 + affordance (mock.css .btn-primary/.btn-ghost). */
+const tombolUtama =
+  "rounded-card cursor-pointer bg-[#E8A33D] px-4 py-3 font-semibold text-navy transition duration-150 hover:bg-[#D9932B] focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
+const tombolGaris =
+  "rounded-card border-muted cursor-pointer border px-4 py-3 font-semibold transition duration-150 hover:border-slate hover:text-navy focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
 
 function bisaPakaiShare(): boolean {
   return (
@@ -75,7 +78,7 @@ export function ShareWA({
         type="button"
         aria-label="Tutup"
         onClick={onTutup}
-        className="bg-ink/40 absolute inset-0"
+        className="bg-ink/40 absolute inset-0 cursor-pointer"
       />
       <div className="rounded-card bg-surface relative w-full space-y-2 p-4">
         <p className="font-semibold">Bagikan ke WhatsApp</p>
@@ -84,7 +87,7 @@ export function ShareWA({
           maxLength={500}
           value={isi}
           onChange={(e) => setIsi(e.target.value)}
-          className="rounded-card border-muted w-full border px-3 py-2 text-[15px]"
+          className="rounded-card border-muted focus:border-marigold-kuat focus:ring-marigold/25 w-full border px-3 py-2 text-[15px] transition duration-150 focus:ring-[3px] focus:outline-none"
         />
         <p className="text-muted text-[13px]">{isi.length}/500</p>
         <TombolBagikan isi={isi} onTutup={onTutup} />
