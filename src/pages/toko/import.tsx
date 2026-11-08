@@ -18,12 +18,12 @@ type Baris = BarisBarang | BarisJual;
 
 const MAKS_BYTE = 2 * 1024 * 1024;
 
-const kartu = "rounded-card border-muted space-y-3 border p-4";
+const kartu = "rounded-card border-line space-y-3 border bg-white p-4";
 const tombolUtama =
-  "rounded-card bg-navy px-4 py-3 text-[16px] font-semibold text-white disabled:opacity-60";
+  "rounded-btn bg-navy inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white disabled:opacity-60";
 const tombolBiasa =
-  "rounded-card border-muted border px-3 py-2 text-[15px] font-semibold";
-const tautanUnduh = "text-safe text-[15px] font-semibold underline";
+  "rounded-btn border-line inline-flex min-h-11 items-center border px-4 text-[15px] font-semibold";
+const tautanUnduh = "text-[15px] font-semibold text-emerald-teks underline";
 
 const TEMPLATE: Record<Jenis, { label: string; href: string }[]> = {
   barang: [
@@ -287,7 +287,7 @@ function HasilImport({
   selesai: boolean;
 }) {
   return (
-    <div className={`${kartu} text-[15px]`}>
+    <div className={`${kartu} md:col-span-2`}>
       <p className="font-semibold">
         {selesai
           ? `Selesai: ${hasil.created} dibuat, ${hasil.updated} diperbarui, ${hasil.skipped} dilewati`
@@ -317,7 +317,7 @@ function IsiTab({ jenis, aktif }: { jenis: Jenis; aktif: boolean }) {
   if (!aktif) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="grid items-start gap-4 md:grid-cols-2">
       <Templat jenis={jenis} />
       <PilihBerkas jenis={jenis} onPilih={(f) => void imp.pilih(f)} />
       {jenis === "barang" ? (
@@ -327,9 +327,11 @@ function IsiTab({ jenis, aktif }: { jenis: Jenis; aktif: boolean }) {
         />
       ) : null}
 
-      {imp.memuat ? <p className="text-muted text-[15px]">Memproses…</p> : null}
+      {imp.memuat ? (
+        <p className="text-muted md:col-span-2">Memproses…</p>
+      ) : null}
       {imp.pesan ? (
-        <p role="alert" className="text-danger text-[15px] font-semibold">
+        <p role="alert" className="text-danger font-semibold md:col-span-2">
           {imp.pesan}
         </p>
       ) : null}
@@ -365,7 +367,8 @@ function PilihanTab({
   jenis: Jenis;
   onPilih: (j: Jenis) => void;
 }) {
-  const dasar = "rounded-card border px-3 py-2 text-[15px] font-semibold";
+  const dasar =
+    "rounded-btn inline-flex min-h-11 items-center border px-4 text-[15px] font-semibold";
   const tab: { nilai: Jenis; label: string }[] = [
     { nilai: "barang", label: "Daftar barang" },
     { nilai: "jual", label: "Penjualan" },
@@ -378,7 +381,7 @@ function PilihanTab({
           type="button"
           aria-pressed={jenis === t.nilai}
           onClick={() => onPilih(t.nilai)}
-          className={`${dasar} ${jenis === t.nilai ? "border-navy text-navy" : "border-muted"}`}
+          className={`${dasar} ${jenis === t.nilai ? "border-navy text-navy" : "border-line"}`}
         >
           {t.label}
         </button>
@@ -397,8 +400,10 @@ export default function ImportPage() {
         <title>Import — Lakoo</title>
       </Head>
       <AppShell>
-        <div className="space-y-3">
-          <h1 className="text-2xl font-bold">Import</h1>
+        <div className="space-y-6">
+          <h1 className="text-[24px] leading-[1.2] font-bold tracking-[-0.01em] md:text-[28px] lg:text-[32px]">
+            Import
+          </h1>
           <PilihanTab jenis={jenis} onPilih={setJenis} />
           <IsiTab jenis="barang" aktif={jenis === "barang"} />
           <IsiTab jenis="jual" aktif={jenis === "jual"} />

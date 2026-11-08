@@ -7,10 +7,12 @@ import { rupiah, tanggalPendek } from "@/lib/ui";
 
 function Hero({ data }: { data: Results }) {
   return (
-    <section className="space-y-1">
-      <p className="text-muted text-[15px]">Kas pulih dari rencana</p>
-      <p className="angka text-4xl font-bold">{rupiah(data.totalRecovered)}</p>
-      <p className="angka text-[15px]">
+    <section className="rounded-card border-line space-y-2 border bg-white p-4 md:col-span-2 md:p-6 lg:col-span-1">
+      <p className="text-muted">Kas pulih dari rencana</p>
+      <p className="angka text-[34px] leading-[1.1] font-bold text-[#0B8A5F] md:text-[40px] lg:text-[48px]">
+        {rupiah(data.totalRecovered)}
+      </p>
+      <p className="angka">
         {rupiah(data.recovered30d)} dalam 30 hari terakhir
       </p>
       <p className="text-muted text-[13px]">
@@ -25,14 +27,12 @@ function Ringkasan({ data }: { data: Results }) {
   if (!minggu) return null;
 
   return (
-    <section className="rounded-card border-muted space-y-1 border p-3">
-      <h2 className="text-lg font-semibold">
+    <section className="rounded-card border-line space-y-2 border bg-white p-4 lg:col-start-1">
+      <h2 className="text-[19px] font-semibold">
         Minggu {tanggalPendek(minggu.weekStart)}–{tanggalPendek(minggu.weekEnd)}
       </h2>
       {minggu.sentences.map((kalimat) => (
-        <p key={kalimat} className="text-[15px]">
-          {kalimat}
-        </p>
+        <p key={kalimat}>{kalimat}</p>
       ))}
     </section>
   );
@@ -40,7 +40,7 @@ function Ringkasan({ data }: { data: Results }) {
 
 function BarisRencana({ plan }: { plan: Plan }) {
   return (
-    <li className="rounded-card border-muted space-y-1 border p-3">
+    <li className="rounded-card border-line space-y-2 border bg-white p-4">
       <div className="flex items-baseline justify-between gap-2">
         <Link
           href={`/toko/barang/${plan.productId}#rencana`}
@@ -50,7 +50,7 @@ function BarisRencana({ plan }: { plan: Plan }) {
         </Link>
         <p className="text-muted text-[13px]">{labelRencana(plan.state)}</p>
       </div>
-      <p className="angka text-[15px]">
+      <p className="angka">
         {rupiah(plan.recovered)} dari {rupiah(plan.lockedValueAtStart ?? 0)}
       </p>
       <div className="bg-muted/30 h-2 w-full rounded-full">
@@ -65,9 +65,9 @@ function BarisRencana({ plan }: { plan: Plan }) {
 
 function Daftar({ plans }: { plans: Plan[] }) {
   return (
-    <section className="space-y-2">
-      <h2 className="text-lg font-semibold">Per rencana</h2>
-      <ul className="space-y-2">
+    <section className="space-y-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+      <h2 className="text-[19px] font-semibold">Per rencana</h2>
+      <ul className="space-y-4">
         {plans.map((plan) => (
           <BarisRencana key={plan.id} plan={plan} />
         ))}
@@ -78,13 +78,13 @@ function Daftar({ plans }: { plans: Plan[] }) {
 
 function Kosong() {
   return (
-    <div className="space-y-2">
-      <p className="text-[15px]">
+    <div className="space-y-4">
+      <p>
         Belum ada hasil. Jalankan satu rencana dulu — hasilnya muncul di sini.
       </p>
       <Link
         href="/toko/rencana"
-        className="rounded-card bg-navy inline-block px-4 py-3 font-semibold text-white"
+        className="rounded-btn bg-navy inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white"
       >
         Lihat rencana
       </Link>
@@ -103,18 +103,18 @@ function Isi({
   gagal: boolean;
   onMuat: () => void;
 }) {
-  if (memuat) return <p className="text-muted text-[15px]">Memuat…</p>;
+  if (memuat) return <p className="text-muted">Memuat…</p>;
 
   if (gagal || !data) {
     return (
-      <div className="rounded-card border-muted border p-4">
+      <div className="rounded-card border-line border p-4">
         <p className="font-semibold">
           Gagal memuat. Periksa sinyal lalu coba lagi.
         </p>
         <button
           type="button"
           onClick={onMuat}
-          className="rounded-card bg-navy mt-3 px-4 py-3 font-semibold text-white"
+          className="rounded-btn bg-navy mt-3 inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white"
         >
           Coba lagi
         </button>
@@ -125,7 +125,7 @@ function Isi({
   if (data.plans.length === 0) return <Kosong />;
 
   return (
-    <div className="space-y-4">
+    <div className="grid items-start gap-6 md:grid-cols-2">
       <Hero data={data} />
       <Ringkasan data={data} />
       <Daftar plans={data.plans} />
@@ -143,8 +143,10 @@ export default function HasilPage() {
         <title>Hasil — Lakoo</title>
       </Head>
       <AppShell>
-        <div className="space-y-3">
-          <h1 className="text-2xl font-bold">Hasil</h1>
+        <div className="space-y-6">
+          <h1 className="text-[24px] leading-[1.2] font-bold tracking-[-0.01em] md:text-[28px] lg:text-[32px]">
+            Hasil
+          </h1>
           <Isi
             data={hasil.data}
             memuat={hasil.memuat}
