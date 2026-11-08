@@ -4,7 +4,11 @@ import type { ImportProductsRequest, ImportSalesRequest } from "./api";
 /** FSD §14 — batas baris per file. */
 export const MAKS_BARANG = 500;
 export const MAKS_PENJUALAN = 5000;
-export const PESAN_BESAR = "File terlalu besar, pecah jadi beberapa file";
+
+/** QA-8 F-04 — sebut jumlah & batas barisnya; beda dari pesan ukuran byte. */
+export function pesanTerlaluBanyak(jumlah: number, maks: number): string {
+  return `File berisi ${jumlah} baris — maksimal ${maks} baris per impor. Pecah jadi beberapa file.`;
+}
 
 export type BarisBarang = ImportProductsRequest["rows"][number];
 export type BarisJual = ImportSalesRequest["rows"][number];
@@ -58,7 +62,8 @@ export function dariTabelBarang(tabel: Sel[][]): Hasil<BarisBarang> {
   const kurang = kurangKolom(kepala, KOLOM_BARANG);
   if (kurang.length > 0)
     return { ok: false, pesan: `File tidak punya kolom: ${kurang.join(", ")}` };
-  if (isi.length > MAKS_BARANG) return { ok: false, pesan: PESAN_BESAR };
+  if (isi.length > MAKS_BARANG)
+    return { ok: false, pesan: pesanTerlaluBanyak(isi.length, MAKS_BARANG) };
 
   return {
     ok: true,
@@ -78,7 +83,11 @@ export function dariTabelJual(tabel: Sel[][]): Hasil<BarisJual> {
   const kurang = kurangKolom(kepala, KOLOM_JUAL);
   if (kurang.length > 0)
     return { ok: false, pesan: `File tidak punya kolom: ${kurang.join(", ")}` };
-  if (isi.length > MAKS_PENJUALAN) return { ok: false, pesan: PESAN_BESAR };
+  if (isi.length > MAKS_PENJUALAN)
+    return {
+      ok: false,
+      pesan: pesanTerlaluBanyak(isi.length, MAKS_PENJUALAN),
+    };
 
   return {
     ok: true,
@@ -94,15 +103,57 @@ export function csvKeTabel(teksCsv: string): Sel[][] {
   return Papa.parse<string[]>(teksCsv, { skipEmptyLines: "greedy" }).data;
 }
 
-/** PRD F-04 AC-3 — baris bermasalah + kolom `alasan`, dibuat di browser. */
+/** Jenis file import — header unduhan mengikuti kolom template per jenis. */
+export type JenisImpor = "barang" | "jual";
+
+const KEPALA_UNDUH: Record<JenisImpor, string[]> = {
+  barang: [
+    "nama_barang",
+    "harga_beli",
+    "harga_jual",
+    "stok",
+    "satuan",
+    "kategori",
+    "alasan",
+  ],
+  jual: ["tanggal", "nama_barang", "jumlah", "alasan"],
+};
+
+/** Nilai sel apa adanya sebagai teks; null/undefined jadi string kosong. */
+function selUnduh(row: Record<string, unknown>, kunci: string): string {
+  const v = row[kunci];
+  return v === null || v === undefined ? "" : String(v);
+}
+
+/**
+ * PRD F-04 AC-3 — baris bermasalah + kolom `alasan`, dibuat di browser.
+ * QA-8 F-01: header memakai kolom template (bukan nama field API) dengan
+ * `alasan` terakhir, jadi file unduhan bisa diperbaiki lalu diimpor ulang
+ * apa adanya — parser mengambil kolom per nama, jadi `alasan` diabaikan.
+ */
 export function csvBermasalah(
+  jenis: JenisImpor,
   rows: Record<string, unknown>[],
   invalid: { index: number; message: string }[],
 ): string {
-  const kepala = [...Object.keys(rows[0] ?? {}), "alasan"];
-  const isi = invalid.map(({ index, message }) => [
-    ...Object.values(rows[index] ?? {}).map((v) => (v ?? "") as string),
-    message,
-  ]);
-  return Papa.unparse([kepala, ...isi]);
+  const isi = invalid.map(({ index, message }) => {
+    const row = rows[index] ?? {};
+    return jenis === "barang"
+      ? [
+          selUnduh(row, "name"),
+          selUnduh(row, "costPrice"),
+          selUnduh(row, "sellPrice"),
+          selUnduh(row, "stock"),
+          selUnduh(row, "unit"),
+          selUnduh(row, "category"),
+          message,
+        ]
+      : [
+          selUnduh(row, "date"),
+          selUnduh(row, "productName"),
+          selUnduh(row, "qty"),
+          message,
+        ];
+  });
+  return Papa.unparse([KEPALA_UNDUH[jenis], ...isi]);
 }
