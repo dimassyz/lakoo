@@ -32,8 +32,10 @@ export function NotaTempel({ produk, onIsi, onTutup }: Props) {
         className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 w-full border px-3 py-2 font-mono text-[16px] transition duration-150 focus:ring-4 focus:outline-none"
       />
       <p className="text-muted text-[13px]">
-        Pola per baris: nama, jumlah, harga beli. Baris yang tidak terbaca tetap
-        masuk ke form untuk diketik manual.
+        Pola per baris: nama, jumlah, harga beli — format WhatsApp seperti
+        &quot;10x Nama @1.500&quot; atau &quot;Nama 10 x 1500&quot; juga
+        terbaca. Baris judul dan total dilewati; baris lain yang tidak terbaca
+        tetap masuk ke form untuk diketik manual.
       </p>
       <div className="flex gap-2">
         <button

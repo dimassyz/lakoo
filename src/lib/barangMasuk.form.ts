@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type ProductSummary, type StockInBatchCreate } from "./api";
 import { hapusOutbox, idOutbox, simpanOutbox } from "./outbox";
 import { hariIniWib, rupiah } from "./ui";
@@ -99,12 +99,87 @@ export function useFormMasuk() {
 
 const OPSI_BARU = /^\+ Tambah '(.*)' sebagai barang baru$/;
 
-/** FSD §16 — pola `<nama> <qty> <harga>` per baris, tanpa AI dan tanpa API baru. */
-const POLA_NOTA = /^\s*(.+?)\s+(\d+)\s+(?:Rp\.?\s*)?([\d.]+)\s*$/i;
+/** "18.500,00" → 18500 — koma adalah desimal, titik adalah ribuan (FSD §0.5). */
+export function hargaNota(token: string): number {
+  const bersih = token.replace(/rp\.?/gi, "").trim();
+  const [utuh] = bersih.split(",");
+  return angkaDari(utuh ?? bersih);
+}
+
+const HARGA = String.raw`[\d]+(?:[.,]\d+)*`;
+
+/** FSD §16 + format WA — pola depan: "10x Nama @1.500", "10 x Nama @1.500 = 15.000". */
+const POLA_DEPAN_HARGA = new RegExp(
+  String.raw`^(\d+)\s*[x×]\s+(.+?)\s*@\s*(?:rp\.?\s*)?(${HARGA})(?:\s*=\s*(?:rp\.?\s*)?${HARGA})?$`,
+  "i",
+);
+
+/** Pola depan tanpa @: "10 x Nama 1500". */
+const POLA_DEPAN = new RegExp(
+  String.raw`^(\d+)\s*[x×]\s+(.+?)\s+(?:rp\.?\s*)?(${HARGA})$`,
+  "i",
+);
+
+/** Pola belakang: "Nama 10 6.200", "Nama 10 x 1500", "Nama x10 @1.500". */
+const POLA_BELAKANG = new RegExp(
+  String.raw`^(.+?)\s+(?:[x×]\s*)?(\d+)\s*(?:[x×]\s*|@\s*)?(?:rp\.?\s*)?(${HARGA})$`,
+  "i",
+);
+
+/** Awalan daftar pada tempelan WA: "- ", "• ", "1. ", "2) ". */
+const POLA_AWALAN = /^(?:[-•*]\s+|\d{1,3}\s*[.)]\s+)/;
 
 /**
- * Baris yang tidak cocok polanya tetap dikembalikan (hanya nama terisi)
- * supaya tidak ada teks yang hilang — pengguna mengetik sisanya manual.
+ * Baris non-barang pada tempelan WA dilewati, bukan jadi baris sampah:
+ * judul diakhiri ":" ("Belanja hari ini:"), baris total, dan baris tanpa
+ * huruf sama sekali (sisa angka total dsb.).
+ */
+function barisLewati(teks: string): boolean {
+  if (!/[a-z]/i.test(teks)) return true;
+  if (/^(grand\s+)?(sub\s*)?total\b/i.test(teks)) return true;
+  return teks.endsWith(":");
+}
+
+/** Grup tangkapan (nama, qty, harga) → baris form; urutan grup per pola. */
+function barisTerbaca(
+  cocok: RegExpExecArray,
+  iNama: number,
+  iQty: number,
+  iHarga: number,
+  produk: ProductSummary[],
+): BarisMasuk {
+  const nama = (cocok[iNama] ?? "").trim();
+  const p = produk.find((x) => x.name.toLowerCase() === nama.toLowerCase());
+  return {
+    ...barisKosong(),
+    nama,
+    productId: p?.id ?? null,
+    qty: String(Number(cocok[iQty] ?? "")),
+    unitCost: String(hargaNota(cocok[iHarga] ?? "0")),
+  };
+}
+
+/** Satu baris tempelan → satu baris form; null bila baris non-barang. */
+function bacaBarisNota(
+  baris: string,
+  produk: ProductSummary[],
+): BarisMasuk | null {
+  if (!baris || barisLewati(baris)) return null;
+
+  const depan = POLA_DEPAN_HARGA.exec(baris) ?? POLA_DEPAN.exec(baris);
+  if (depan) return barisTerbaca(depan, 2, 1, 3, produk);
+
+  const belakang = POLA_BELAKANG.exec(baris);
+  if (belakang) return barisTerbaca(belakang, 1, 2, 3, produk);
+
+  return { ...barisKosong(), nama: baris };
+}
+
+/**
+ * FSD §16 — per baris: `<nama> <qty> <harga>` plus format WhatsApp umum
+ * (qty di depan, pemisah "x", harga "@…", awalan daftar). Baris yang tidak
+ * cocok polanya tetap dikembalikan (hanya nama terisi) supaya tidak ada
+ * teks yang hilang — pengguna mengetik sisanya manual.
  */
 export function parseNota(
   teks: string,
@@ -112,23 +187,10 @@ export function parseNota(
 ): BarisMasuk[] {
   const hasil: BarisMasuk[] = [];
 
-  for (const baris of teks.split(/\r?\n/)) {
-    if (!baris.trim()) continue;
-    const cocok = POLA_NOTA.exec(baris);
-    if (!cocok) {
-      hasil.push({ ...barisKosong(), nama: baris.trim() });
-      continue;
-    }
-
-    const nama = (cocok[1] ?? "").trim();
-    const p = produk.find((x) => x.name.toLowerCase() === nama.toLowerCase());
-    hasil.push({
-      ...barisKosong(),
-      nama,
-      productId: p?.id ?? null,
-      qty: String(Number(cocok[2])),
-      unitCost: String(angkaDari(cocok[3] ?? "0")),
-    });
+  for (const mentah of teks.split(/\r?\n/)) {
+    const baris = mentah.trim().replace(POLA_AWALAN, "").trim();
+    const terbaca = bacaBarisNota(baris, produk);
+    if (terbaca) hasil.push(terbaca);
   }
 
   return hasil;
@@ -284,6 +346,62 @@ export function barisDariPayload(
   });
 }
 
+/**
+ * Kunci sinkron anti-aktivasi-ganda. `ambil()` berhasil hanya untuk
+ * pemanggil pertama sampai `lepas()` dipanggil. Berbeda dengan state React
+ * (yang baru terlihat setelah render), kunci ini efektif seketika — bahkan
+ * untuk dua aktivasi pada frame yang sama, sebelum await apa pun.
+ */
+export function buatKunciSinkron() {
+  let terkunci = false;
+  return {
+    ambil(): boolean {
+      if (terkunci) return false;
+      terkunci = true;
+      return true;
+    },
+    lepas(): void {
+      terkunci = false;
+    },
+  };
+}
+
+/** Kirim satu nota yang sudah tersimpan di outbox; petakan hasil ke callback. */
+async function kirimMasuk(
+  body: StockInBatchCreate,
+  id: string,
+  daftar: BarisMasuk[],
+  cb: Omit<SimpanArgs, "tanggal" | "daftar">,
+): Promise<void> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await api.POST("/stock-ins", {
+      body,
+      params: { header: { "Idempotency-Key": id } },
+      signal: ctrl.signal,
+    });
+    if (res.response.ok) {
+      await hapusOutbox(id);
+      cb.onSukses(body.lines.length);
+    } else if (res.response.status === 422) {
+      cb.on422(petaBaris(res.error, daftar));
+    } else if (res.response.status === 401) {
+      cb.onGagal(PESAN_SESI);
+    } else if (res.response.status === 409) {
+      // Kunci yang sama sudah diproses server — anggap selesai, jangan kirim ganda.
+      await hapusOutbox(id);
+      cb.onSukses(body.lines.length);
+    } else {
+      cb.onGagal(PESAN_JARINGAN);
+    }
+  } catch {
+    cb.onGagal(PESAN_JARINGAN);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** FSD §0.4 — simpan lewat outbox IndexedDB; Idempotency-Key = id outbox. */
 export function useSimpanMasuk({
   tanggal,
@@ -293,49 +411,32 @@ export function useSimpanMasuk({
   on422,
 }: SimpanArgs) {
   const [menyimpan, setMenyimpan] = useState(false);
+  const kunci = useRef(buatKunciSinkron());
 
   const simpan = useCallback(async () => {
-    const body = payloadMasuk(tanggal, daftar);
-    if (!body) return;
-
-    const id = idOutbox();
-    await simpanOutbox({
-      id,
-      kind: "stockin",
-      tanggal,
-      baris: body.lines.length,
-      status: "pending",
-      payload: body,
-      dibuat: new Date().toISOString(),
-    });
-
+    // Kunci diambil sinkron SEBELUM await pertama (QA-3): dulu flag
+    // `menyimpan` baru naik setelah `await simpanOutbox(...)`, jadi klik
+    // kedua lolos dan membuat item outbox + Idempotency-Key kedua —
+    // stok tercatat dua kali.
+    if (!kunci.current.ambil()) return;
     setMenyimpan(true);
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 15000);
     try {
-      const res = await api.POST("/stock-ins", {
-        body,
-        params: { header: { "Idempotency-Key": id } },
-        signal: ctrl.signal,
+      const body = payloadMasuk(tanggal, daftar);
+      if (!body) return;
+
+      const id = idOutbox();
+      await simpanOutbox({
+        id,
+        kind: "stockin",
+        tanggal,
+        baris: body.lines.length,
+        status: "pending",
+        payload: body,
+        dibuat: new Date().toISOString(),
       });
-      if (res.response.ok) {
-        await hapusOutbox(id);
-        onSukses(body.lines.length);
-      } else if (res.response.status === 422) {
-        on422(petaBaris(res.error, daftar));
-      } else if (res.response.status === 401) {
-        onGagal(PESAN_SESI);
-      } else if (res.response.status === 409) {
-        // Kunci yang sama sudah diproses server — anggap selesai, jangan kirim ganda.
-        await hapusOutbox(id);
-        onSukses(body.lines.length);
-      } else {
-        onGagal(PESAN_JARINGAN);
-      }
-    } catch {
-      onGagal(PESAN_JARINGAN);
+      await kirimMasuk(body, id, daftar, { onSukses, onGagal, on422 });
     } finally {
-      clearTimeout(timer);
+      kunci.current.lepas();
       setMenyimpan(false);
     }
   }, [tanggal, daftar, onSukses, onGagal, on422]);

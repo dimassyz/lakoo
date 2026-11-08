@@ -10,6 +10,25 @@ const tombol =
 const angka =
   "rounded-btn border-line h-11 border px-2 text-center text-lg transition duration-150 focus:border-marigold-kuat focus:ring-4 focus:ring-marigold/25 focus:outline-none";
 
+/**
+ * Baca ketikan field jumlah (QA-4 M-1): koma/titik ditandai sebagai upaya
+ * desimal supaya field bisa menolak + memberi petunjuk; selain itu hanya
+ * digit yang diambil, konsisten dengan field angka lain di aplikasi.
+ */
+function bacaJumlah(mentah: string): { desimal: boolean; nilai: number } {
+  if (/[.,]/.test(mentah)) return { desimal: true, nilai: 0 };
+  const digit = mentah.replace(/\D/g, "");
+  return { desimal: false, nilai: digit === "" ? 0 : Number(digit) };
+}
+
+function PetunjukBulat({ teks }: { teks: string }) {
+  return (
+    <p role="alert" className="text-danger mt-1 text-[13px] font-semibold">
+      {teks}
+    </p>
+  );
+}
+
 function Stepper({
   nama,
   nilai,
@@ -21,36 +40,46 @@ function Stepper({
   maks: number;
   onUbah: (n: number) => void;
 }) {
+  const [peringatan, setPeringatan] = useState(false);
   const set = (n: number) => onUbah(Math.min(maks, Math.max(0, n)));
 
+  // QA-4 M-1: desimal ditolak di field + diberi petunjuk — nilai desimal
+  // tidak pernah mencapai antrean simpan.
+  const ketik = (mentah: string) => {
+    const baca = bacaJumlah(mentah);
+    setPeringatan(baca.desimal);
+    if (!baca.desimal) set(baca.nilai);
+  };
+
   return (
-    <div className="mt-2 flex items-center gap-2">
-      <button
-        type="button"
-        className={tombol}
-        aria-label={`Kurangi ${nama}`}
-        onClick={() => set(nilai - 1)}
-      >
-        −
-      </button>
-      <input
-        type="number"
-        inputMode="numeric"
-        min={0}
-        max={maks}
-        value={nilai}
-        aria-label={`Jumlah terjual ${nama}`}
-        onChange={(e) => set(Number(e.target.value) || 0)}
-        className={`${angka} w-16`}
-      />
-      <button
-        type="button"
-        className={tombol}
-        aria-label={`Tambah ${nama}`}
-        onClick={() => set(nilai + 1)}
-      >
-        +
-      </button>
+    <div>
+      <div className="mt-2 flex items-center gap-2">
+        <button
+          type="button"
+          className={tombol}
+          aria-label={`Kurangi ${nama}`}
+          onClick={() => set(nilai - 1)}
+        >
+          −
+        </button>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={nilai}
+          aria-label={`Jumlah terjual ${nama}`}
+          onChange={(e) => ketik(e.target.value)}
+          className={`${angka} w-16`}
+        />
+        <button
+          type="button"
+          className={tombol}
+          aria-label={`Tambah ${nama}`}
+          onClick={() => set(nilai + 1)}
+        >
+          +
+        </button>
+      </div>
+      {peringatan ? <PetunjukBulat teks="Jumlah harus bilangan bulat" /> : null}
     </div>
   );
 }
@@ -99,6 +128,49 @@ export function BarisQuantity({
   );
 }
 
+/** Field "sisa sekarang" opname — hanya bilangan bulat (QA-4 M-1). */
+function InputSisa({
+  nama,
+  nilai,
+  onUbah,
+}: {
+  nama: string;
+  nilai?: number;
+  onUbah: (n: number | undefined) => void;
+}) {
+  const [peringatan, setPeringatan] = useState(false);
+
+  const ketik = (mentah: string) => {
+    if (mentah === "") {
+      setPeringatan(false);
+      onUbah(undefined);
+      return;
+    }
+    const baca = bacaJumlah(mentah);
+    setPeringatan(baca.desimal);
+    if (!baca.desimal) onUbah(baca.nilai);
+  };
+
+  return (
+    <>
+      <label className="mt-2 flex items-center gap-2">
+        <span className="text-muted">sisa sekarang</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={nilai ?? ""}
+          aria-label={`Sisa stok ${nama}`}
+          onChange={(e) => ketik(e.target.value)}
+          className={`${angka} w-20`}
+        />
+      </label>
+      {peringatan ? (
+        <PetunjukBulat teks="Sisa stok harus bilangan bulat" />
+      ) : null}
+    </>
+  );
+}
+
 /** FSD §7 mode "Hitung sisa stok (opname)": sisa kosong secara bawaan. */
 export function BarisOpname({
   baris,
@@ -127,20 +199,7 @@ export function BarisOpname({
         pagi {baris.morningStock}
         {baris.stockInOnDate > 0 ? ` · +masuk ${baris.stockInOnDate}` : ""}
       </p>
-      <label className="mt-2 flex items-center gap-2">
-        <span className="text-muted">sisa sekarang</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          min={0}
-          value={nilai ?? ""}
-          aria-label={`Sisa stok ${baris.name}`}
-          onChange={(e) =>
-            onUbah(e.target.value === "" ? undefined : Number(e.target.value))
-          }
-          className={`${angka} w-20`}
-        />
-      </label>
+      <InputSisa nama={baris.name} nilai={nilai} onUbah={onUbah} />
       {sold === null ? null : <p className="mt-1">terjual {sold}</p>}
       {error ? (
         <p className="text-danger mt-1">
@@ -184,12 +243,15 @@ export function SheetStok({
         </h2>
         <p className="text-muted text-[14px]">{nama}</p>
         <input
-          type="number"
+          type="text"
           inputMode="numeric"
-          min={0}
           value={nilai}
           aria-label="Stok sebenarnya"
-          onChange={(e) => setNilai(e.target.value)}
+          onChange={(e) => {
+            // Stok hanya bilangan bulat — koma/titik tidak diterima.
+            if (/[.,]/.test(e.target.value)) return;
+            setNilai(e.target.value.replace(/\D/g, ""));
+          }}
           className={`${angka} mt-3 w-full`}
         />
         <div className="mt-3 flex gap-2">

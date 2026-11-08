@@ -57,36 +57,54 @@ function KontrolTanggal({
   ubah: (t: string) => void;
 }) {
   const { min, max } = batasTanggal();
+  const [peringatan, setPeringatan] = useState("");
+
+  // QA-4 M-2: atribut max tidak menahan tanggal yang DIKETIK — tolak di sini.
+  const pilih = (v: string) => {
+    if (v && v > max) {
+      setPeringatan("Tanggal belum terjadi");
+      return;
+    }
+    setPeringatan("");
+    ubah(v || hariIniWib());
+  };
 
   return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        aria-label="Hari sebelumnya"
-        className={tombolGeser}
-        disabled={tanggal <= min}
-        onClick={() => ubah(geserHari(tanggal, -1))}
-      >
-        ‹
-      </button>
-      <input
-        type="date"
-        aria-label="Tanggal rekap"
-        value={tanggal}
-        min={min}
-        max={max}
-        onChange={(e) => ubah(e.target.value || hariIniWib())}
-        className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 h-[52px] border px-3 transition duration-150 focus:ring-4 focus:outline-none"
-      />
-      <button
-        type="button"
-        aria-label="Hari berikutnya"
-        className={tombolGeser}
-        disabled={tanggal >= max}
-        onClick={() => ubah(geserHari(tanggal, 1))}
-      >
-        ›
-      </button>
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          aria-label="Hari sebelumnya"
+          className={tombolGeser}
+          disabled={tanggal <= min}
+          onClick={() => ubah(geserHari(tanggal, -1))}
+        >
+          ‹
+        </button>
+        <input
+          type="date"
+          aria-label="Tanggal rekap"
+          value={tanggal}
+          min={min}
+          max={max}
+          onChange={(e) => pilih(e.target.value)}
+          className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 h-[52px] border px-3 transition duration-150 focus:ring-4 focus:outline-none"
+        />
+        <button
+          type="button"
+          aria-label="Hari berikutnya"
+          className={tombolGeser}
+          disabled={tanggal >= max}
+          onClick={() => ubah(geserHari(tanggal, 1))}
+        >
+          ›
+        </button>
+      </div>
+      {peringatan ? (
+        <p role="alert" className="text-danger text-[13px] font-semibold">
+          {peringatan}
+        </p>
+      ) : null}
     </div>
   );
 }
