@@ -17,12 +17,15 @@ import {
 import { rupiah, tanggalPendek } from "@/lib/ui";
 import { ChipStatus } from "@/components/ChipStatus";
 
-const tombolGaris = "rounded-card border-muted border px-4 py-3 font-semibold";
+const tombolGaris =
+  "rounded-btn border-line inline-flex min-h-11 items-center border px-4 font-semibold";
 
 function gayaChip(aktif: boolean) {
+  /* DESIGN-V3 §3/§7 — chip filter: pill penuh, target sentuh 44px; nonaktif
+     lunak (bukan pill status jenuh ala board), aktif solid ink (ruling R-T2). */
   const dasar =
-    "rounded-card border px-3 py-1.5 text-[13px] font-semibold whitespace-nowrap";
-  return `${dasar} ${aktif ? "border-navy text-navy" : "border-muted text-ink"}`;
+    "rounded-pill inline-flex min-h-11 items-center border px-4 text-[13px] font-semibold whitespace-nowrap";
+  return `${dasar} ${aktif ? "border-navy bg-navy text-white" : "border-line text-ink"}`;
 }
 
 /** FSD §9 — chip status + toggle arsip. */
@@ -52,7 +55,7 @@ function ChipFilter({
           </button>
         ))}
       </div>
-      <label className="flex min-h-11 items-center gap-2 text-[15px]">
+      <label className="flex min-h-11 items-center gap-2 text-base">
         <input
           type="checkbox"
           checked={arsip}
@@ -72,14 +75,14 @@ function KartuBarang({ p }: { p: ProductSummary }) {
     <li>
       <Link
         href={`/toko/barang/${p.id}`}
-        className="rounded-card border-muted block border p-3"
+        className="md:rounded-card md:border-garis md:bg-card md:shadow-card block p-4 md:border"
       >
         <div className="flex items-baseline justify-between gap-2">
-          <p className="font-semibold">{p.name}</p>
+          <p className="text-navy font-semibold">{p.name}</p>
           <ChipStatus status={p.status} />
         </div>
-        <p className="text-muted text-[15px]">
-          stok {p.stock} ·{" "}
+        <p className="text-muted text-base">
+          stok <span className="angka">{p.stock}</span> ·{" "}
           <span className="angka">{rupiah(p.lockedValue)}</span> terkunci
         </p>
         {ket ? <p className="text-muted text-[13px]">{ket}</p> : null}
@@ -99,7 +102,7 @@ function KepalaTabel({
 }) {
   return (
     <thead>
-      <tr className="border-muted border-b text-left">
+      <tr className="border-garis border-b text-left">
         {KOLOM.map((c) => (
           <th
             key={c.kunci}
@@ -107,7 +110,7 @@ function KepalaTabel({
             aria-sort={
               kolom === c.kunci ? (naik ? "ascending" : "descending") : "none"
             }
-            className="py-2 text-[13px]"
+            className="px-2 py-3 text-[13px]"
           >
             <button
               type="button"
@@ -141,49 +144,58 @@ function TabelBarang({ items }: { items: ProductSummary[] }) {
     }
   }
 
+  /* DESIGN-V3 §5 — di lg daftar tampil sebagai baris mirip tabel di dalam
+     kartu putih (header kolom dari KOLOM aplikasi, bukan versi board). */
   return (
-    <table className="hidden w-full lg:table">
-      <KepalaTabel kolom={kolom} naik={naik} onKlik={klik} />
-      <tbody>
-        {baris.map((p) => (
-          <tr key={p.id} className="border-muted border-b">
-            <td className="py-2">
-              <Link href={`/toko/barang/${p.id}`} className="font-semibold">
-                {p.name}
-              </Link>
-            </td>
-            <td>
-              <ChipStatus status={p.status} />
-            </td>
-            <td>{p.stock}</td>
-            <td className="angka">{rupiah(p.lastCost)}</td>
-            <td className="angka">{rupiah(p.sellPrice)}</td>
-            <td className="angka">{rupiah(p.lockedValue)}</td>
-            <td>{p.lastSaleDate ? tanggalPendek(p.lastSaleDate) : "Belum"}</td>
-            <td>{p.priorityScore ?? "–"}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="rounded-card border-garis bg-card shadow-card hidden border p-6 lg:block">
+      <table className="w-full">
+        <KepalaTabel kolom={kolom} naik={naik} onKlik={klik} />
+        <tbody>
+          {baris.map((p) => (
+            <tr key={p.id} className="border-garis border-b last:border-b-0">
+              <td className="px-2 py-3">
+                <Link
+                  href={`/toko/barang/${p.id}`}
+                  className="text-navy font-semibold"
+                >
+                  {p.name}
+                </Link>
+              </td>
+              <td className="px-2 py-3">
+                <ChipStatus status={p.status} />
+              </td>
+              <td className="angka px-2 py-3">{p.stock}</td>
+              <td className="angka px-2 py-3">{rupiah(p.lastCost)}</td>
+              <td className="angka px-2 py-3">{rupiah(p.sellPrice)}</td>
+              <td className="angka px-2 py-3">{rupiah(p.lockedValue)}</td>
+              <td className="px-2 py-3">
+                {p.lastSaleDate ? tanggalPendek(p.lastSaleDate) : "Belum"}
+              </td>
+              <td className="angka px-2 py-3">{p.priorityScore ?? "–"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
 function Kosong({ adaFilter }: { adaFilter: boolean }) {
   if (adaFilter) {
     return (
-      <p className="text-muted text-[15px]">
+      <p className="text-muted text-base">
         Tidak ada barang yang cocok dengan filter atau pencarian ini.
       </p>
     );
   }
 
   return (
-    <div className="rounded-card border-muted border p-4">
-      <p className="font-semibold">Belum ada barang.</p>
-      <div className="mt-3 flex flex-wrap gap-2">
+    <div className="rounded-card border-garis bg-card shadow-card border p-6">
+      <p className="text-navy font-semibold">Belum ada barang.</p>
+      <div className="mt-4 flex flex-wrap gap-2">
         <Link
           href="/toko/barang/baru"
-          className="rounded-card bg-navy px-4 py-3 font-semibold text-white"
+          className="rounded-btn bg-navy inline-flex min-h-11 items-center px-4 font-semibold text-white"
         >
           Tambah barang
         </Link>
@@ -208,18 +220,18 @@ function IsiDaftar({
   adaFilter: boolean;
   onMuat: () => void;
 }) {
-  if (memuat) return <p className="text-muted text-[15px]">Memuat…</p>;
+  if (memuat) return <p className="text-muted text-base">Memuat…</p>;
 
   if (gagal) {
     return (
-      <div className="rounded-card border-muted border p-4">
-        <p className="font-semibold">
+      <div className="rounded-card border-garis bg-card border p-4">
+        <p className="text-navy font-semibold">
           Gagal memuat. Periksa sinyal lalu coba lagi.
         </p>
         <button
           type="button"
           onClick={onMuat}
-          className="rounded-card bg-navy mt-3 px-4 py-3 font-semibold text-white"
+          className="rounded-btn bg-navy mt-4 inline-flex min-h-11 items-center px-4 font-semibold text-white"
         >
           Coba lagi
         </button>
@@ -231,7 +243,9 @@ function IsiDaftar({
 
   return (
     <>
-      <ul className="space-y-2 lg:hidden">
+      {/* DESIGN-V3 §5 — HP: satu kartu putih berisi semua baris dengan
+          garis pemisah hairline; md: kartu dua kolom; lg: tabel (di bawah). */}
+      <ul className="rounded-card border-garis bg-card shadow-card divide-garis grid divide-y border md:grid-cols-2 md:gap-4 md:divide-y-0 md:rounded-none md:border-0 md:bg-transparent md:shadow-none lg:hidden">
         {items.map((p) => (
           <KartuBarang key={p.id} p={p} />
         ))}
@@ -252,17 +266,19 @@ function KepalaDaftar({
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Daftar Barang</h1>
+        <h1 className="text-2xl font-bold tracking-[-0.01em] md:text-[28px] lg:text-[32px]">
+          Daftar Barang
+        </h1>
         <div className="flex gap-2">
           <Link
             href="/toko/barang/baru"
-            className="rounded-card bg-navy px-3 py-2 text-[15px] font-semibold text-white"
+            className="rounded-btn bg-navy hidden min-h-11 items-center px-4 text-base font-semibold text-white md:inline-flex"
           >
             + Tambah barang
           </Link>
           <Link
             href="/toko/import"
-            className="rounded-card border-muted border px-3 py-2 text-[15px] font-semibold"
+            className="rounded-btn border-line inline-flex min-h-11 items-center border px-4 text-base font-semibold"
           >
             Import
           </Link>
@@ -274,7 +290,7 @@ function KepalaDaftar({
         placeholder="Cari barang…"
         value={cari}
         onChange={(e) => onCari(e.target.value)}
-        className="rounded-card border-muted w-full border px-3 py-2"
+        className="rounded-btn border-garis bg-card shadow-card w-full border px-4 py-3 text-base"
       />
     </>
   );
@@ -304,7 +320,7 @@ export default function BarangPage() {
         <title>Daftar Barang — Lakoo</title>
       </Head>
       <AppShell>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <KepalaDaftar cari={cari} onCari={setCari} />
           <ChipFilter
             filter={filter}

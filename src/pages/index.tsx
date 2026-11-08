@@ -57,9 +57,11 @@ const FAQ = [
   },
 ];
 
+/* DESIGN-V3 §3 — tombol utama tinggi 52px, radius 12px (rounded-btn);
+   kartu radius 16px (rounded-card), putih di atas kertas, garis rambut. */
 const tombolUtama =
-  "rounded-card bg-navy px-4 py-3 text-[16px] font-semibold text-white disabled:opacity-60";
-const kartu = "rounded-card border-muted border p-4";
+  "rounded-btn bg-navy inline-flex h-[52px] w-full items-center justify-center px-6 text-base font-semibold text-white disabled:opacity-60 sm:w-auto";
+const kartu = "rounded-card border-garis bg-card shadow-card border p-4";
 
 /** SPEC §7b — JSON-LD: SoftwareApplication, Organization, WebSite, FAQPage. */
 function jsonLd(origin: string) {
@@ -174,17 +176,17 @@ function TombolDemo() {
           {memproses ? "Menyiapkan toko contoh…" : "Coba akun demo"}
         </button>
       </div>
-      <p className="text-muted text-[15px]">
+      <p className="text-muted text-base">
         Gratis. Tanpa kartu kredit. Bahasa Indonesia.
       </p>
       {pesan ? (
         <div role="alert" className={`${kartu} space-y-2`}>
-          <p className="text-danger text-[15px] font-semibold">{pesan}</p>
+          <p className="text-danger text-base font-semibold">{pesan}</p>
           <button
             type="button"
             onClick={() => void coba()}
             disabled={memproses}
-            className="rounded-card border-muted border px-3 py-2 text-[15px] font-semibold"
+            className="rounded-btn border-line inline-flex min-h-11 items-center border px-4 text-base font-semibold"
           >
             Coba lagi
           </button>
@@ -197,10 +199,10 @@ function TombolDemo() {
 function Hero() {
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-bold">
+      <h1 className="text-[30px] font-bold tracking-[-0.01em] md:text-[36px] lg:text-[46px]">
         Berapa uangmu yang terkunci di rak?
       </h1>
-      <p className="text-[17px]">
+      <p className="text-base">
         Lakoo menghitung modal yang tertahan di barang tidak laku dan memberi
         rencana menjualnya kembali.
       </p>
@@ -211,11 +213,11 @@ function Hero() {
 
 function AngkaContoh() {
   return (
-    <section className={`${kartu} space-y-1`}>
-      <p className="angka text-4xl font-extrabold tracking-tight">
+    <section className="rounded-card border-garis bg-card shadow-card space-y-2 border p-6">
+      <p className="angka text-emerald text-[34px] leading-[1.15] font-bold tracking-[-0.01em] md:text-[40px] lg:text-[48px]">
         {ANGKA_CONTOH.terkunci} terkunci
       </p>
-      <p className="text-muted text-[15px]">
+      <p className="text-muted text-base">
         {ANGKA_CONTOH.mati} barang mati · {ANGKA_CONTOH.sekarat} sekarat
       </p>
       <p className="text-muted text-[13px]">Angka dari data toko contoh.</p>
@@ -225,15 +227,15 @@ function AngkaContoh() {
 
 function CaraKerja() {
   return (
-    <section className="space-y-3">
-      <h2 className="text-[17px] font-semibold">Cara kerja</h2>
-      <ol className="space-y-3">
+    <section className="space-y-4">
+      <h2 className="text-[19px] font-semibold">Cara kerja</h2>
+      <ol className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {LANGKAH.map((l, i) => (
           <li key={l.judul} className={kartu}>
-            <p className="text-[15px] font-semibold">
+            <p className="text-navy text-base font-semibold">
               {i + 1}. {l.judul}
             </p>
-            <p className="text-[15px]">{l.isi}</p>
+            <p className="mt-1 text-base">{l.isi}</p>
           </li>
         ))}
       </ol>
@@ -243,15 +245,15 @@ function CaraKerja() {
 
 function Definisi() {
   return (
-    <section className="space-y-3">
-      <h2 className="text-[17px] font-semibold">Apa itu uang terkunci?</h2>
-      <p className="text-[17px]">
+    <section className="space-y-4">
+      <h2 className="text-[19px] font-semibold">Apa itu uang terkunci?</h2>
+      <p className="text-base">
         Uang terkunci adalah modal yang sudah Anda bayar untuk stok, tetapi
         belum kembali menjadi uang karena barangnya tidak laku. Selama barang
         itu diam di rak, uangnya tidak bisa dipakai membeli barang yang justru
         cepat habis.
       </p>
-      <p className="text-[17px]">
+      <p className="text-base">
         Contoh: 40 botol sampo × Rp18.500 = Rp740.000. Selama sampo itu tidak
         terjual, Rp740.000 tetap terkunci di rak.
       </p>
@@ -261,13 +263,13 @@ function Definisi() {
 
 function PertanyaanUmum() {
   return (
-    <section className="space-y-3">
-      <h2 className="text-[17px] font-semibold">Pertanyaan umum</h2>
-      <dl className="space-y-3">
+    <section className="space-y-4">
+      <h2 className="text-[19px] font-semibold">Pertanyaan umum</h2>
+      <dl className="space-y-4">
         {FAQ.map((f) => (
           <div key={f.tanya} className={kartu}>
-            <dt className="text-[15px] font-semibold">{f.tanya}</dt>
-            <dd className="mt-1 text-[15px]">{f.jawab}</dd>
+            <dt className="text-navy text-base font-semibold">{f.tanya}</dt>
+            <dd className="mt-1 text-base">{f.jawab}</dd>
           </div>
         ))}
       </dl>
@@ -277,7 +279,7 @@ function PertanyaanUmum() {
 
 function Kaki() {
   return (
-    <footer className="border-muted text-muted flex flex-wrap gap-4 border-t pt-4 text-[13px]">
+    <footer className="border-garis text-muted flex flex-wrap gap-4 border-t pt-4 text-[13px]">
       <Link href="/privasi">Privasi</Link>
       <a href="https://github.com/dimassyz/lakoo">GitHub</a>
       <span>Karya GTNIC 2026</span>
@@ -289,12 +291,19 @@ export default function Landing({ origin }: { origin: string }) {
   return (
     <>
       <Kepala origin={origin} />
-      <main className="mx-auto max-w-2xl space-y-10 px-4 py-8">
-        <Hero />
-        <AngkaContoh />
+      {/* DESIGN-V3 §3/§5 — padding halaman 20/32/40px, konten maks 1200px;
+          hero dua kolom di lg (teks kiri, kartu angka kanan); teks bacaan
+          panjang (Definisi, FAQ) tetap di kolom 672px supaya enak dibaca. */}
+      <main className="mx-auto w-full max-w-2xl space-y-10 px-5 py-8 md:px-8 lg:max-w-[1200px] lg:px-10 lg:py-12">
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          <Hero />
+          <AngkaContoh />
+        </div>
         <CaraKerja />
-        <Definisi />
-        <PertanyaanUmum />
+        <div className="max-w-2xl space-y-10">
+          <Definisi />
+          <PertanyaanUmum />
+        </div>
         <Kaki />
       </main>
     </>

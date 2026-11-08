@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
+import { ChevronLeft } from "lucide-react";
 import { AppShell } from "@/components/NavBar";
 import { BagianRencana } from "@/components/Rencana";
 import { SheetStok } from "@/components/RekapBaris";
@@ -19,9 +20,9 @@ import { rupiah, tanggalPendek } from "@/lib/ui";
 import { ChipStatus } from "@/components/ChipStatus";
 
 const tombolGaris =
-  "rounded-card border-muted border px-3 py-2 text-[15px] font-semibold";
+  "rounded-btn border-line inline-flex min-h-11 items-center border px-4 text-base font-semibold";
 const tombolUtama =
-  "rounded-card bg-navy px-3 py-2 text-[15px] font-semibold text-white";
+  "rounded-btn bg-navy inline-flex h-[52px] items-center px-4 text-base font-semibold text-white";
 
 type Jalan = (fn: () => Promise<string | null>) => void;
 
@@ -37,43 +38,58 @@ function kalimatStatus(p: ProductDetail): string {
 
 function Baris({ label, nilai }: { label: string; nilai: string }) {
   return (
-    <div className="flex justify-between gap-2 text-[15px]">
+    <div className="flex flex-col text-base md:flex-row md:justify-between md:gap-2">
       <dt className="text-muted">{label}</dt>
-      <dd className="angka font-semibold">{nilai}</dd>
+      <dd className="angka text-navy font-semibold">{nilai}</dd>
     </div>
   );
 }
 
-/** FSD §11.1 — ringkasan barang. */
-function Ringkasan({ p }: { p: ProductDetail }) {
+/** FSD §11.1 — judul barang + chip status + kalimat bantu. */
+function Judul({ p }: { p: ProductDetail }) {
   return (
     <div className="space-y-2">
       <div className="flex items-baseline justify-between gap-2">
-        <h1 className="text-2xl font-bold">{p.name}</h1>
+        <h1 className="text-2xl font-bold tracking-[-0.01em] md:text-[28px] lg:text-[32px]">
+          {p.name}
+        </h1>
         <ChipStatus status={p.status} />
       </div>
-      <p className="text-muted text-[15px]">{kalimatStatus(p)}</p>
-      <p className="angka text-3xl font-bold">{rupiah(p.lockedValue)}</p>
-      <p className="text-muted text-[13px]">uang terkunci di rak</p>
-      <dl className="rounded-card border-muted space-y-1 border p-3">
-        <Baris label="Stok" nilai={`${p.stock} ${p.unit}`} />
-        <Baris label="Harga beli terakhir" nilai={rupiah(p.lastCost)} />
-        <Baris label="Harga jual" nilai={rupiah(p.sellPrice)} />
-        <Baris
-          label="Margin per unit"
-          nilai={rupiah(p.sellPrice - p.lastCost)}
-        />
-        <Baris
-          label="Terakhir laku"
-          nilai={
-            p.lastSaleDate
-              ? `${tanggalPendek(p.lastSaleDate)} · ${p.daysSinceLastSale ?? 0} hari lalu`
-              : "Belum pernah laku"
-          }
-        />
-      </dl>
-      <WeekChart weekQty={p.weekQty} />
+      <p className="text-muted text-base">{kalimatStatus(p)}</p>
     </div>
+  );
+}
+
+/** DESIGN-V3 §5 — kartu wawasan di rel kanan: angka uang terkunci,
+    latar tint emerald 10%, angka emerald-teks. */
+function KartuTerkunci({ p }: { p: ProductDetail }) {
+  return (
+    <div className="rounded-card border-garis bg-emerald/10 shadow-card border p-6">
+      <p className="angka text-emerald-teks text-[34px] leading-[1.15] font-bold tracking-[-0.01em]">
+        {rupiah(p.lockedValue)}
+      </p>
+      <p className="text-muted mt-1 text-[13px]">uang terkunci di rak</p>
+    </div>
+  );
+}
+
+/** FSD §11.1 — statistik barang; kolom kiri bersama grafik mingguan. */
+function Statistik({ p }: { p: ProductDetail }) {
+  return (
+    <dl className="rounded-card border-garis bg-card shadow-card grid grid-cols-2 gap-4 border p-4 md:flex md:flex-col md:gap-2">
+      <Baris label="Stok" nilai={`${p.stock} ${p.unit}`} />
+      <Baris label="Harga beli terakhir" nilai={rupiah(p.lastCost)} />
+      <Baris label="Harga jual" nilai={rupiah(p.sellPrice)} />
+      <Baris label="Margin per unit" nilai={rupiah(p.sellPrice - p.lastCost)} />
+      <Baris
+        label="Terakhir laku"
+        nilai={
+          p.lastSaleDate
+            ? `${tanggalPendek(p.lastSaleDate)} · ${p.daysSinceLastSale ?? 0} hari lalu`
+            : "Belum pernah laku"
+        }
+      />
+    </dl>
   );
 }
 
@@ -89,8 +105,8 @@ function KotakPelengkap({
   );
 
   return (
-    <div className="rounded-card border-muted space-y-2 border p-3">
-      <p className="text-[15px]">
+    <div className="rounded-card border-garis bg-card space-y-2 border p-4">
+      <p className="text-base">
         Barang pelengkap.
         {p.complementaryOverstock && p.complementaryThreshold !== null
           ? ` Stok ${p.stock}, kebutuhan ±60 hari ${p.complementaryThreshold}. Jangan kulakan dulu sampai stok tinggal ${p.complementaryThreshold}.`
@@ -106,7 +122,7 @@ function KotakPelengkap({
             inputMode="numeric"
             value={nilai}
             onChange={(e) => setNilai(e.target.value.replace(/\D/g, ""))}
-            className="rounded-card border-muted w-24 border px-3 py-2"
+            className="rounded-btn border-garis min-h-11 w-24 border px-3"
           />
           <button
             type="button"
@@ -160,8 +176,8 @@ function KonfirmasiArsip({
   onBatal: () => void;
 }) {
   return (
-    <div className="rounded-card border-ink space-y-2 border p-3">
-      <p className="text-[15px]">
+    <div className="rounded-card border-navy bg-card space-y-2 border p-4">
+      <p className="text-base">
         Barang tidak muncul lagi di rekap &amp; beranda. Riwayat tetap
         tersimpan.
       </p>
@@ -219,8 +235,37 @@ function BagianAksi({
 function Kerangka({ children }: { children: React.ReactNode }) {
   return (
     <AppShell>
-      <div className="space-y-3">{children}</div>
+      <div className="space-y-6">{children}</div>
     </AppShell>
+  );
+}
+
+/**
+ * DESIGN-V3 §5 — md/lg dua kolom: statistik + grafik di kiri, kartu uang
+ * terkunci + aksi di rel kanan (360px pada lg). HP bertumpuk satu kolom.
+ */
+function KolomDetail({
+  p,
+  aksi,
+  jalan,
+  onPerbaiki,
+}: {
+  p: ProductDetail;
+  aksi: ReturnType<typeof useAksiDetail>;
+  jalan: Jalan;
+  onPerbaiki: () => void;
+}) {
+  return (
+    <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="space-y-6">
+        <Statistik p={p} />
+        <WeekChart weekQty={p.weekQty} />
+      </div>
+      <div className="space-y-6">
+        <KartuTerkunci p={p} />
+        <BagianAksi p={p} aksi={aksi} jalan={jalan} onPerbaiki={onPerbaiki} />
+      </div>
+    </div>
   );
 }
 
@@ -241,21 +286,28 @@ function IsiDetail({ p, rencana, aksi, aksiRencana, aksiTahap }: PropsIsi) {
   };
 
   return (
-    <>
-      <Ringkasan p={p} />
-      <BagianAksi
+    <div className="space-y-6">
+      <Link
+        href="/toko/barang"
+        className="text-navy inline-flex min-h-11 items-center gap-1 text-base font-semibold"
+      >
+        <ChevronLeft aria-hidden className="h-5 w-5" />
+        Kembali
+      </Link>
+      <Judul p={p} />
+      <KolomDetail
         p={p}
         aksi={aksi}
         jalan={jalan}
         onPerbaiki={() => setSheet(true)}
       />
       {pesan ? (
-        <p role="alert" className="text-danger text-[15px] font-semibold">
+        <p role="alert" className="text-danger text-base font-semibold">
           {pesan}
         </p>
       ) : null}
-      <section id="rencana" className="space-y-2">
-        <h2 className="text-lg font-semibold">Rencana</h2>
+      <section id="rencana" className="space-y-4">
+        <h2 className="text-[19px] font-semibold">Rencana</h2>
         <BagianRencana
           produk={p}
           plan={rencana.plan}
@@ -279,7 +331,7 @@ function IsiDetail({ p, rencana, aksi, aksiRencana, aksiTahap }: PropsIsi) {
       {bagikan !== null ? (
         <ShareWA teks={bagikan} onTutup={() => setBagikan(null)} />
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -303,7 +355,7 @@ export default function DetailBarangPage() {
   if (produk.memuat && !produk.data) {
     return (
       <Kerangka>
-        <p className="text-muted text-[15px]">Memuat…</p>
+        <p className="text-muted text-base">Memuat…</p>
       </Kerangka>
     );
   }
@@ -311,12 +363,9 @@ export default function DetailBarangPage() {
   if (produk.gagal || !produk.data) {
     return (
       <Kerangka>
-        <div className="rounded-card border-muted border p-4">
-          <p className="font-semibold">Barang tidak ditemukan.</p>
-          <Link
-            href="/toko/barang"
-            className={`${tombolUtama} mt-3 inline-block`}
-          >
+        <div className="rounded-card border-garis bg-card border p-4">
+          <p className="text-navy font-semibold">Barang tidak ditemukan.</p>
+          <Link href="/toko/barang" className={`${tombolUtama} mt-4`}>
             Kembali ke daftar
           </Link>
         </div>

@@ -33,15 +33,15 @@ export function HariIni({ today }: { today: D["today"] }) {
 
   return (
     <section aria-labelledby="hari-ini">
-      <h2 id="hari-ini" className="text-muted mb-2 text-[15px] font-semibold">
+      <h2 id="hari-ini" className="mb-4 text-[19px] font-semibold">
         Hari ini
       </h2>
       {baris.length === 0 ? (
-        <p className="text-[15px]">Tidak ada yang perlu dicek hari ini</p>
+        <p className="text-base">Tidak ada yang perlu dicek hari ini</p>
       ) : (
         <ul className="space-y-1">
           {baris.slice(0, 5).map((b) => (
-            <li key={b.key} className="text-[15px]">
+            <li key={b.key} className="text-base">
               <Link
                 href={b.href}
                 className="decoration-muted underline underline-offset-2"
@@ -55,7 +55,7 @@ export function HariIni({ today }: { today: D["today"] }) {
       {baris.length > 5 ? (
         <Link
           href="/toko/rencana"
-          className="text-muted mt-1 block text-[15px] underline"
+          className="text-muted mt-1 block text-base underline"
         >
           lihat semua
         </Link>
@@ -71,22 +71,19 @@ export function RingkasanMinggu({ summary }: { summary: D["weeklySummary"] }) {
   return (
     <section
       aria-labelledby="ringkasan-minggu"
-      className="rounded-card border-muted border p-4"
+      className="rounded-card border-garis bg-card shadow-card border p-4"
     >
-      <h2
-        id="ringkasan-minggu"
-        className="text-muted mb-2 text-[15px] font-semibold"
-      >
+      <h2 id="ringkasan-minggu" className="mb-4 text-[19px] font-semibold">
         Minggu lalu
       </h2>
       {summary.sentences.map((s) => (
-        <p key={s} className="text-[15px]">
+        <p key={s} className="text-base">
           {s}
         </p>
       ))}
       <Link
         href="/toko/hasil"
-        className="mt-2 inline-block text-[15px] underline"
+        className="mt-2 inline-block text-base underline"
       >
         Lihat hasil
       </Link>
@@ -98,30 +95,30 @@ export function RingkasanMinggu({ summary }: { summary: D["weeklySummary"] }) {
 export function TanganiDulu({ items }: { items: D["topPriority"] }) {
   return (
     <section aria-labelledby="tangani-dulu">
-      <h2
-        id="tangani-dulu"
-        className="text-muted mb-2 text-[15px] font-semibold"
-      >
+      <h2 id="tangani-dulu" className="mb-4 text-[19px] font-semibold">
         Tangani dulu
       </h2>
       {items.length === 0 ? (
-        <p className="text-[15px]">Tidak ada barang bermasalah. Mantap!</p>
+        <p className="text-base">Tidak ada barang bermasalah. Mantap!</p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-4">
           {items.slice(0, 3).map((p) => (
-            <li key={p.id} className="rounded-card border-muted border p-3">
-              <p className="font-semibold">{p.name}</p>
-              <p className="text-muted flex items-center gap-2 text-[15px]">
+            <li
+              key={p.id}
+              className="rounded-card border-garis bg-card shadow-card border p-4"
+            >
+              <p className="text-navy font-semibold">{p.name}</p>
+              <p className="text-muted mt-1 flex items-center gap-2 text-base">
                 <ChipStatus status={p.status} />
                 <span>
                   <span className="angka">{rupiah(p.lockedValue)}</span>{" "}
                   terkunci
                 </span>
               </p>
-              {p.reason ? <p className="text-[15px]">{p.reason}</p> : null}
+              {p.reason ? <p className="mt-1 text-base">{p.reason}</p> : null}
               <Link
                 href={`/toko/barang/${p.id}#rencana`}
-                className="rounded-card border-navy text-navy mt-2 inline-block border px-3 py-2 text-[15px] font-semibold"
+                className="rounded-btn border-navy text-navy mt-4 inline-flex min-h-11 items-center border px-4 text-base font-semibold"
               >
                 Lihat rencana
               </Link>
@@ -140,12 +137,12 @@ export function SegeraKulakan({ items }: { items: D["restockSoon"] }) {
 
   return (
     <section aria-labelledby="kulakan">
-      <h2 id="kulakan" className="text-muted mb-2 text-[15px] font-semibold">
+      <h2 id="kulakan" className="mb-4 text-[19px] font-semibold">
         Segera kulakan
       </h2>
       <ul className="space-y-1">
         {siap.map((p) => (
-          <li key={p.id} className="text-[15px]">
+          <li key={p.id} className="text-base">
             {p.name} — ±{p.daysUntilEmpty} hari lagi habis
           </li>
         ))}
@@ -164,12 +161,12 @@ export function PelengkapKebanyakan({
 
   return (
     <section aria-labelledby="pelengkap">
-      <h2 id="pelengkap" className="text-muted mb-2 text-[15px] font-semibold">
+      <h2 id="pelengkap" className="mb-4 text-[19px] font-semibold">
         Pelengkap kebanyakan
       </h2>
       <ul className="space-y-1">
         {items.map((p) => (
-          <li key={p.id} className="text-[15px]">
+          <li key={p.id} className="text-base">
             {p.name}: stok {p.stock}, jangan kulakan dulu sampai tinggal{" "}
             {p.complementaryThreshold}
           </li>
@@ -182,22 +179,22 @@ export function PelengkapKebanyakan({
 /** FSD §6 state kosong — toko baru tanpa barang. */
 export function BerandaKosong() {
   return (
-    <section className="rounded-card border-muted border p-4">
-      <p className="font-semibold">Belum ada barang</p>
-      <p className="text-muted mt-1 text-[15px]">
+    <section className="rounded-card border-garis bg-card shadow-card border p-6">
+      <p className="text-navy font-semibold">Belum ada barang</p>
+      <p className="text-muted mt-1 text-base">
         Mulai dengan menambah satu barang atau import daftar yang sudah kamu
         punya.
       </p>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         <Link
           href="/toko/barang/baru"
-          className="rounded-card bg-navy px-4 py-3 font-semibold text-white"
+          className="rounded-btn bg-navy inline-flex min-h-11 items-center px-4 font-semibold text-white"
         >
           Tambah barang
         </Link>
         <Link
           href="/toko/import"
-          className="rounded-card border-muted border px-4 py-3 font-semibold"
+          className="rounded-btn border-line inline-flex min-h-11 items-center border px-4 font-semibold"
         >
           Import dari file
         </Link>
