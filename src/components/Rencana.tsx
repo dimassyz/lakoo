@@ -402,6 +402,25 @@ function SelesaiRencana({ plan, onBaru }: { plan: Plan; onBaru: () => void }) {
   );
 }
 
+/** Jejak rencana terakhir yang sudah berakhir — tampil saat tidak ada
+    rencana berjalan, di atas ajakan buat rencana / pesan status. */
+function RencanaTerakhir({ plan }: { plan: Plan }) {
+  return (
+    <div className="rounded-card border-line shadow-card space-y-1 border bg-white p-4">
+      <p className="text-muted text-[13px] font-semibold">Rencana terakhir</p>
+      <p>{pesanAkhir(plan)}</p>
+      <p className="angka font-semibold">
+        {rupiah(plan.recovered)} kembali · {plan.recoveredPercent}%
+      </p>
+      {plan.endedOn ? (
+        <p className="text-muted text-[13px]">
+          Berakhir {tanggalPendek(plan.endedOn)}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 type Jenis =
   | "memuat"
   | "pelengkap"
@@ -419,13 +438,16 @@ function jenisRencana(
   membuat: boolean,
 ): Jenis {
   if (memuat) return "memuat";
+  // Rencana yang masih hidup selalu menang atas pesan status: barang bisa
+  // pulih jadi sehat (atau ditandai pelengkap) di tengah rencana, dan
+  // rencananya tetap harus terlihat & bisa dioperasikan dari sini.
+  if (plan?.state === "suggested") return "suggested";
+  if (plan?.state === "active") return "active";
+  if (plan) return "selesai";
   if (produk.isComplementary) return "pelengkap";
   if (produk.status === "sehat") return "sehat";
   if (membuat) return "membuat";
-  if (!plan) return "kosong";
-  if (plan.state === "suggested") return "suggested";
-  if (plan.state === "active") return "active";
-  return "selesai";
+  return "kosong";
 }
 
 function TombolBuat({ pesan, onBuat }: { pesan: string; onBuat: () => void }) {
@@ -558,7 +580,8 @@ type Props = {
   onBagikan: (teks: string) => void;
 };
 
-/** FSD §11.2 — memilih state A/B/C/D sesuai status barang dan rencana. */
+/** FSD §11.2 — memilih state A/B/C/D. Rencana yang masih hidup didahulukan
+    dari status barang; pesan status hanya untuk barang tanpa rencana. */
 export function BagianRencana({
   produk,
   plan,
@@ -592,6 +615,20 @@ export function BagianRencana({
         onBagikan={onBagikan}
         onBuat={(r) => void buat(r)}
       />
+    );
+  }
+
+  if (lastEnded) {
+    return (
+      <div className="space-y-4">
+        <RencanaTerakhir plan={lastEnded} />
+        <IsiTanpaRencana
+          jenis={jenis}
+          produk={produk}
+          pesan={pesan}
+          onBuat={(r) => void buat(r)}
+        />
+      </div>
     );
   }
 
