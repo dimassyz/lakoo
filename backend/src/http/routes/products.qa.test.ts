@@ -160,7 +160,7 @@ describe("QA-9 F3/F4 + QA-2 B6/B7 — higiene nama produk", () => {
     expect(first.status).toBe(201);
 
     const zw = await req("/products", "POST", {
-      name: `Kopi${ZW}Hitam`,
+      name: `Kopi Hitam${ZW}`,
       costPrice: 1_000,
       sellPrice: 2_000,
       openingStock: 1,
@@ -178,7 +178,7 @@ describe("QA-9 F3/F4 + QA-2 B6/B7 — higiene nama produk", () => {
     expect(blank.status).toBe(400);
 
     const dup = await req(`/products/${id}`, "PATCH", {
-      name: `Kopi${ZW}Hitam`,
+      name: `Kopi Hitam${ZW}`,
     });
     expect(dup.status).toBe(409);
     const body = (await dup.json()) as ErrorBody;
