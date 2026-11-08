@@ -34,9 +34,9 @@ export function useLayarMasuk() {
   const form = useFormMasuk();
   const [toast, setToast] = useState("");
   const [errorKirim, setErrorKirim] = useState<Record<string, string>>({});
-
   const { reset } = form;
   const { muat: muatRiwayat } = riwayat;
+  const { muat: muatProduk } = produk;
 
   const onSukses = useCallback(
     (jumlah: number) => {
@@ -44,8 +44,10 @@ export function useLayarMasuk() {
       setErrorKirim({});
       reset();
       void muatRiwayat();
+      // QA-3: barang baru dari nota ini harus langsung bisa dipilih lagi.
+      void muatProduk();
     },
-    [reset, muatRiwayat],
+    [reset, muatRiwayat, muatProduk],
   );
   const onGagal = useCallback(
     (pesan: string) => gagalKirim(pesan, setToast, reset),
@@ -55,7 +57,6 @@ export function useLayarMasuk() {
     setErrorKirim(peta);
     setToast(`${Object.keys(peta).length} baris perlu dicek`);
   }, []);
-
   const { simpan, menyimpan } = useSimpanMasuk({
     tanggal: form.tanggal,
     daftar: form.daftar,

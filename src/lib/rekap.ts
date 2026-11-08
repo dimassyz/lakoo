@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   api,
   type SalesRecap,
   type SalesRecapPut,
   type SalesRecapResult,
 } from "./api";
+import { buatKunciSinkron } from "./barangMasuk.form";
 import { hapusOutbox, idOutbox, simpanOutbox } from "./outbox";
 import { hariIniWib, rupiah } from "./ui";
 
@@ -61,11 +62,18 @@ export function errorBaris(
     if (mode === "quantity") {
       const isi = n ?? l.recordedQty;
       const tersedia = l.currentStock + l.recordedQty;
-      if (isi > tersedia)
+      // QA-4 M-1: qty desimal pasti ditolak server — tahan di klien supaya
+      // tidak masuk antrean sebagai "akan dicoba lagi" yang tak pernah lolos.
+      if (!Number.isInteger(isi))
+        hasil[l.productId] = "Jumlah harus bilangan bulat";
+      else if (isi > tersedia)
         hasil[l.productId] = `Stok tercatat hanya ${tersedia}`;
-    } else if (n !== undefined && l.morningStock + l.stockInOnDate - n < 0) {
-      hasil[l.productId] =
-        "Sisa lebih banyak dari catatan. Cek lagi jumlahnya atau";
+    } else if (n !== undefined) {
+      if (!Number.isInteger(n))
+        hasil[l.productId] = "Sisa stok harus bilangan bulat";
+      else if (l.morningStock + l.stockInOnDate - n < 0)
+        hasil[l.productId] =
+          "Sisa lebih banyak dari catatan. Cek lagi jumlahnya atau";
     }
   }
 
@@ -160,52 +168,70 @@ export function useSimpanRekap({
   on422,
 }: SimpanArgs) {
   const [menyimpan, setMenyimpan] = useState(false);
+  const kunci = useRef(buatKunciSinkron());
 
   const simpan = useCallback(async () => {
-    if (!data) return;
-    const lines = payloadRekap(data, mode, nilai);
-    if (lines.length === 0) return;
-
-    const body: SalesRecapPut = { date: tanggal, mode, lines };
-    const id = idOutbox();
-    await simpanOutbox({
-      id,
-      kind: "recap",
-      tanggal,
-      baris: lines.length,
-      status: "pending",
-      payload: body,
-      dibuat: new Date().toISOString(),
-    });
-
+    // Kunci sinkron sebelum await pertama — pola yang sama dengan
+    // useSimpanMasuk (QA-3): aktivasi ganda tidak boleh membuat item
+    // outbox kedua dengan Idempotency-Key berbeda.
+    if (!kunci.current.ambil()) return;
     setMenyimpan(true);
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 15000);
     try {
-      const res = await api.PUT("/sales/recap", {
-        body,
-        params: { header: { "Idempotency-Key": id } },
-        signal: ctrl.signal,
+      if (!data) return;
+      const lines = payloadRekap(data, mode, nilai);
+      if (lines.length === 0) return;
+
+      const body: SalesRecapPut = { date: tanggal, mode, lines };
+      const id = idOutbox();
+      await simpanOutbox({
+        id,
+        kind: "recap",
+        tanggal,
+        baris: lines.length,
+        status: "pending",
+        payload: body,
+        dibuat: new Date().toISOString(),
       });
-      if (res.response.ok && res.data) {
-        await hapusOutbox(id);
-        onSukses(res.data);
-      } else if (res.response.status === 422) {
-        on422(petaBaris(res.error, lines));
-      } else if (res.response.status === 401) {
-        onGagal("Sesi berakhir, silakan masuk lagi");
-      } else {
-        onGagal(PESAN_JARINGAN);
-      }
-    } catch {
-      onGagal(PESAN_JARINGAN);
+      await kirimRekap(body, id, lines, { onSukses, onGagal, on422 });
     } finally {
-      clearTimeout(timer);
+      kunci.current.lepas();
       setMenyimpan(false);
     }
   }, [data, mode, nilai, tanggal, onSukses, onGagal, on422]);
 
   return { simpan, menyimpan };
+}
+
+/** Kirim satu rekap yang sudah tersimpan di outbox; petakan hasil ke callback. */
+async function kirimRekap(
+  body: SalesRecapPut,
+  id: string,
+  lines: SalesRecapPut["lines"],
+  cb: Omit<SimpanArgs, "tanggal" | "mode" | "data" | "nilai">,
+): Promise<void> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await api.PUT("/sales/recap", {
+      body,
+      params: { header: { "Idempotency-Key": id } },
+      signal: ctrl.signal,
+    });
+    if (res.response.ok && res.data) {
+      await hapusOutbox(id);
+      cb.onSukses(res.data);
+    } else if (res.response.status === 422) {
+      cb.on422(petaBaris(res.error, lines));
+    } else if (res.response.status === 401) {
+      cb.onGagal("Sesi berakhir, silakan masuk lagi");
+    } else {
+      cb.onGagal(PESAN_JARINGAN);
+    }
+  } catch {
+    cb.onGagal(PESAN_JARINGAN);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** Terapkan isian antrean begitu itemnya terbaca dari IndexedDB. */
@@ -352,7 +378,12 @@ export function useRekapLayar(awal?: {
     ...tampilan,
     ...aksi,
     error,
-    bisa: tampilan.angka.jumlah > 0 && Object.keys(error).length === 0,
+    bisa:
+      tampilan.angka.jumlah > 0 &&
+      Object.keys(error).length === 0 &&
+      // QA-4 M-2: rekap tanggal masa depan selalu ditolak server — jangan
+      // pernah bisa disimpan/di-antrekan (mis. dari antrean lama).
+      tampilan.tanggal <= hariIniWib(),
   };
 }
 
