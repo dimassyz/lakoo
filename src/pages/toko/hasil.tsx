@@ -9,8 +9,8 @@ function Hero({ data }: { data: Results }) {
   return (
     <section className="space-y-1">
       <p className="text-muted text-[15px]">Kas pulih dari rencana</p>
-      <p className="text-4xl font-bold">{rupiah(data.totalRecovered)}</p>
-      <p className="text-[15px]">
+      <p className="angka text-4xl font-bold">{rupiah(data.totalRecovered)}</p>
+      <p className="angka text-[15px]">
         {rupiah(data.recovered30d)} dalam 30 hari terakhir
       </p>
       <p className="text-muted text-[13px]">
@@ -50,12 +50,12 @@ function BarisRencana({ plan }: { plan: Plan }) {
         </Link>
         <p className="text-muted text-[13px]">{labelRencana(plan.state)}</p>
       </div>
-      <p className="text-[15px]">
+      <p className="angka text-[15px]">
         {rupiah(plan.recovered)} dari {rupiah(plan.lockedValueAtStart ?? 0)}
       </p>
       <div className="bg-muted/30 h-2 w-full rounded-full">
         <div
-          className="bg-safe h-2 rounded-full"
+          className="bg-emerald h-2 rounded-full"
           style={{ width: `${Math.min(100, plan.recoveredPercent)}%` }}
         />
       </div>
@@ -84,7 +84,7 @@ function Kosong() {
       </p>
       <Link
         href="/toko/rencana"
-        className="rounded-card bg-safe inline-block px-4 py-3 font-semibold text-white"
+        className="rounded-card bg-navy inline-block px-4 py-3 font-semibold text-white"
       >
         Lihat rencana
       </Link>
@@ -114,7 +114,7 @@ function Isi({
         <button
           type="button"
           onClick={onMuat}
-          className="rounded-card bg-safe mt-3 px-4 py-3 font-semibold text-white"
+          className="rounded-card bg-navy mt-3 px-4 py-3 font-semibold text-white"
         >
           Coba lagi
         </button>

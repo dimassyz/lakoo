@@ -21,7 +21,7 @@ import { ChipStatus } from "@/components/ChipStatus";
 const tombolGaris =
   "rounded-card border-muted border px-3 py-2 text-[15px] font-semibold";
 const tombolUtama =
-  "rounded-card bg-safe px-3 py-2 text-[15px] font-semibold text-white";
+  "rounded-card bg-navy px-3 py-2 text-[15px] font-semibold text-white";
 
 type Jalan = (fn: () => Promise<string | null>) => void;
 

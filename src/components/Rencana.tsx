@@ -8,7 +8,7 @@ type Aksi = ReturnType<typeof useAksiRencana> & ReturnType<typeof useAksiTahap>;
 
 const tombolGaris = "rounded-card border-muted border px-4 py-3 font-semibold";
 const tombolUtama =
-  "rounded-card bg-safe px-4 py-3 font-semibold text-white disabled:opacity-40";
+  "rounded-card bg-navy px-4 py-3 font-semibold text-white disabled:opacity-40";
 
 /** Ikon outcome tahap — Lucide, emoji render beda per OS. */
 const TANDA: Record<PlanStep["outcome"], LucideIcon | null> = {
@@ -303,13 +303,13 @@ function TahapBerjalan(props: PropsTahap) {
 function KasPulih({ plan }: { plan: Plan }) {
   return (
     <div>
-      <p className="font-semibold">
+      <p className="angka font-semibold">
         {rupiah(plan.recovered)} dari {rupiah(plan.lockedValueAtStart ?? 0)}{" "}
         kembali
       </p>
       <div className="bg-muted/30 mt-1 h-2 w-full rounded-full">
         <div
-          className="bg-safe h-2 rounded-full"
+          className="bg-emerald h-2 rounded-full"
           style={{ width: `${Math.min(100, plan.recoveredPercent)}%` }}
         />
       </div>
@@ -384,7 +384,7 @@ function AktifRencana({
 function SelesaiRencana({ plan, onBaru }: { plan: Plan; onBaru: () => void }) {
   return (
     <div className="rounded-card border-muted space-y-2 border p-3">
-      <p className="text-[15px]">
+      <p className="angka text-[15px]">
         {pesanAkhir(plan)} {rupiah(plan.recovered)} kembali.
       </p>
       <button type="button" onClick={onBaru} className={tombolGaris}>

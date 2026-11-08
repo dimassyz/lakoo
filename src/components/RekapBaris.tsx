@@ -76,7 +76,7 @@ export function BarisQuantity({
     >
       <div className="flex items-baseline justify-between">
         <p className="font-semibold">{baris.name}</p>
-        <p className="text-muted text-[15px]">
+        <p className="angka text-muted text-[15px]">
           {rupiah(nilai * baris.sellPrice)}
         </p>
       </div>
@@ -200,7 +200,7 @@ export function SheetStok({
           <button
             type="button"
             onClick={() => onSimpan(Number(nilai) || 0)}
-            className="rounded-card bg-safe flex-1 px-4 py-3 font-semibold text-white"
+            className="rounded-card bg-navy flex-1 px-4 py-3 font-semibold text-white"
           >
             Simpan
           </button>

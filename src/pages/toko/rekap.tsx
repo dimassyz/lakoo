@@ -94,7 +94,7 @@ function KontrolTanggal({
 function TabMode({ mode, ubah }: { mode: Mode; ubah: (m: Mode) => void }) {
   const tab = "flex-1 rounded-card border px-3 py-2 text-[15px] font-semibold";
   const gaya = (aktif: boolean) =>
-    `${tab} ${aktif ? "border-safe text-safe" : "border-muted text-ink"}`;
+    `${tab} ${aktif ? "border-navy text-navy" : "border-muted text-ink"}`;
 
   return (
     <div className="flex gap-2" role="tablist" aria-label="Mode rekap">
@@ -187,11 +187,11 @@ function Footer({
   menyimpan: boolean;
   onSimpan: () => void;
 }) {
-  const gaya = bisa ? "bg-safe text-white" : "border border-muted text-muted";
+  const gaya = bisa ? "bg-navy text-white" : "border border-muted text-muted";
 
   return (
     <div className="rounded-card border-muted bg-surface sticky bottom-16 z-10 mt-4 border p-3 lg:bottom-0">
-      <p className="text-muted text-[15px]">
+      <p className="angka text-muted text-[15px]">
         {jumlah} barang · {total} terjual · {rupiah(estimasi)}
       </p>
       <button
@@ -296,7 +296,7 @@ function BadanRekap({
         <button
           type="button"
           onClick={() => void r.muat()}
-          className="rounded-card bg-safe mt-3 px-4 py-3 font-semibold text-white"
+          className="rounded-card bg-navy mt-3 px-4 py-3 font-semibold text-white"
         >
           Coba lagi
         </button>

@@ -36,7 +36,7 @@ export function NotaTempel({ produk, onIsi, onTutup }: Props) {
           type="button"
           onClick={() => onIsi(parseNota(teks, produk))}
           disabled={teks.trim() === ""}
-          className="rounded-card bg-safe px-3 py-2 font-semibold text-white disabled:opacity-40"
+          className="rounded-card bg-navy px-3 py-2 font-semibold text-white disabled:opacity-40"
         >
           Isi form
         </button>

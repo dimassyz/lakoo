@@ -24,7 +24,7 @@ export function WeekChart({ weekQty }: Props) {
           <div key={i} className="flex flex-1 flex-col items-center gap-1">
             <span className="text-[11px]">{n}</span>
             <div
-              className="bg-safe w-full rounded-t"
+              className="bg-emerald w-full rounded-t"
               style={{
                 height: Math.max(2, Math.round((n / puncak) * TINGGI_MAKS)),
               }}

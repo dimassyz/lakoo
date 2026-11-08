@@ -43,11 +43,11 @@ function Kartu({ plan }: { plan: Plan }) {
         ) : null}
         <div className="bg-muted/30 mt-1 h-2 w-full rounded-full">
           <div
-            className="bg-safe h-2 rounded-full"
+            className="bg-emerald h-2 rounded-full"
             style={{ width: `${Math.min(100, plan.recoveredPercent)}%` }}
           />
         </div>
-        <p className="text-muted text-[13px]">
+        <p className="angka text-muted text-[13px]">
           {rupiah(plan.recovered)} pulih · {plan.recoveredPercent}%
         </p>
       </Link>
@@ -63,7 +63,7 @@ function PilihanTab({ tab, onPilih }: { tab: Tab; onPilih: (t: Tab) => void }) {
         type="button"
         aria-pressed={tab === "berjalan"}
         onClick={() => onPilih("berjalan")}
-        className={`${dasar} ${tab === "berjalan" ? "border-safe text-safe" : "border-muted"}`}
+        className={`${dasar} ${tab === "berjalan" ? "border-navy text-navy" : "border-muted"}`}
       >
         Berjalan
       </button>
@@ -71,7 +71,7 @@ function PilihanTab({ tab, onPilih }: { tab: Tab; onPilih: (t: Tab) => void }) {
         type="button"
         aria-pressed={tab === "riwayat"}
         onClick={() => onPilih("riwayat")}
-        className={`${dasar} ${tab === "riwayat" ? "border-safe text-safe" : "border-muted"}`}
+        className={`${dasar} ${tab === "riwayat" ? "border-navy text-navy" : "border-muted"}`}
       >
         Riwayat
       </button>
@@ -103,7 +103,7 @@ function Isi({
         <button
           type="button"
           onClick={onMuat}
-          className="rounded-card bg-safe mt-3 px-4 py-3 font-semibold text-white"
+          className="rounded-card bg-navy mt-3 px-4 py-3 font-semibold text-white"
         >
           Coba lagi
         </button>

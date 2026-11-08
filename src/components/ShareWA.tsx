@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const tombolUtama = "rounded-card bg-safe px-4 py-3 font-semibold text-white";
+const tombolUtama = "rounded-card bg-navy px-4 py-3 font-semibold text-white";
 const tombolGaris = "rounded-card border-muted border px-4 py-3 font-semibold";
 
 function bisaPakaiShare(): boolean {

@@ -20,7 +20,7 @@ const MAKS_BYTE = 2 * 1024 * 1024;
 
 const kartu = "rounded-card border-muted space-y-3 border p-4";
 const tombolUtama =
-  "rounded-card bg-safe px-4 py-3 text-[16px] font-semibold text-white disabled:opacity-60";
+  "rounded-card bg-navy px-4 py-3 text-[16px] font-semibold text-white disabled:opacity-60";
 const tombolBiasa =
   "rounded-card border-muted border px-3 py-2 text-[15px] font-semibold";
 const tautanUnduh = "text-safe text-[15px] font-semibold underline";
@@ -378,7 +378,7 @@ function PilihanTab({
           type="button"
           aria-pressed={jenis === t.nilai}
           onClick={() => onPilih(t.nilai)}
-          className={`${dasar} ${jenis === t.nilai ? "border-safe text-safe" : "border-muted"}`}
+          className={`${dasar} ${jenis === t.nilai ? "border-navy text-navy" : "border-muted"}`}
         >
           {t.label}
         </button>
