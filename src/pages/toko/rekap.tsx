@@ -46,7 +46,7 @@ function useAwalAntrean(): Awal | undefined {
 }
 
 const tombolGeser =
-  "h-10 w-10 rounded-card border border-muted text-lg font-semibold disabled:text-muted";
+  "rounded-btn border-line h-11 w-11 border text-lg font-semibold disabled:text-muted";
 
 /** FSD §7 — geser per hari + pemilih ≤ hari ini dan ≥ 365 hari lalu. */
 function KontrolTanggal({
@@ -76,7 +76,7 @@ function KontrolTanggal({
         min={min}
         max={max}
         onChange={(e) => ubah(e.target.value || hariIniWib())}
-        className="rounded-card border-muted border px-3 py-2"
+        className="rounded-btn border-line h-[52px] border px-3"
       />
       <button
         type="button"
@@ -92,9 +92,10 @@ function KontrolTanggal({
 }
 
 function TabMode({ mode, ubah }: { mode: Mode; ubah: (m: Mode) => void }) {
-  const tab = "flex-1 rounded-card border px-3 py-2 text-[15px] font-semibold";
+  const tab =
+    "flex min-h-11 flex-1 items-center justify-center rounded-btn border px-3 text-[15px] font-semibold";
   const gaya = (aktif: boolean) =>
-    `${tab} ${aktif ? "border-navy text-navy" : "border-muted text-ink"}`;
+    `${tab} ${aktif ? "border-navy text-navy" : "border-line text-ink"}`;
 
   return (
     <div className="flex gap-2" role="tablist" aria-label="Mode rekap">
@@ -139,14 +140,14 @@ function DaftarRekap({
 }) {
   if (baris.length === 0) {
     return (
-      <p className="text-muted text-[15px]">
+      <p className="text-muted">
         Tidak ada barang yang cocok dengan pencarian.
       </p>
     );
   }
 
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-4">
       {baris.map((l) =>
         mode === "quantity" ? (
           <BarisQuantity
@@ -187,18 +188,18 @@ function Footer({
   menyimpan: boolean;
   onSimpan: () => void;
 }) {
-  const gaya = bisa ? "bg-navy text-white" : "border border-muted text-muted";
+  const gaya = bisa ? "bg-navy text-white" : "border border-line text-muted";
 
   return (
-    <div className="rounded-card border-muted bg-surface sticky bottom-16 z-10 mt-4 border p-3 lg:bottom-0">
-      <p className="angka text-muted text-[15px]">
+    <div className="rounded-card border-line bg-surface sticky bottom-16 z-10 mt-4 border p-4 lg:bottom-0">
+      <p className="angka text-muted">
         {jumlah} barang · {total} terjual · {rupiah(estimasi)}
       </p>
       <button
         type="button"
         disabled={!bisa || menyimpan}
         onClick={onSimpan}
-        className={`rounded-card mt-2 w-full px-4 py-3 font-semibold ${gaya}`}
+        className={`rounded-btn mt-2 flex h-[52px] w-full items-center justify-center px-4 font-semibold ${gaya}`}
       >
         {menyimpan
           ? "Menyimpan…"
@@ -246,16 +247,16 @@ function SheetPerbaiki({
 
 function KepalaRekap({ r }: { r: RekapLayar }) {
   return (
-    <>
-      <h1 className="text-2xl font-bold">Rekap Penjualan</h1>
+    <div className="space-y-4">
+      <h1 className="text-[24px] leading-[1.2] font-bold tracking-[-0.01em] md:text-[28px] lg:text-[32px]">
+        Rekap Penjualan
+      </h1>
       <KontrolTanggal tanggal={r.tanggal} ubah={r.setTanggal} />
-      <p className="text-muted text-[15px]">
+      <p className="text-muted">
         {r.tanggal === hariIniWib() ? "Hari ini" : "Tanggal lampau"}
       </p>
       {r.data?.hasRecord ? (
-        <p className="text-[15px]">
-          Sudah ada rekap untuk tanggal ini — perubahan akan mengganti
-        </p>
+        <p>Sudah ada rekap untuk tanggal ini — perubahan akan mengganti</p>
       ) : null}
       <TabMode mode={r.mode} ubah={r.setMode} />
       <input
@@ -264,17 +265,14 @@ function KepalaRekap({ r }: { r: RekapLayar }) {
         placeholder="Cari barang…"
         value={r.cari}
         onChange={(e) => r.setCari(e.target.value)}
-        className="rounded-card border-muted w-full border px-3 py-2"
+        className="rounded-btn border-line h-[52px] w-full border px-3"
       />
       {r.toast ? (
-        <p
-          role="status"
-          className="rounded-card border-muted border p-2 text-[15px]"
-        >
+        <p role="status" className="rounded-card border-line border p-3">
           {r.toast}
         </p>
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -285,18 +283,18 @@ function BadanRekap({
   r: RekapLayar;
   onPerbaiki: (baris: Baris) => void;
 }) {
-  if (r.memuat) return <p className="text-muted text-[15px]">Memuat…</p>;
+  if (r.memuat) return <p className="text-muted">Memuat…</p>;
 
   if (r.gagal) {
     return (
-      <div className="rounded-card border-muted border p-4">
+      <div className="rounded-card border-line border p-4">
         <p className="font-semibold">
           Gagal memuat. Periksa sinyal lalu coba lagi.
         </p>
         <button
           type="button"
           onClick={() => void r.muat()}
-          className="rounded-card bg-navy mt-3 px-4 py-3 font-semibold text-white"
+          className="rounded-btn bg-navy mt-3 inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white"
         >
           Coba lagi
         </button>
@@ -328,7 +326,7 @@ export default function RekapPage() {
         <title>Rekap Penjualan — Lakoo</title>
       </Head>
       <AppShell>
-        <div className="space-y-3">
+        <div className="space-y-6">
           <KepalaRekap r={r} />
           <BadanRekap r={r} onPerbaiki={setSheet} />
           <Footer

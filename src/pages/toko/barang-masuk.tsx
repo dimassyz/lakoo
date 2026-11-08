@@ -33,18 +33,24 @@ function usePulihkanAntrean(l: LayarMasuk) {
 }
 
 const tombolUtama =
-  "rounded-card bg-navy px-4 py-3 font-semibold text-white disabled:opacity-40";
-const tombolGaris = "rounded-card border-muted border px-4 py-3 font-semibold";
+  "rounded-btn bg-navy inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white disabled:opacity-40";
+const tombolGaris =
+  "rounded-btn border-line inline-flex h-[52px] items-center justify-center border px-4 font-semibold";
 
 /** FSD §8 — tanggal nota: bawaan hari ini, boleh mundur sampai 365 hari. */
 function KepalaNota({ l, onTempel }: { l: LayarMasuk; onTempel: () => void }) {
   const { min, max } = batasTanggal();
 
   return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-bold">Barang Masuk</h1>
+    <div className="space-y-4">
+      <h1 className="text-[24px] leading-[1.2] font-bold tracking-[-0.01em] md:text-[28px] lg:text-[32px]">
+        Barang Masuk
+      </h1>
       <div>
-        <label htmlFor="tanggal-nota" className="text-muted block text-[13px]">
+        <label
+          htmlFor="tanggal-nota"
+          className="text-muted block text-[13px] font-semibold"
+        >
           Tanggal nota
         </label>
         <input
@@ -54,27 +60,22 @@ function KepalaNota({ l, onTempel }: { l: LayarMasuk; onTempel: () => void }) {
           min={min}
           max={max}
           onChange={(e) => l.form.setTanggal(e.target.value)}
-          className="rounded-card border-muted border px-3 py-2"
+          className="rounded-btn border-line h-[52px] border px-3"
         />
       </div>
       <button type="button" onClick={onTempel} className={tombolGaris}>
         Tempel dari nota
       </button>
       {l.toast ? (
-        <p
-          role="status"
-          className="rounded-card border-muted border p-2 text-[15px]"
-        >
+        <p role="status" className="rounded-card border-line border p-3">
           {l.toast}
         </p>
       ) : null}
       {l.produk.gagal ? (
-        <p className="text-[15px]">
-          Gagal memuat daftar barang. Saran nama tidak tersedia.
-        </p>
+        <p>Gagal memuat daftar barang. Saran nama tidak tersedia.</p>
       ) : null}
       {!l.produk.memuat && l.produk.items.length === 0 ? (
-        <p className="text-[15px]">
+        <p>
           Belum ada barang.{" "}
           <Link href="/toko/barang" className="font-semibold underline">
             Tambah barang
@@ -88,8 +89,8 @@ function KepalaNota({ l, onTempel }: { l: LayarMasuk; onTempel: () => void }) {
 
 function DaftarNota({ l }: { l: LayarMasuk }) {
   return (
-    <div className="space-y-2">
-      <ul className="space-y-2">
+    <div className="space-y-4">
+      <ul className="space-y-4">
         {l.form.daftar.map((b) => (
           <BarisNota
             key={b.kunci}
@@ -113,12 +114,12 @@ function FooterNota({ l }: { l: LayarMasuk }) {
   const kurang = Object.keys(l.error).length;
 
   return (
-    <div className="rounded-card border-muted bg-surface sticky bottom-16 z-10 border p-3 lg:bottom-0">
-      <p className="text-muted text-[15px]">
+    <div className="rounded-card border-line bg-surface sticky bottom-16 z-10 border p-4 md:top-6 md:bottom-auto">
+      <p className="angka text-muted">
         {l.angka.baris} baris · {rupiah(l.angka.total)}
       </p>
       {kurang > 0 ? (
-        <p role="alert" className="text-danger text-[15px] font-semibold">
+        <p role="alert" className="text-danger font-semibold">
           {kurang} baris perlu dicek
         </p>
       ) : null}
@@ -136,19 +137,19 @@ function FooterNota({ l }: { l: LayarMasuk }) {
 
 function IsiRiwayat({ l }: { l: LayarMasuk }) {
   if (l.riwayat.memuat) {
-    return <p className="text-muted text-[15px]">Memuat…</p>;
+    return <p className="text-muted">Memuat…</p>;
   }
 
   if (l.riwayat.gagal) {
     return (
-      <div className="rounded-card border-muted border p-4">
+      <div className="rounded-card border-line border p-4">
         <p className="font-semibold">
           Gagal memuat. Periksa sinyal lalu coba lagi.
         </p>
         <button
           type="button"
           onClick={() => void l.riwayat.muat()}
-          className="rounded-card bg-navy mt-3 px-4 py-3 font-semibold text-white"
+          className="rounded-btn bg-navy mt-3 inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white"
         >
           Coba lagi
         </button>
@@ -158,7 +159,7 @@ function IsiRiwayat({ l }: { l: LayarMasuk }) {
 
   if (l.riwayat.items.length === 0) {
     return (
-      <p className="text-muted text-[15px]">
+      <p className="text-muted">
         Belum ada barang masuk dalam 30 hari terakhir.
       </p>
     );
@@ -187,8 +188,8 @@ function IsiRiwayat({ l }: { l: LayarMasuk }) {
 
 function RiwayatMasuk({ l }: { l: LayarMasuk }) {
   return (
-    <section className="space-y-2">
-      <h2 className="text-lg font-semibold">Riwayat 30 hari</h2>
+    <section className="space-y-4">
+      <h2 className="text-[19px] font-semibold">Riwayat 30 hari</h2>
       <IsiRiwayat l={l} />
     </section>
   );
@@ -205,20 +206,24 @@ export default function BarangMasukPage() {
         <title>Barang Masuk — Lakoo</title>
       </Head>
       <AppShell>
-        <div className="space-y-4">
-          <KepalaNota l={l} onTempel={() => setTempel(true)} />
-          {tempel ? (
-            <NotaTempel
-              produk={l.produk.items}
-              onIsi={(daftar) => {
-                l.form.isi(daftar);
-                setTempel(false);
-              }}
-              onTutup={() => setTempel(false)}
-            />
-          ) : null}
-          <DaftarNota l={l} />
-          <FooterNota l={l} />
+        <div className="space-y-6">
+          <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="space-y-4">
+              <KepalaNota l={l} onTempel={() => setTempel(true)} />
+              {tempel ? (
+                <NotaTempel
+                  produk={l.produk.items}
+                  onIsi={(daftar) => {
+                    l.form.isi(daftar);
+                    setTempel(false);
+                  }}
+                  onTutup={() => setTempel(false)}
+                />
+              ) : null}
+              <DaftarNota l={l} />
+            </div>
+            <FooterNota l={l} />
+          </div>
           <RiwayatMasuk l={l} />
         </div>
       </AppShell>

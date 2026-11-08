@@ -1,6 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
+import { PenLine } from "lucide-react";
 import { AppShell } from "@/components/NavBar";
 import type { Plan } from "@/lib/api";
 import {
@@ -21,13 +22,13 @@ function Kartu({ plan }: { plan: Plan }) {
     <li>
       <Link
         href={`/toko/barang/${plan.productId}#rencana`}
-        className="rounded-card border-muted block space-y-1 border p-3"
+        className="rounded-card border-line block h-full space-y-2 border bg-white p-4"
       >
         <div className="flex items-baseline justify-between gap-2">
           <p className="font-semibold">{plan.productName}</p>
           <p className="text-muted text-[13px]">{labelRencana(plan.state)}</p>
         </div>
-        <p className="text-[15px]">
+        <p>
           {plan.currentStep ?? 0}/3{tahap ? ` · ${tahap.title}` : ""}
         </p>
         {tahap?.dueOn ? (
@@ -55,15 +56,38 @@ function Kartu({ plan }: { plan: Plan }) {
   );
 }
 
+/** DESIGN-V3 §5 — band Playbook AI di atas daftar rencana berjalan. */
+function BandAI({ jumlah }: { jumlah: number }) {
+  return (
+    <div className="rounded-card bg-navy/5 flex items-start gap-3 p-4">
+      <PenLine
+        size={20}
+        strokeWidth={1.75}
+        aria-hidden="true"
+        className="mt-0.5 shrink-0"
+      />
+      <div>
+        <p className="font-semibold">
+          Playbook AI · disusun dari pola penjualan tokomu
+        </p>
+        {jumlah > 0 ? (
+          <p className="text-muted text-[13px]">{jumlah} rencana berjalan</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function PilihanTab({ tab, onPilih }: { tab: Tab; onPilih: (t: Tab) => void }) {
-  const dasar = "rounded-card border px-3 py-2 text-[15px] font-semibold";
+  const dasar =
+    "rounded-btn inline-flex min-h-11 items-center border px-4 text-[15px] font-semibold";
   return (
     <div className="flex gap-2">
       <button
         type="button"
         aria-pressed={tab === "berjalan"}
         onClick={() => onPilih("berjalan")}
-        className={`${dasar} ${tab === "berjalan" ? "border-navy text-navy" : "border-muted"}`}
+        className={`${dasar} ${tab === "berjalan" ? "border-navy text-navy" : "border-line"}`}
       >
         Berjalan
       </button>
@@ -71,7 +95,7 @@ function PilihanTab({ tab, onPilih }: { tab: Tab; onPilih: (t: Tab) => void }) {
         type="button"
         aria-pressed={tab === "riwayat"}
         onClick={() => onPilih("riwayat")}
-        className={`${dasar} ${tab === "riwayat" ? "border-navy text-navy" : "border-muted"}`}
+        className={`${dasar} ${tab === "riwayat" ? "border-navy text-navy" : "border-line"}`}
       >
         Riwayat
       </button>
@@ -92,18 +116,18 @@ function Isi({
   kosong: string;
   onMuat: () => void;
 }) {
-  if (memuat) return <p className="text-muted text-[15px]">Memuat…</p>;
+  if (memuat) return <p className="text-muted">Memuat…</p>;
 
   if (gagal) {
     return (
-      <div className="rounded-card border-muted border p-4">
+      <div className="rounded-card border-line border p-4">
         <p className="font-semibold">
           Gagal memuat. Periksa sinyal lalu coba lagi.
         </p>
         <button
           type="button"
           onClick={onMuat}
-          className="rounded-card bg-navy mt-3 px-4 py-3 font-semibold text-white"
+          className="rounded-btn bg-navy mt-3 inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white"
         >
           Coba lagi
         </button>
@@ -111,10 +135,10 @@ function Isi({
     );
   }
 
-  if (items.length === 0) return <p className="text-[15px]">{kosong}</p>;
+  if (items.length === 0) return <p>{kosong}</p>;
 
   return (
-    <ul className="space-y-2">
+    <ul className="mx-auto max-w-[640px] space-y-4 lg:grid lg:max-w-none lg:grid-cols-2 lg:gap-4 lg:space-y-0">
       {items.map((plan) => (
         <Kartu key={plan.id} plan={plan} />
       ))}
@@ -133,8 +157,11 @@ export default function RencanaPage() {
         <title>Rencana — Lakoo</title>
       </Head>
       <AppShell>
-        <div className="space-y-3">
-          <h1 className="text-2xl font-bold">Rencana</h1>
+        <div className="space-y-6">
+          <h1 className="text-[24px] leading-[1.2] font-bold tracking-[-0.01em] md:text-[28px] lg:text-[32px]">
+            Rencana
+          </h1>
+          {tab === "berjalan" ? <BandAI jumlah={daftar.items.length} /> : null}
           <PilihanTab tab={tab} onPilih={setTab} />
           <Isi
             items={daftar.items}

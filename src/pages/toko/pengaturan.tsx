@@ -15,14 +15,13 @@ import {
 } from "@/lib/pengaturan";
 import { useAntrean, type Antrean } from "@/lib/worker";
 
-const kartu = "rounded-card border-muted space-y-3 border p-4";
+const kartu = "rounded-card border-line space-y-3 border bg-white p-4";
 const label = "block text-[15px] font-semibold";
-const input =
-  "rounded-card border-muted mt-1 w-full border px-3 py-2 text-[17px]";
+const input = "rounded-btn border-line mt-1 h-[52px] w-full border px-3";
 const tombolSimpan =
-  "rounded-card bg-navy px-4 py-3 text-[16px] font-semibold text-white disabled:opacity-60";
+  "rounded-btn bg-navy inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white disabled:opacity-60";
 const tombolBiasa =
-  "rounded-card border-muted border px-3 py-2 text-[15px] font-semibold";
+  "rounded-btn border-line inline-flex min-h-11 items-center border px-4 text-[15px] font-semibold";
 
 /** FSD §15 — satu PATCH untuk profil + aturan + AI (semua field opsional). */
 function bodySimpan(isi: Isian): StorePatch {
@@ -198,7 +197,7 @@ function Profil({
 }) {
   return (
     <section className={kartu}>
-      <h2 className="text-[17px] font-semibold">Profil toko</h2>
+      <h2 className="text-[19px] font-semibold">Profil toko</h2>
       <IsianTeks
         id="nama"
         teks="Nama toko"
@@ -235,7 +234,7 @@ function Aturan({
 }) {
   return (
     <section className={kartu}>
-      <h2 className="text-[17px] font-semibold">Aturan status</h2>
+      <h2 className="text-[19px] font-semibold">Aturan status</h2>
       <IsianAngka
         id="sehat"
         teks={`Sehat bila laku dalam ${isi.sehat || "…"} hari`}
@@ -274,7 +273,7 @@ function SaranAI({
 }) {
   return (
     <section className={kartu}>
-      <h2 className="text-[17px] font-semibold">Saran AI</h2>
+      <h2 className="text-[19px] font-semibold">Saran AI</h2>
       <label className="flex items-center gap-2 text-[15px]">
         <input
           type="checkbox"
@@ -341,7 +340,7 @@ function useForm(me: Me, onMe: (store: Store) => void) {
 
 function Aksi({ form }: { form: ReturnType<typeof useForm> }) {
   return (
-    <>
+    <div className="space-y-3 lg:col-span-2">
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -361,22 +360,20 @@ function Aksi({ form }: { form: ReturnType<typeof useForm> }) {
         </button>
       </div>
       {form.pesan ? (
-        <p role="status" className="text-safe text-[15px] font-semibold">
+        <p role="status" className="text-emerald-teks font-semibold">
           {form.pesan}
         </p>
       ) : null}
       <Galat pesan={form.galat.umum} />
-    </>
+    </div>
   );
 }
 
 function Akun({ me, antrean }: { me: Me; antrean: Antrean }) {
   return (
-    <section className={kartu}>
-      <h2 className="text-[17px] font-semibold">Akun</h2>
-      <p className="text-[15px]">
-        {me.user.isDemo ? "Akun demo" : (me.user.email ?? "—")}
-      </p>
+    <section className={`${kartu} lg:col-start-2 lg:row-start-2`}>
+      <h2 className="text-[19px] font-semibold">Akun</h2>
+      <p>{me.user.isDemo ? "Akun demo" : (me.user.email ?? "—")}</p>
       <Keluar antrean={antrean} />
     </section>
   );
@@ -393,7 +390,7 @@ function Isi({
 }) {
   const form = useForm(me, onMe);
   return (
-    <div className="space-y-3">
+    <div className="grid items-start gap-6 lg:grid-cols-2">
       <Profil isi={form.isi} galat={form.galat} onUbah={form.ubah} />
       <Aturan isi={form.isi} galat={form.galat} onUbah={form.ubah} />
       <SaranAI ai={form.isi.ai} onUbah={(v) => form.ubah({ ai: v })} />
@@ -429,11 +426,13 @@ export default function PengaturanPage() {
         <title>Pengaturan — Lakoo</title>
       </Head>
       <AppShell>
-        <div className="space-y-3">
-          <h1 className="text-2xl font-bold">Pengaturan</h1>
-          {memuat ? <p className="text-muted text-[15px]">Memuat…</p> : null}
+        <div className="space-y-6">
+          <h1 className="text-[24px] leading-[1.2] font-bold tracking-[-0.01em] md:text-[28px] lg:text-[32px]">
+            Pengaturan
+          </h1>
+          {memuat ? <p className="text-muted">Memuat…</p> : null}
           {!memuat && gagal ? (
-            <div className="rounded-card border-muted border p-4">
+            <div className="rounded-card border-line border p-4">
               <p className="font-semibold">
                 Gagal memuat pengaturan. Periksa sinyal lalu coba lagi.
               </p>

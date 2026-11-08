@@ -15,14 +15,14 @@ export function WeekChart({ weekQty }: Props) {
   const puncak = Math.max(1, ...nilai);
 
   return (
-    <section className="rounded-card border-muted border p-3">
+    <section className="rounded-card border-line border bg-white p-4">
       <h2 className="text-muted text-[13px] font-semibold">
         Terjual per 7 hari · kiri terlama
       </h2>
       <div className="mt-2 flex items-end gap-1" aria-hidden="true">
         {nilai.map((n, i) => (
           <div key={i} className="flex flex-1 flex-col items-center gap-1">
-            <span className="text-[11px]">{n}</span>
+            <span className="angka text-[13px]">{n}</span>
             <div
               className="bg-emerald w-full rounded-t"
               style={{

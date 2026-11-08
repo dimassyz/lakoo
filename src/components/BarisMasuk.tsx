@@ -8,11 +8,11 @@ import {
 } from "@/lib/barangMasuk";
 import { rupiah, tanggalPendek } from "@/lib/ui";
 
-const input = "rounded-card border-muted w-full border px-3 py-2";
-const label = "text-muted block text-[13px]";
+const input = "rounded-btn border-line h-[52px] w-full border px-3";
+const label = "text-muted block text-[13px] font-semibold";
 const teksError = "text-danger text-[13px] font-semibold";
 const tombolKecil =
-  "rounded-card border-muted border px-3 py-1.5 text-[13px] font-semibold";
+  "rounded-btn border-line inline-flex min-h-11 items-center border px-3 text-[13px] font-semibold";
 
 type PropsUbah = { baris: Baris; onUbah: (b: Baris) => void };
 
@@ -56,7 +56,7 @@ function AngkaBaris({ baris, onUbah }: PropsUbah) {
   const id = `produk-${baris.kunci}`;
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-2 gap-4">
       <div>
         <label htmlFor={`${id}-qty`} className={label}>
           Jumlah
@@ -126,7 +126,7 @@ export function BarisNota({
   onBuang,
 }: PropsBaris) {
   return (
-    <li className="rounded-card border-muted space-y-2 border p-3">
+    <li className="rounded-card border-line space-y-4 border p-4">
       <div className="flex items-start gap-2">
         <div className="flex-1">
           <PilihBarang baris={baris} produk={produk} onUbah={onUbah} />
@@ -136,7 +136,7 @@ export function BarisNota({
             type="button"
             aria-label={`Hapus baris ${baris.nama.trim() || "ini"}`}
             onClick={onBuang}
-            className="rounded-card border-muted mt-6 h-10 w-10 border text-lg"
+            className="rounded-btn border-line mt-6 h-11 w-11 border text-lg"
           >
             ×
           </button>
@@ -170,7 +170,7 @@ type PropsKoreksiIsi = {
 
 function AngkaKoreksi({ item, koreksi, setKoreksi }: PropsKoreksiIsi) {
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-2 gap-4">
       <div>
         <label htmlFor={`${item.id}-kq`} className={label}>
           Jumlah
@@ -235,7 +235,7 @@ function TombolKoreksi({
       <button
         type="button"
         onClick={onSimpan}
-        className="rounded-card bg-navy px-3 py-2 text-[13px] font-semibold text-white"
+        className="rounded-btn bg-navy inline-flex min-h-11 items-center px-4 text-[13px] font-semibold text-white"
       >
         Simpan koreksi
       </button>
@@ -256,7 +256,7 @@ function FormKoreksi({
   onBatal,
 }: PropsKoreksi) {
   return (
-    <li className="rounded-card border-muted space-y-2 border p-3">
+    <li className="rounded-card border-line space-y-4 border p-4">
       <p className="font-semibold">{item.productName}</p>
       <AngkaKoreksi item={item} koreksi={koreksi} setKoreksi={setKoreksi} />
       <TanggalKoreksi item={item} koreksi={koreksi} setKoreksi={setKoreksi} />
@@ -284,7 +284,7 @@ function AksiRiwayat({ konfirmasi, onKonfirmasi, onUbah, onHapus }: PropsAksi) {
         <button
           type="button"
           onClick={onHapus}
-          className="rounded-card border-ink border px-3 py-1.5 text-[13px] font-semibold"
+          className="rounded-btn border-ink inline-flex min-h-11 items-center border px-3 text-[13px] font-semibold"
         >
           Ya, hapus
         </button>
@@ -357,7 +357,7 @@ export function BarisRiwayat({ item, onUbah, onHapus }: PropsRiwayat) {
   }
 
   return (
-    <li className="rounded-card border-muted flex items-center gap-2 border p-3">
+    <li className="rounded-card border-line flex items-center gap-2 border p-4">
       <div className="flex-1">
         <p className="font-semibold">{item.productName}</p>
         <p className="angka text-muted text-[13px]">

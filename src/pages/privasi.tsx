@@ -51,39 +51,43 @@ export default function Privasi({
     <>
       <MetaPrivasi origin={origin} />
 
-      <main className="mx-auto max-w-2xl space-y-6 px-4 py-8">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold">Privasi</h1>
-          <p className="text-[17px]">
-            Ringkas dan tanpa bahasa hukum berbelit: ini yang kami simpan, ini
-            yang tidak.
-          </p>
-        </div>
+      <main className="mx-auto max-w-[680px] px-5 py-8 md:px-8">
+        <div className="rounded-card border-line space-y-6 border bg-white p-4 md:p-6">
+          <div className="space-y-2">
+            <h1 className="text-[24px] leading-[1.2] font-bold tracking-[-0.01em] md:text-[28px] lg:text-[32px]">
+              Privasi
+            </h1>
+            <p className="leading-[1.7]">
+              Ringkas dan tanpa bahasa hukum berbelit: ini yang kami simpan, ini
+              yang tidak.
+            </p>
+          </div>
 
-        {BAGIAN.map((b) => (
-          <section key={b.judul} className="space-y-1">
-            <h2 className="text-[17px] font-semibold">{b.judul}</h2>
-            <p className="text-[17px]">{b.isi}</p>
+          {BAGIAN.map((b) => (
+            <section key={b.judul} className="space-y-1">
+              <h2 className="text-[19px] font-semibold">{b.judul}</h2>
+              <p className="leading-[1.7]">{b.isi}</p>
+            </section>
+          ))}
+
+          <section className="space-y-1">
+            <h2 className="text-[19px] font-semibold">Menghapus akun</h2>
+            <p className="leading-[1.7]">
+              Kirim permintaan hapus akun ke{" "}
+              <span className="font-semibold">
+                {kontak || "(alamat kontak belum diatur di lingkungan ini)"}
+              </span>
+              . Kami menghapus akun beserta data tokonya, dan Anda akan mendapat
+              balasan saat selesai.
+            </p>
           </section>
-        ))}
 
-        <section className="space-y-1">
-          <h2 className="text-[17px] font-semibold">Menghapus akun</h2>
-          <p className="text-[17px]">
-            Kirim permintaan hapus akun ke{" "}
-            <span className="font-semibold">
-              {kontak || "(alamat kontak belum diatur di lingkungan ini)"}
-            </span>
-            . Kami menghapus akun beserta data tokonya, dan Anda akan mendapat
-            balasan saat selesai.
-          </p>
-        </section>
-
-        <footer className="border-muted border-t pt-4">
-          <Link href="/" className="text-[15px] font-semibold underline">
-            Kembali ke beranda
-          </Link>
-        </footer>
+          <footer className="border-line border-t pt-4">
+            <Link href="/" className="font-semibold underline">
+              Kembali ke beranda
+            </Link>
+          </footer>
+        </div>
       </main>
     </>
   );

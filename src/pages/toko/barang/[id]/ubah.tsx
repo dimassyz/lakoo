@@ -10,7 +10,9 @@ import { isianDari } from "@/lib/formBarang";
 function Kerangka({ children }: { children: ReactNode }) {
   return (
     <AppShell>
-      <div className="space-y-3">{children}</div>
+      <div className="mx-auto w-full max-w-[560px] space-y-6 lg:max-w-[880px]">
+        {children}
+      </div>
     </AppShell>
   );
 }
@@ -24,7 +26,7 @@ export default function UbahBarangPage() {
   if (produk.memuat && !produk.data) {
     return (
       <Kerangka>
-        <p className="text-muted text-[15px]">Memuat…</p>
+        <p className="text-muted">Memuat…</p>
       </Kerangka>
     );
   }
@@ -32,11 +34,11 @@ export default function UbahBarangPage() {
   if (!produk.data) {
     return (
       <Kerangka>
-        <div className="rounded-card border-muted border p-4">
+        <div className="rounded-card border-line border p-4">
           <p className="font-semibold">Barang tidak ditemukan.</p>
           <Link
             href="/toko/barang"
-            className="rounded-card bg-navy mt-3 inline-block px-4 py-3 font-semibold text-white"
+            className="rounded-btn bg-navy mt-3 inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white"
           >
             Kembali ke daftar
           </Link>
@@ -53,14 +55,18 @@ export default function UbahBarangPage() {
         <title>Ubah {p.name} — Lakoo</title>
       </Head>
       <Kerangka>
-        <h1 className="text-2xl font-bold">Ubah barang</h1>
-        <p className="text-muted text-[15px]">{p.name}</p>
-        <FormBarang
-          mode="ubah"
-          id={p.id}
-          awal={isianDari(p)}
-          onSelesai={() => void router.push(`/toko/barang/${p.id}`)}
-        />
+        <h1 className="text-[24px] leading-[1.2] font-bold tracking-[-0.01em] md:text-[28px] lg:text-[32px]">
+          Ubah barang
+        </h1>
+        <p className="text-muted -mt-4">{p.name}</p>
+        <div className="bg-card rounded-card border-line shadow-card border p-4 md:p-6">
+          <FormBarang
+            mode="ubah"
+            id={p.id}
+            awal={isianDari(p)}
+            onSelesai={() => void router.push(`/toko/barang/${p.id}`)}
+          />
+        </div>
       </Kerangka>
     </>
   );

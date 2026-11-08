@@ -5,9 +5,8 @@ import { rupiah } from "@/lib/ui";
 
 type Baris = SalesRecap["lines"][number];
 
-const tombol =
-  "h-10 w-10 rounded-card border border-muted text-lg font-semibold";
-const angka = "rounded-card border border-muted px-2 py-2 text-center text-lg";
+const tombol = "rounded-btn border-line h-11 w-11 border text-lg font-semibold";
+const angka = "rounded-btn border-line h-11 border px-2 text-center text-lg";
 
 function Stepper({
   nama,
@@ -72,18 +71,18 @@ export function BarisQuantity({
 
   return (
     <li
-      className={`rounded-card border p-3 ${error ? "border-danger" : "border-muted"}`}
+      className={`rounded-card border bg-white p-4 ${error ? "border-danger" : "border-line"}`}
     >
       <div className="flex items-baseline justify-between">
         <p className="font-semibold">{baris.name}</p>
-        <p className="angka text-muted text-[15px]">
+        <p className="angka text-muted text-[14px]">
           {rupiah(nilai * baris.sellPrice)}
         </p>
       </div>
-      <p className="text-muted text-[15px]">stok {baris.currentStock}</p>
+      <p className="text-muted text-[14px]">stok {baris.currentStock}</p>
       <Stepper nama={baris.name} nilai={nilai} maks={maks} onUbah={onUbah} />
       {error ? (
-        <p className="text-danger mt-2 text-[15px]">
+        <p className="text-danger mt-2">
           {error}{" "}
           <button type="button" onClick={onPerbaiki} className="underline">
             Perbaiki stok
@@ -115,14 +114,14 @@ export function BarisOpname({
 
   return (
     <li
-      className={`rounded-card border p-3 ${error ? "border-danger" : "border-muted"}`}
+      className={`rounded-card border bg-white p-4 ${error ? "border-danger" : "border-line"}`}
     >
       <p className="font-semibold">{baris.name}</p>
-      <p className="text-muted text-[15px]">
+      <p className="text-muted text-[14px]">
         pagi {baris.morningStock}
         {baris.stockInOnDate > 0 ? ` · +masuk ${baris.stockInOnDate}` : ""}
       </p>
-      <label className="mt-2 flex items-center gap-2 text-[15px]">
+      <label className="mt-2 flex items-center gap-2">
         <span className="text-muted">sisa sekarang</span>
         <input
           type="number"
@@ -136,11 +135,9 @@ export function BarisOpname({
           className={`${angka} w-20`}
         />
       </label>
-      {sold === null ? null : (
-        <p className="mt-1 text-[15px]">terjual {sold}</p>
-      )}
+      {sold === null ? null : <p className="mt-1">terjual {sold}</p>}
       {error ? (
-        <p className="text-danger mt-1 text-[15px]">
+        <p className="text-danger mt-1">
           {error}{" "}
           <Link
             href={`/toko/barang-masuk?date=${tanggal}`}
@@ -174,12 +171,12 @@ export function SheetStok({
         role="dialog"
         aria-modal="true"
         aria-labelledby="sheet-stok"
-        className="rounded-card border-muted bg-surface w-full border p-4"
+        className="rounded-card border-line bg-surface w-full border p-4"
       >
-        <h2 id="sheet-stok" className="font-semibold">
+        <h2 id="sheet-stok" className="text-[19px] font-semibold">
           Stok sebenarnya sekarang?
         </h2>
-        <p className="text-muted text-[15px]">{nama}</p>
+        <p className="text-muted text-[14px]">{nama}</p>
         <input
           type="number"
           inputMode="numeric"
@@ -193,14 +190,14 @@ export function SheetStok({
           <button
             type="button"
             onClick={onBatal}
-            className="rounded-card border-muted flex-1 border px-4 py-3 font-semibold"
+            className="rounded-btn border-line flex h-[52px] flex-1 items-center justify-center border px-4 font-semibold"
           >
             Batal
           </button>
           <button
             type="button"
             onClick={() => onSimpan(Number(nilai) || 0)}
-            className="rounded-card bg-navy flex-1 px-4 py-3 font-semibold text-white"
+            className="rounded-btn bg-navy flex h-[52px] flex-1 items-center justify-center px-4 font-semibold text-white"
           >
             Simpan
           </button>
