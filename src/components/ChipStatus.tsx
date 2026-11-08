@@ -27,7 +27,7 @@ export const kelasTeksStatus: Record<ProductStatus, string> = {
 export function ChipStatus({ status }: { status: ProductStatus }) {
   return (
     <span
-      className={`rounded-pill inline-block px-2 py-1 text-[13px] font-semibold whitespace-nowrap ${kelasChip[status]}`}
+      className={`rounded-pill inline-block px-2.5 py-1 text-xs font-bold whitespace-nowrap ${kelasChip[status]}`}
     >
       {labelStatus(status)}
     </span>
