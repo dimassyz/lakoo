@@ -5,8 +5,10 @@ import { rupiah } from "@/lib/ui";
 
 type Baris = SalesRecap["lines"][number];
 
-const tombol = "rounded-btn border-line h-11 w-11 border text-lg font-semibold";
-const angka = "rounded-btn border-line h-11 border px-2 text-center text-lg";
+const tombol =
+  "rounded-btn border-line h-11 w-11 cursor-pointer border text-lg font-semibold transition duration-150 hover:border-slate hover:bg-[#f3efe7] hover:text-navy focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
+const angka =
+  "rounded-btn border-line h-11 border px-2 text-center text-lg transition duration-150 focus:border-marigold-kuat focus:ring-[3px] focus:ring-marigold/25 focus:outline-none";
 
 function Stepper({
   nama,
@@ -84,7 +86,11 @@ export function BarisQuantity({
       {error ? (
         <p className="text-danger mt-2">
           {error}{" "}
-          <button type="button" onClick={onPerbaiki} className="underline">
+          <button
+            type="button"
+            onClick={onPerbaiki}
+            className="hover:text-marigold-kuat cursor-pointer underline transition duration-150 hover:decoration-2"
+          >
             Perbaiki stok
           </button>
         </p>
@@ -141,7 +147,7 @@ export function BarisOpname({
           {error}{" "}
           <Link
             href={`/toko/barang-masuk?date=${tanggal}`}
-            className="underline"
+            className="hover:text-marigold-kuat underline transition duration-150 hover:decoration-2"
           >
             catat barang masuk
           </Link>
@@ -190,14 +196,14 @@ export function SheetStok({
           <button
             type="button"
             onClick={onBatal}
-            className="rounded-btn border-line flex h-[52px] flex-1 items-center justify-center border px-4 font-semibold"
+            className="rounded-btn border-line hover:bg-navy focus-visible:outline-navy flex h-[52px] flex-1 cursor-pointer items-center justify-center border px-4 font-semibold transition duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
           >
             Batal
           </button>
           <button
             type="button"
             onClick={() => onSimpan(Number(nilai) || 0)}
-            className="rounded-btn bg-navy flex h-[52px] flex-1 items-center justify-center px-4 font-semibold text-white"
+            className="rounded-btn bg-marigold text-navy focus-visible:outline-navy flex h-[52px] flex-1 cursor-pointer items-center justify-center px-4 font-semibold transition duration-150 hover:bg-[#d9932b] hover:shadow-[0_2px_8px_rgb(10_37_64/0.18)] focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
           >
             Simpan
           </button>

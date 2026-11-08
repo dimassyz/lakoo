@@ -38,7 +38,7 @@ export default function UbahBarangPage() {
           <p className="font-semibold">Barang tidak ditemukan.</p>
           <Link
             href="/toko/barang"
-            className="rounded-btn bg-navy mt-3 inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white"
+            className="rounded-btn bg-marigold text-navy focus-visible:outline-navy mt-3 inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold transition duration-150 hover:bg-[#d9932b] hover:shadow-[0_2px_8px_rgb(10_37_64/0.18)] focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
           >
             Kembali ke daftar
           </Link>

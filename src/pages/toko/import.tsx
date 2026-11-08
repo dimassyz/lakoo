@@ -20,10 +20,11 @@ const MAKS_BYTE = 2 * 1024 * 1024;
 
 const kartu = "rounded-card border-line space-y-3 border bg-white p-4";
 const tombolUtama =
-  "rounded-btn bg-navy inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white disabled:opacity-60";
+  "rounded-btn bg-marigold text-navy inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold transition duration-150 focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 enabled:hover:bg-[#d9932b] enabled:hover:shadow-[0_2px_8px_rgb(10_37_64/0.18)] enabled:active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55";
 const tombolBiasa =
-  "rounded-btn border-line inline-flex min-h-11 items-center border px-4 text-[15px] font-semibold";
-const tautanUnduh = "text-[15px] font-semibold text-emerald-teks underline";
+  "rounded-btn border-line inline-flex min-h-11 cursor-pointer items-center border px-4 text-[15px] font-semibold transition duration-150 hover:border-slate hover:bg-white hover:text-navy focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
+const tautanUnduh =
+  "text-emerald-teks cursor-pointer text-[15px] font-semibold underline transition duration-150 hover:text-marigold-kuat hover:decoration-2";
 
 const TEMPLATE: Record<Jenis, { label: string; href: string }[]> = {
   barang: [
@@ -225,13 +226,16 @@ function RadioDuplikat({
         Bila nama barang sudah ada
       </legend>
       {pilihan.map((p) => (
-        <label key={p.nilai} className="flex items-center gap-2 text-[15px]">
+        <label
+          key={p.nilai}
+          className="hover:text-navy flex min-h-11 cursor-pointer items-center gap-2 text-[15px] transition duration-150"
+        >
           <input
             type="radio"
             name="duplikat"
             checked={nilai === p.nilai}
             onChange={() => onUbah(p.nilai)}
-            className="h-5 w-5"
+            className="accent-marigold h-5 w-5 cursor-pointer"
           />
           {p.label}
         </label>
@@ -368,7 +372,7 @@ function PilihanTab({
   onPilih: (j: Jenis) => void;
 }) {
   const dasar =
-    "rounded-btn inline-flex min-h-11 items-center border px-4 text-[15px] font-semibold";
+    "rounded-btn inline-flex min-h-11 cursor-pointer items-center border px-4 text-[15px] font-semibold transition duration-150 hover:border-slate hover:bg-[#f3efe7] hover:text-navy focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
   const tab: { nilai: Jenis; label: string }[] = [
     { nilai: "barang", label: "Daftar barang" },
     { nilai: "jual", label: "Penjualan" },
