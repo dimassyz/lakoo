@@ -7,7 +7,7 @@ import {
 } from "@/lib/formBarang";
 
 const tombolUtama =
-  "rounded-card bg-safe px-4 py-3 font-semibold text-white disabled:opacity-40";
+  "rounded-card bg-navy px-4 py-3 font-semibold text-white disabled:opacity-40";
 const tombolGaris = "rounded-card border-muted border px-4 py-3 font-semibold";
 const kotakIsian = "rounded-card border-muted w-full border px-3 py-2";
 const teksError = "text-danger text-[13px] font-semibold";
@@ -16,7 +16,7 @@ type Ubah = (patch: Partial<IsianBarang>) => void;
 
 function Label({ htmlFor, children }: { htmlFor: string; children: string }) {
   return (
-    <label htmlFor={htmlFor} className="text-muted block text-[13px]">
+    <label htmlFor={htmlFor} className="text-muted block text-[14px]">
       {children}
     </label>
   );
@@ -61,6 +61,7 @@ function IsianTeks({
       <Label htmlFor={id}>{label}</Label>
       <input
         id={id}
+        enterKeyHint="next"
         value={nilai}
         autoFocus={fokus}
         onChange={(e) => onUbah(e.target.value)}
@@ -92,6 +93,7 @@ function IsianAngka({
       <Label htmlFor={id}>{label}</Label>
       <input
         id={id}
+        enterKeyHint="next"
         inputMode="numeric"
         value={nilai}
         onChange={(e) => onUbah(e.target.value.replace(/\D/g, ""))}
@@ -197,12 +199,11 @@ function DetailLain({
           onUbah={(v) => onUbah({ kategori: v })}
         />
         <div>
-          <label className="flex items-start gap-2 text-[15px]">
+          <label className="flex min-h-11 items-center gap-2 text-[15px]">
             <input
               type="checkbox"
               checked={isian.pelengkap}
               onChange={(e) => onUbah({ pelengkap: e.target.checked })}
-              className="mt-1"
             />
             <span>Barang pelengkap</span>
           </label>
