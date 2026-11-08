@@ -8,11 +8,12 @@ import {
 } from "@/lib/barangMasuk";
 import { rupiah, tanggalPendek } from "@/lib/ui";
 
-const input = "rounded-btn border-line h-[52px] w-full border px-3";
+const input =
+  "rounded-btn border-line h-[52px] w-full border px-3 transition duration-150 focus:border-marigold-kuat focus:ring-[3px] focus:ring-marigold/25 focus:outline-none";
 const label = "text-muted block text-[13px] font-semibold";
 const teksError = "text-danger text-[13px] font-semibold";
 const tombolKecil =
-  "rounded-btn border-line inline-flex min-h-11 items-center border px-3 text-[13px] font-semibold";
+  "rounded-btn border-line inline-flex min-h-11 cursor-pointer items-center border px-3 text-[13px] font-semibold transition duration-150 hover:border-slate hover:text-navy focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
 
 type PropsUbah = { baris: Baris; onUbah: (b: Baris) => void };
 
@@ -136,7 +137,7 @@ export function BarisNota({
             type="button"
             aria-label={`Hapus baris ${baris.nama.trim() || "ini"}`}
             onClick={onBuang}
-            className="rounded-btn border-line mt-6 h-11 w-11 border text-lg"
+            className="rounded-btn border-line hover:border-slate hover:text-navy focus-visible:outline-navy mt-6 h-11 w-11 cursor-pointer border text-lg transition duration-150 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
           >
             ×
           </button>
@@ -235,7 +236,7 @@ function TombolKoreksi({
       <button
         type="button"
         onClick={onSimpan}
-        className="rounded-btn bg-navy inline-flex min-h-11 items-center px-4 text-[13px] font-semibold text-white"
+        className="rounded-btn bg-marigold text-navy focus-visible:outline-navy inline-flex min-h-11 cursor-pointer items-center px-4 text-[13px] font-semibold transition duration-150 hover:bg-[#d9932b] hover:shadow-[0_2px_8px_rgb(10_37_64/0.18)] focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
       >
         Simpan koreksi
       </button>
@@ -284,7 +285,7 @@ function AksiRiwayat({ konfirmasi, onKonfirmasi, onUbah, onHapus }: PropsAksi) {
         <button
           type="button"
           onClick={onHapus}
-          className="rounded-btn border-ink inline-flex min-h-11 items-center border px-3 text-[13px] font-semibold"
+          className="rounded-btn border-ink hover:bg-navy focus-visible:outline-navy inline-flex min-h-11 cursor-pointer items-center border px-3 text-[13px] font-semibold transition duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
         >
           Ya, hapus
         </button>

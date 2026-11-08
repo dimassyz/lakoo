@@ -46,7 +46,7 @@ function useAwalAntrean(): Awal | undefined {
 }
 
 const tombolGeser =
-  "rounded-btn border-line h-11 w-11 border text-lg font-semibold disabled:text-muted";
+  "rounded-btn border-line h-11 w-11 cursor-pointer border text-lg font-semibold transition duration-150 focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 enabled:hover:border-slate enabled:hover:bg-[#f3efe7] enabled:hover:text-navy enabled:active:translate-y-px disabled:cursor-not-allowed disabled:text-muted";
 
 /** FSD §7 — geser per hari + pemilih ≤ hari ini dan ≥ 365 hari lalu. */
 function KontrolTanggal({
@@ -76,7 +76,7 @@ function KontrolTanggal({
         min={min}
         max={max}
         onChange={(e) => ubah(e.target.value || hariIniWib())}
-        className="rounded-btn border-line h-[52px] border px-3"
+        className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 h-[52px] border px-3 transition duration-150 focus:ring-[3px] focus:outline-none"
       />
       <button
         type="button"
@@ -93,7 +93,7 @@ function KontrolTanggal({
 
 function TabMode({ mode, ubah }: { mode: Mode; ubah: (m: Mode) => void }) {
   const tab =
-    "flex min-h-11 flex-1 items-center justify-center rounded-btn border px-3 text-[15px] font-semibold";
+    "flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-btn border px-3 text-[15px] font-semibold transition duration-150 hover:border-slate hover:bg-[#f3efe7] hover:text-navy focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 active:translate-y-px";
   const gaya = (aktif: boolean) =>
     `${tab} ${aktif ? "border-navy text-navy" : "border-line text-ink"}`;
 
@@ -188,7 +188,9 @@ function Footer({
   menyimpan: boolean;
   onSimpan: () => void;
 }) {
-  const gaya = bisa ? "bg-navy text-white" : "border border-line text-muted";
+  const gaya = bisa
+    ? "bg-marigold text-navy enabled:hover:bg-[#d9932b] enabled:hover:shadow-[0_2px_8px_rgb(10_37_64/0.18)] enabled:active:translate-y-px"
+    : "border border-line text-muted opacity-55";
 
   return (
     <div className="rounded-card border-line bg-surface sticky bottom-16 z-10 mt-4 border p-4 lg:bottom-0">
@@ -199,7 +201,7 @@ function Footer({
         type="button"
         disabled={!bisa || menyimpan}
         onClick={onSimpan}
-        className={`rounded-btn mt-2 flex h-[52px] w-full items-center justify-center px-4 font-semibold ${gaya}`}
+        className={`rounded-btn focus-visible:outline-navy mt-2 flex h-[52px] w-full cursor-pointer items-center justify-center px-4 font-semibold transition duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed ${gaya}`}
       >
         {menyimpan
           ? "Menyimpan…"
@@ -265,7 +267,7 @@ function KepalaRekap({ r }: { r: RekapLayar }) {
         placeholder="Cari barang…"
         value={r.cari}
         onChange={(e) => r.setCari(e.target.value)}
-        className="rounded-btn border-line h-[52px] w-full border px-3"
+        className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 h-[52px] w-full border px-3 transition duration-150 focus:ring-[3px] focus:outline-none"
       />
       {r.toast ? (
         <p role="status" className="rounded-card border-line border p-3">
@@ -294,7 +296,7 @@ function BadanRekap({
         <button
           type="button"
           onClick={() => void r.muat()}
-          className="rounded-btn bg-navy mt-3 inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white"
+          className="rounded-btn bg-marigold text-navy focus-visible:outline-navy mt-3 inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold transition duration-150 hover:bg-[#d9932b] hover:shadow-[0_2px_8px_rgb(10_37_64/0.18)] focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
         >
           Coba lagi
         </button>

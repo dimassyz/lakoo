@@ -33,9 +33,9 @@ function usePulihkanAntrean(l: LayarMasuk) {
 }
 
 const tombolUtama =
-  "rounded-btn bg-navy inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white disabled:opacity-40";
+  "rounded-btn bg-marigold text-navy inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold transition duration-150 focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 enabled:hover:bg-[#d9932b] enabled:hover:shadow-[0_2px_8px_rgb(10_37_64/0.18)] enabled:active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55";
 const tombolGaris =
-  "rounded-btn border-line inline-flex h-[52px] items-center justify-center border px-4 font-semibold";
+  "rounded-btn border-line inline-flex h-[52px] cursor-pointer items-center justify-center border px-4 font-semibold transition duration-150 focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2 enabled:hover:bg-navy enabled:hover:text-white enabled:active:translate-y-px disabled:cursor-not-allowed";
 
 /** FSD §8 — tanggal nota: bawaan hari ini, boleh mundur sampai 365 hari. */
 function KepalaNota({ l, onTempel }: { l: LayarMasuk; onTempel: () => void }) {
@@ -60,7 +60,7 @@ function KepalaNota({ l, onTempel }: { l: LayarMasuk; onTempel: () => void }) {
           min={min}
           max={max}
           onChange={(e) => l.form.setTanggal(e.target.value)}
-          className="rounded-btn border-line h-[52px] border px-3"
+          className="rounded-btn border-line focus:border-marigold-kuat focus:ring-marigold/25 h-[52px] border px-3 transition duration-150 focus:ring-[3px] focus:outline-none"
         />
       </div>
       <button type="button" onClick={onTempel} className={tombolGaris}>
@@ -77,7 +77,10 @@ function KepalaNota({ l, onTempel }: { l: LayarMasuk; onTempel: () => void }) {
       {!l.produk.memuat && l.produk.items.length === 0 ? (
         <p>
           Belum ada barang.{" "}
-          <Link href="/toko/barang" className="font-semibold underline">
+          <Link
+            href="/toko/barang"
+            className="hover:text-marigold-kuat font-semibold underline transition duration-150 hover:decoration-2"
+          >
             Tambah barang
           </Link>{" "}
           dulu, atau ketik nama baru di baris nota.
@@ -127,7 +130,7 @@ function FooterNota({ l }: { l: LayarMasuk }) {
         type="button"
         disabled={!l.bisa}
         onClick={() => void l.simpan()}
-        className={`mt-2 w-full ${l.bisa ? tombolUtama : tombolGaris}`}
+        className={`mt-2 w-full ${l.bisa ? tombolUtama : `${tombolGaris} opacity-55`}`}
       >
         {l.menyimpan ? "Menyimpan…" : "Simpan"}
       </button>
@@ -149,7 +152,7 @@ function IsiRiwayat({ l }: { l: LayarMasuk }) {
         <button
           type="button"
           onClick={() => void l.riwayat.muat()}
-          className="rounded-btn bg-navy mt-3 inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white"
+          className="rounded-btn bg-marigold text-navy focus-visible:outline-navy mt-3 inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold transition duration-150 hover:bg-[#d9932b] hover:shadow-[0_2px_8px_rgb(10_37_64/0.18)] focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
         >
           Coba lagi
         </button>
