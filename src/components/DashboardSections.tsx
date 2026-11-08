@@ -38,7 +38,9 @@ export function HariIni({ today }: { today: D["today"] }) {
         Hari ini
       </h2>
       {baris.length === 0 ? (
-        <p className="text-base">Tidak ada yang perlu dicek hari ini</p>
+        <div className="rounded-card border-garis bg-card shadow-card border p-6">
+          <p className="text-base">Tidak ada yang perlu dicek hari ini</p>
+        </div>
       ) : (
         <ul className="rounded-card border-garis bg-card shadow-card space-y-1 border p-6">
           {baris.slice(0, 5).map((b) => (
@@ -100,7 +102,9 @@ export function TanganiDulu({ items }: { items: D["topPriority"] }) {
         Tangani dulu
       </h2>
       {items.length === 0 ? (
-        <p className="text-base">Tidak ada barang bermasalah. Mantap!</p>
+        <div className="rounded-card border-garis bg-card shadow-card border p-6">
+          <p className="text-base">Tidak ada barang bermasalah. Mantap!</p>
+        </div>
       ) : (
         <ul className="space-y-4">
           {items.slice(0, 3).map((p) => (

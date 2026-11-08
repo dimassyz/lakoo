@@ -13,6 +13,7 @@ import {
   tanpaBarang,
 } from "@/components/DashboardSections";
 import { api, type Dashboard } from "@/lib/api";
+import { tombolUtama } from "@/lib/tombol";
 
 function useDashboard() {
   const [data, setData] = useState<Dashboard | null>(null);
@@ -93,7 +94,7 @@ function Gagal({ muat }: { muat: () => void }) {
       <button
         type="button"
         onClick={muat}
-        className="rounded-btn bg-navy mt-4 inline-flex min-h-11 items-center px-4 font-semibold text-white"
+        className={`${tombolUtama} rounded-btn mt-4 inline-flex min-h-11 items-center px-4`}
       >
         Coba lagi
       </button>
@@ -116,7 +117,7 @@ export default function BerandaPage() {
       </AppShell>
       <Link
         href="/toko/rekap"
-        className="rounded-btn bg-navy shadow-float fixed right-4 bottom-20 inline-flex min-h-11 items-center px-4 font-semibold text-white lg:hidden"
+        className={`${tombolUtama} shadow-float fixed right-4 bottom-20 inline-flex min-h-11 items-center rounded-full px-4 lg:hidden`}
       >
         Rekap hari ini
       </Link>
