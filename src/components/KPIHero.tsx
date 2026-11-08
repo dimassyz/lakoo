@@ -1,37 +1,39 @@
-import {
-  AlertTriangle,
-  CircleCheck,
-  CircleX,
-  PackageX,
-  TrendingDown,
-  type LucideIcon,
-} from "lucide-react";
+import { PackageX } from "lucide-react";
 import Link from "next/link";
 import type { Dashboard, ProductStatus } from "@/lib/api";
+import { dasarInteraktif } from "@/lib/tombol";
 import { rupiah } from "@/lib/ui";
+import { ChipStatus, kelasTeksStatus } from "@/components/ChipStatus";
 
 /**
- * FSD §6 blok 1 — "Uang terkunci di rak". DESIGN-V3 §9 R-HERO: kartu PUTIH,
- * angka tinta (navy) 34/40/48px, subbaris merah tenang (token chip Mati).
- * Blok navy penuh ditinggalkan — board v2-02 yang menang.
+ * FSD §6 blok 1 — "Uang terkunci di rak". PALETTE-V6 varian A (menggantikan
+ * R-HERO v3): permukaan EMERALD-GELAP, label marigold 700, angka PUTIH
+ * 34/40/48px, band masalah putih 10% (dot merah-terang, teks band-terang),
+ * catatan note-gelap. Kontras terhitung di PALETTE-V6 (semua ≥4,5:1).
  */
 export function KpiHero({ totals }: { totals: Dashboard["totals"] }) {
   return (
     <section
       aria-labelledby="hero-label"
-      className="rounded-card border-garis bg-card shadow-card border p-6"
+      className="rounded-card bg-emerald-gelap shadow-card p-6"
     >
-      <h1 id="hero-label" className="text-slate text-sm font-semibold">
+      <h1 id="hero-label" className="text-marigold text-sm font-bold">
         Uang terkunci di rak
       </h1>
-      <p className="angka text-navy mt-2 text-[34px] leading-[1.1] font-extrabold tracking-[-0.02em] md:text-[40px] lg:text-[48px]">
+      <p className="angka mt-2 text-[34px] leading-[1.1] font-extrabold tracking-[-0.02em] text-white md:text-[40px] lg:text-[48px]">
         {rupiah(totals.lockedValue)}
       </p>
-      <p className="angka text-mati-chip mt-2 text-base font-semibold">
-        {rupiah(totals.problemLockedValue)} di barang bermasalah
+      <p className="rounded-btn mt-3 flex items-center gap-2 bg-white/10 px-4 py-3">
+        <span
+          aria-hidden="true"
+          className="bg-merah-terang h-2 w-2 shrink-0 rounded-full"
+        />
+        <span className="angka text-band-terang text-base font-semibold">
+          {rupiah(totals.problemLockedValue)} di barang bermasalah
+        </span>
       </p>
       {totals.complementaryLockedValue > 0 ? (
-        <p className="angka text-muted mt-1 text-sm">
+        <p className="angka text-note-gelap mt-3 text-sm">
           termasuk {rupiah(totals.complementaryLockedValue)} di barang pelengkap
         </p>
       ) : null}
@@ -39,43 +41,32 @@ export function KpiHero({ totals }: { totals: Dashboard["totals"] }) {
   );
 }
 
+type StatusUbin = Exclude<ProductStatus, "stok_habis">;
+
 type Ubin = {
-  status: ProductStatus;
+  status: StatusUbin;
   label: string;
-  ikon: LucideIcon;
-  warna: string;
 };
 
 /**
- * Kelas warna ditulis literal di sini, BUKAN disusun dari `item.status`:
- * Tailwind v4 memindai sumber untuk string kelas, jadi `text-${status}-chip`
- * tidak pernah jadi utility. Nol hex di berkas ini — semuanya lewat tokens.css.
- * Token CHIP (bukan dasar) untuk angka ubin: latar kartu adalah
- * `--color-surface`, dan token dasar Waspada hanya 2,97:1 di sana — gagal 3:1.
- * Chip 4,68:1 lolos. Lihat komentar tokens.css §2 untuk angka lengkap.
- * Ikon Lucide 20px / stroke 1.75px (DESIGN.md §3) — emoji render beda per OS
- * dan merusak ramp status.
+ * PALETTE-V6 — ubin status: permukaan tint ubin hue status di atas paper,
+ * chip varian "ubin" (latar putih), angka berwarna teks status (token CHIP
+ * dipergelap, 4,6:1 di atas tint), jumlah slate. Status tidak pernah
+ * dibedakan warna saja — label teks selalu tampil. Ubin adalah TAUTAN:
+ * hover mengangkat bayangan + border marigold-kuat (affordance v6).
  */
+const kelasUbin: Record<Ubin["status"], string> = {
+  sehat: "bg-sehat-ubin",
+  waspada: "bg-waspada-ubin",
+  sekarat: "bg-sekarat-ubin",
+  mati: "bg-mati-ubin",
+};
+
 const ubin: Ubin[] = [
-  {
-    status: "sehat",
-    label: "Sehat",
-    ikon: CircleCheck,
-    warna: "text-sehat-chip",
-  },
-  {
-    status: "waspada",
-    label: "Waspada",
-    ikon: AlertTriangle,
-    warna: "text-waspada-chip",
-  },
-  {
-    status: "sekarat",
-    label: "Sekarat",
-    ikon: TrendingDown,
-    warna: "text-sekarat-chip",
-  },
-  { status: "mati", label: "Mati", ikon: CircleX, warna: "text-mati-chip" },
+  { status: "sehat", label: "Sehat" },
+  { status: "waspada", label: "Waspada" },
+  { status: "sekarat", label: "Sekarat" },
+  { status: "mati", label: "Mati" },
 ];
 
 function SatuUbin({
@@ -88,19 +79,13 @@ function SatuUbin({
   return (
     <Link
       href={`/toko/barang?status=${item.status}`}
-      className="rounded-card border-garis bg-card shadow-card border px-6 py-5"
+      className={`${dasarInteraktif} rounded-card border-garis shadow-card hover:border-marigold-kuat hover:shadow-float block border px-6 py-5 ${kelasUbin[item.status]}`}
       aria-label={`${item.label}: ${bucket.count} barang, ${rupiah(bucket.lockedValue)} terkunci`}
     >
-      <span className="text-muted flex items-center gap-2 text-sm font-semibold">
-        <item.ikon
-          size={20}
-          strokeWidth={1.75}
-          aria-hidden="true"
-          className={item.warna}
-        />
-        {item.label}
-      </span>
-      <span className="angka text-navy mt-3 block text-[32px] leading-[1.15] font-extrabold">
+      <ChipStatus status={item.status} variant="ubin" />
+      <span
+        className={`angka mt-3 block text-[32px] leading-[1.15] font-extrabold ${kelasTeksStatus[item.status]}`}
+      >
         {bucket.count}
       </span>
       <span className="text-slate angka mt-1 block text-sm">
@@ -134,7 +119,7 @@ export function StatusTiles({
       </div>
       {habis.count > 0 ? (
         <p className="text-muted mt-3 flex items-center gap-2 text-[13px]">
-          <PackageX size={20} strokeWidth={1.75} aria-hidden="true" />
+          <PackageX size={16} strokeWidth={1.75} aria-hidden="true" />
           {habis.count} barang stok habis
         </p>
       ) : null}

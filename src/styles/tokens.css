@@ -13,16 +13,23 @@
    `static` dipakai supaya Tailwind tidak membuang token yang belum dipakai
    kelas mana pun (v4 melakukan tree-shake). */
 @theme static {
-  --color-navy: #0a2540; /* ink — merek + heading + tombol utama (putih di atasnya 15,5:1; di atas paper 14,7:1) */
-  --color-surface: #faf8f5; /* paper — latar halaman */
+  --color-navy: #0a2540; /* ink — merek + heading + teks di atas marigold (putih di atasnya 15,5:1; di atas paper 14,7:1) */
+  --color-surface: #faf6ef; /* paper v6 — latar halaman (PALETTE-V6) */
   --color-card: #ffffff; /* kartu — permukaan putih di atas paper (ink di atasnya 15,5:1) */
   --color-slate: #425466; /* teks isi (7,4:1 di atas paper) */
   --color-muted: #5e6b7f; /* teks bantu + label (5,1:1 di atas paper — Amendemen A1) */
   --color-emerald: #0b8a5f; /* kas kembali + status Sehat SAJA: angka besar (≥24px), fill, dot.
                                BUKAN teks kecil, BUKAN latar tombol (putih di atasnya 4,4:1). */
   --color-emerald-teks: #0a825a; /* teks emerald <24px (4,6:1 di atas paper — Amendemen A1) */
-  --color-marigold: #e8a33d; /* aksen merek DEKORATIF saja: dot logo */
-  --color-marigold-kuat: #c78118; /* marigold FUNGSIONAL: thumb slider, penanda menu aktif (Amendemen A1) */
+  --color-marigold: #e8a33d; /* v6: aksen merek + AKSI — dot logo, nav aktif, avatar, tombol utama (ink di atasnya 7,2:1) */
+  --color-marigold-kuat: #c78118; /* marigold FUNGSIONAL: thumb slider, hover tautan teks, fokus input (Amendemen A1) */
+  --color-marigold-hover: #d9932b; /* hover tombol marigold (PALETTE-V6) */
+  --color-merah: #c62f3b; /* hue Mati: dot alert di atas permukaan terang (di atas hero gelap pakai merah-terang) */
+  --color-emerald-gelap: #0b4a32; /* v6: permukaan hero Beranda — emerald dipergelap (putih di atasnya 10,3:1) */
+  --color-pasir: #f3e9d7; /* v6: tier konteks hangat — kartu Minggu lalu + Segera kulakan (PALETTE-V6) */
+  --color-band-terang: #ffc9ce; /* v6: teks band masalah di atas hero emerald-gelap (5,4:1 di atas band) */
+  --color-note-gelap: #bcd8cb; /* v6: catatan di atas hero emerald-gelap (6,8:1) */
+  --color-merah-terang: #ff8a94; /* v6: dot band masalah di atas hero emerald-gelap (non-teks 3,5:1) */
 
   /* Ramp status — token DASAR (vivid): ikon · dot · bar · angka besar. Set
      ini TIDAK berubah di v3 (DESIGN-V3 §1). */
@@ -31,13 +38,25 @@
   --color-sekarat: #ea580c;
   --color-mati: #dc2626;
 
-  /* Ramp status — token CHIP v3: teks label chip di atas tint 10% hue yang
-     sama di atas kartu putih (terhitung: sehat 4,7:1 · waspada 4,7:1 ·
-     sekarat 4,7:1 · mati 4,8:1 — Amendemen A1). stok_habis memakai muted. */
-  --color-sehat-chip: #0a7954;
-  --color-waspada-chip: #9d5b00;
-  --color-sekarat-chip: #b74521;
-  --color-mati-chip: #c32e3a;
+  /* Ramp status — token CHIP v6: teks label chip, DIPERGELAP dari A1 supaya
+     tetap ≥4,5:1 di atas tint yang lebih pekat (terhitung PALETTE-V6: di atas
+     tint chip 5,3–5,4:1 · di atas putih 6,5:1 · angka ubin di atas tint ubin
+     4,6:1). stok_habis memakai muted. */
+  --color-sehat-chip: #096b4a;
+  --color-waspada-chip: #895000;
+  --color-sekarat-chip: #a33d1d;
+  --color-mati-chip: #b12a35;
+
+  /* Tint chip v6 di atas kartu putih (PALETTE-V6) + tint UBIN status yang
+     lebih pekat di atas paper — permukaan ubin Beranda. */
+  --color-sehat-chipbg: rgb(11 138 95 / 0.15);
+  --color-waspada-chipbg: rgb(199 116 0 / 0.18);
+  --color-sekarat-chipbg: rgb(217 85 44 / 0.15);
+  --color-mati-chipbg: rgb(198 47 59 / 0.12);
+  --color-sehat-ubin: rgb(11 138 95 / 0.22);
+  --color-waspada-ubin: rgb(199 116 0 / 0.26);
+  --color-sekarat-ubin: rgb(217 85 44 / 0.22);
+  --color-mati-ubin: rgb(198 47 59 / 0.18);
 
   /* Hairline di atas paper (hangat). `--color-garis` adalah nama DESIGN-V3;
      `--color-line` nama lama yang masih dipakai kelas yang ada — nilai sama. */
