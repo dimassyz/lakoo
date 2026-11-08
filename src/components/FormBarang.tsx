@@ -7,16 +7,20 @@ import {
 } from "@/lib/formBarang";
 
 const tombolUtama =
-  "rounded-card bg-navy px-4 py-3 font-semibold text-white disabled:opacity-40";
-const tombolGaris = "rounded-card border-muted border px-4 py-3 font-semibold";
-const kotakIsian = "rounded-card border-muted w-full border px-3 py-2";
+  "rounded-btn bg-navy inline-flex h-[52px] w-full items-center justify-center px-4 font-semibold text-white disabled:opacity-40 lg:w-auto";
+const tombolGaris =
+  "rounded-btn border-line inline-flex h-[52px] w-full items-center justify-center border px-4 font-semibold lg:w-auto";
+const kotakIsian = "rounded-btn border-line h-[52px] w-full border px-3";
 const teksError = "text-danger text-[13px] font-semibold";
 
 type Ubah = (patch: Partial<IsianBarang>) => void;
 
 function Label({ htmlFor, children }: { htmlFor: string; children: string }) {
   return (
-    <label htmlFor={htmlFor} className="text-muted block text-[14px]">
+    <label
+      htmlFor={htmlFor}
+      className="text-muted block text-[14px] font-semibold"
+    >
       {children}
     </label>
   );
@@ -47,6 +51,7 @@ function IsianTeks({
   tautan,
   onUbah,
   fokus,
+  kelas,
 }: {
   id: string;
   label: string;
@@ -55,9 +60,10 @@ function IsianTeks({
   tautan?: string;
   onUbah: (v: string) => void;
   fokus?: boolean;
+  kelas?: string;
 }) {
   return (
-    <div>
+    <div className={kelas}>
       <Label htmlFor={id}>{label}</Label>
       <input
         id={id}
@@ -106,6 +112,38 @@ function IsianAngka({
   );
 }
 
+type PropsIsian = {
+  isian: IsianBarang;
+  galat: GalatBarang;
+  onUbah: Ubah;
+};
+
+/** Field khusus mode baru: harga beli. */
+function IsianModal({ isian, galat, onUbah }: PropsIsian) {
+  return (
+    <IsianAngka
+      id="modal"
+      label="Harga beli (Rp)"
+      nilai={isian.modal}
+      galat={galat.modal}
+      onUbah={(v) => onUbah({ modal: v })}
+    />
+  );
+}
+
+/** Field khusus mode baru: stok awal. */
+function IsianStok({ isian, galat, onUbah }: PropsIsian) {
+  return (
+    <IsianAngka
+      id="stok"
+      label="Stok sekarang"
+      nilai={isian.stok}
+      galat={galat.stok}
+      onUbah={(v) => onUbah({ stok: v })}
+    />
+  );
+}
+
 function IsianUtama({
   isian,
   galat,
@@ -122,7 +160,7 @@ function IsianUtama({
   onUbah: Ubah;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="grid gap-6 lg:grid-cols-2">
       <IsianTeks
         id="nama"
         label="Nama barang"
@@ -131,17 +169,10 @@ function IsianUtama({
         tautan={tautan}
         onUbah={(v) => onUbah({ nama: v })}
         fokus
+        kelas="lg:col-span-2"
       />
 
-      {baru ? (
-        <IsianAngka
-          id="modal"
-          label="Harga beli (Rp)"
-          nilai={isian.modal}
-          galat={galat.modal}
-          onUbah={(v) => onUbah({ modal: v })}
-        />
-      ) : null}
+      {baru ? <IsianModal isian={isian} galat={galat} onUbah={onUbah} /> : null}
 
       <IsianAngka
         id="jual"
@@ -151,18 +182,10 @@ function IsianUtama({
         onUbah={(v) => onUbah({ jual: v })}
       />
       {peringatan ? (
-        <p className="text-warn text-[15px] font-semibold">{peringatan}</p>
+        <p className="text-warn font-semibold lg:col-span-2">{peringatan}</p>
       ) : null}
 
-      {baru ? (
-        <IsianAngka
-          id="stok"
-          label="Stok sekarang"
-          nilai={isian.stok}
-          galat={galat.stok}
-          onUbah={(v) => onUbah({ stok: v })}
-        />
-      ) : null}
+      {baru ? <IsianStok isian={isian} galat={galat} onUbah={onUbah} /> : null}
     </div>
   );
 }
@@ -179,11 +202,9 @@ function DetailLain({
   onUbah: Ubah;
 }) {
   return (
-    <details className="rounded-card border-muted border p-3">
-      <summary className="cursor-pointer text-[15px] font-semibold">
-        Detail lain
-      </summary>
-      <div className="mt-3 space-y-3">
+    <details className="rounded-card border-line border p-4">
+      <summary className="cursor-pointer font-semibold">Detail lain</summary>
+      <div className="mt-4 grid gap-6 lg:grid-cols-2">
         <IsianTeks
           id="satuan"
           label="Satuan"
@@ -199,7 +220,7 @@ function DetailLain({
           onUbah={(v) => onUbah({ kategori: v })}
         />
         <div>
-          <label className="flex min-h-11 items-center gap-2 text-[15px]">
+          <label className="flex min-h-11 items-center gap-2">
             <input
               type="checkbox"
               checked={isian.pelengkap}
@@ -236,7 +257,7 @@ function TombolSimpan({
   onKirim: (lagi: boolean) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col gap-2 lg:flex-row lg:justify-end">
       <button
         type="button"
         disabled={menyimpan}
@@ -274,7 +295,7 @@ export function FormBarang({
   const baru = mode === "baru";
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <IsianUtama
         isian={f.isian}
         galat={f.galat}
@@ -285,7 +306,7 @@ export function FormBarang({
       />
       <DetailLain isian={f.isian} galat={f.galat} baru={baru} onUbah={f.ubah} />
       {f.galat.umum ? (
-        <p role="alert" className={`${teksError} text-[15px]`}>
+        <p role="alert" className="text-danger font-semibold">
           {f.galat.umum}
         </p>
       ) : null}

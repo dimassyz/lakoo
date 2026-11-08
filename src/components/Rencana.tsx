@@ -6,9 +6,10 @@ import { rupiah, tanggalPendek } from "@/lib/ui";
 
 type Aksi = ReturnType<typeof useAksiRencana> & ReturnType<typeof useAksiTahap>;
 
-const tombolGaris = "rounded-card border-muted border px-4 py-3 font-semibold";
+const tombolGaris =
+  "rounded-btn border-line inline-flex h-[52px] items-center justify-center border px-4 font-semibold";
 const tombolUtama =
-  "rounded-card bg-navy px-4 py-3 font-semibold text-white disabled:opacity-40";
+  "rounded-btn bg-navy inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white disabled:opacity-40";
 
 /** Ikon outcome tahap — Lucide, emoji render beda per OS. */
 const TANDA: Record<PlanStep["outcome"], LucideIcon | null> = {
@@ -49,7 +50,7 @@ function KotakHitungan({ s }: { s: PlanStep }) {
           className={
             s.isLoss
               ? "angka text-danger font-semibold"
-              : "angka text-safe font-semibold"
+              : "angka text-emerald-teks font-semibold"
           }
         >
           {s.isLoss
@@ -59,7 +60,9 @@ function KotakHitungan({ s }: { s: PlanStep }) {
       </div>
       <div className="flex justify-between gap-2">
         <dt>Bila stok habis terjual</dt>
-        <dd className="angka">±{rupiah(s.cashBackEstimate)} kembali</dd>
+        <dd className="angka text-emerald-teks font-semibold">
+          ±{rupiah(s.cashBackEstimate)} kembali
+        </dd>
       </div>
       {s.bundleProduct ? (
         <div className="flex justify-between gap-2">
@@ -78,14 +81,14 @@ function KartuTahap({ s, redup }: { s: PlanStep; redup?: boolean }) {
 
   return (
     <li
-      className={`rounded-card border-muted border p-3 ${redup ? "opacity-60" : ""}`}
+      className={`rounded-card border-line border bg-white p-4 ${redup ? "opacity-60" : ""}`}
     >
       <p className="text-muted flex items-center gap-2 text-[13px] font-semibold">
         {Ikon ? <Ikon size={16} strokeWidth={1.75} aria-hidden="true" /> : null}
         Tahap {s.stepNo} · {s.durationDays} hari
       </p>
-      <p className="font-semibold">{s.title}</p>
-      <p className="text-[15px]">{s.instructions}</p>
+      <p className="text-[17px] font-semibold">{s.title}</p>
+      <p>{s.instructions}</p>
       <p className="text-muted text-[13px]">
         Berhasil kalau: {s.successCriteria}
       </p>
@@ -105,8 +108,8 @@ function Konfirmasi({
   onBatal: () => void;
 }) {
   return (
-    <div className="rounded-card border-ink space-y-2 border p-3">
-      <p className="text-[15px]">{pesan}</p>
+    <div className="rounded-card border-ink space-y-2 border p-4">
+      <p>{pesan}</p>
       <div className="flex gap-2">
         <button type="button" onClick={onYa} className={tombolUtama}>
           Ya
@@ -131,12 +134,14 @@ function SaranRencana({
   const [tanyaUlang, setTanyaUlang] = useState(false);
 
   return (
-    <div className="space-y-2">
-      <p className="text-muted text-[13px] font-semibold">
-        {plan.source === "ai" ? "Disusun AI" : "Saran dasar"}
+    <div className="space-y-4">
+      <p>
+        <span className="rounded-pill border-line inline-block border px-2 py-0.5 text-[13px] font-semibold">
+          {plan.source === "ai" ? "Saran AI" : "Saran dasar"}
+        </span>
       </p>
-      <p className="text-[15px]">{plan.rationale}</p>
-      <ol className="space-y-2">
+      <p>{plan.rationale}</p>
+      <ol className="space-y-4">
         {plan.steps.map((s) => (
           <KartuTahap key={s.stepNo} s={s} />
         ))}
@@ -250,12 +255,12 @@ function IsiTahapBerjalan({
   onTanya: (t: "berhasil" | "belum") => void;
 }) {
   return (
-    <div className="rounded-card border-safe space-y-2 border p-3">
+    <div className="rounded-card border-emerald space-y-2 border bg-white p-4">
       <p className="text-muted text-[13px] font-semibold">
         Sedang berjalan · Tahap {s.stepNo} · {s.durationDays} hari
       </p>
-      <p className="font-semibold">{s.title}</p>
-      <p className="text-[15px]">{s.instructions}</p>
+      <p className="text-[17px] font-semibold">{s.title}</p>
+      <p>{s.instructions}</p>
       <p className="text-muted text-[13px]">
         Mulai {s.startedOn ? tanggalPendek(s.startedOn) : "–"} · cek{" "}
         {s.dueOn ? tanggalPendek(s.dueOn) : "–"}
@@ -341,7 +346,7 @@ function AktifRencana({
   return (
     <div className="space-y-2">
       <KasPulih plan={plan} />
-      <ol className="space-y-2">
+      <ol className="space-y-4">
         {plan.steps.map((s) =>
           s.outcome === "in_progress" ? (
             <li key={s.stepNo}>
@@ -372,7 +377,7 @@ function AktifRencana({
         <button
           type="button"
           onClick={() => setTanyaStop(true)}
-          className="text-[15px] underline"
+          className="underline"
         >
           Hentikan rencana
         </button>
@@ -383,8 +388,8 @@ function AktifRencana({
 
 function SelesaiRencana({ plan, onBaru }: { plan: Plan; onBaru: () => void }) {
   return (
-    <div className="rounded-card border-muted space-y-2 border p-3">
-      <p className="angka text-[15px]">
+    <div className="rounded-card border-line space-y-2 border bg-white p-4">
+      <p className="angka">
         {pesanAkhir(plan)} {rupiah(plan.recovered)} kembali.
       </p>
       <button type="button" onClick={onBaru} className={tombolGaris}>
@@ -427,7 +432,7 @@ function TombolBuat({ pesan, onBuat }: { pesan: string; onBuat: () => void }) {
         Buat rencana
       </button>
       {pesan ? (
-        <p role="alert" className="text-danger text-[15px] font-semibold">
+        <p role="alert" className="text-danger font-semibold">
           {pesan}
         </p>
       ) : null}
@@ -445,16 +450,12 @@ type PropsTanpaRencana = {
 function IsiTanpaRencana({ jenis, produk, pesan, onBuat }: PropsTanpaRencana) {
   switch (jenis) {
     case "memuat":
-      return <p className="text-muted text-[15px]">Memuat…</p>;
+      return <p className="text-muted">Memuat…</p>;
     case "pelengkap":
-      return (
-        <p className="text-[15px]">
-          Barang pelengkap tidak diberi saran obral.
-        </p>
-      );
+      return <p>Barang pelengkap tidak diberi saran obral.</p>;
     case "sehat":
       return (
-        <p className="text-[15px]">
+        <p>
           Barang ini sehat.
           {produk.daysUntilEmpty !== null
             ? ` ±${produk.daysUntilEmpty} hari lagi habis.`
@@ -462,7 +463,7 @@ function IsiTanpaRencana({ jenis, produk, pesan, onBuat }: PropsTanpaRencana) {
         </p>
       );
     case "membuat":
-      return <p className="text-muted text-[15px]">Memuat…</p>;
+      return <p className="text-muted">Memuat…</p>;
     default:
       return <TombolBuat pesan={pesan} onBuat={() => onBuat(false)} />;
   }
