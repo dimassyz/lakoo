@@ -491,3 +491,49 @@ describe("23505 — jaring saat pre-check route kalah balapan", () => {
     expect((await conflict!.json()).error.code).toBe("duplicate_product_name");
   });
 });
+
+describe("POST /stock-ins — productId tak dikenal (QA-3)", () => {
+  interface LineError {
+    error: {
+      code: string;
+      lines?: { index: number; code: string; message: string }[];
+    };
+  }
+
+  it("422 validation_error menyebut baris & barangnya, bukan 500", async () => {
+    const ghost = crypto.randomUUID();
+    const res = await post({
+      receivedOn: TODAY,
+      lines: [{ productId: ghost, qty: 5, unitCost: 1_000 }],
+    });
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as LineError;
+    expect(body.error.code).toBe("validation_error");
+    expect(body.error.lines?.[0]?.index).toBe(0);
+    expect(body.error.lines?.[0]?.message).toContain(ghost);
+  });
+
+  it("baris asing di posisi kedua → index 1, dan tidak ada yang tertulis", async () => {
+    const before = await db.execute(
+      sql`SELECT COUNT(*) AS n FROM stock_ins WHERE product_id = ${kecapId}`,
+    );
+    const ghost = crypto.randomUUID();
+    const res = await post({
+      receivedOn: TODAY,
+      lines: [
+        { productId: kecapId, qty: 1, unitCost: 1_000 },
+        { productId: ghost, qty: 5, unitCost: 1_000 },
+      ],
+    });
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as LineError;
+    expect(body.error.lines?.[0]?.index).toBe(1);
+
+    const after = await db.execute(
+      sql`SELECT COUNT(*) AS n FROM stock_ins WHERE product_id = ${kecapId}`,
+    );
+    expect(Number((after.rows[0] as { n: unknown }).n)).toBe(
+      Number((before.rows[0] as { n: unknown }).n),
+    );
+  });
+});

@@ -11,9 +11,10 @@ import {
   deleteStockIn,
   listStockIns,
   nameKeyTaken,
+  productExistsInStore,
   updateStockIn,
 } from "../../repo/stockIns.ts";
-import { todayIso } from "./products.ts";
+import { MAX_PRICE, productName, todayIso } from "./products.ts";
 
 export interface StockInDeps {
   db: AnyDb;
@@ -37,10 +38,10 @@ const listQuery = z.object({
 
 const newProductSchema = z
   .object({
-    name: z.string().min(1).max(80),
+    name: productName,
     unit: z.string().min(1).max(16).default("pcs"),
     category: z.string().max(40).nullable().optional(),
-    sellPrice: z.number().int().min(0),
+    sellPrice: z.number().int().min(0).max(MAX_PRICE),
   })
   .strict();
 
@@ -155,6 +156,30 @@ async function checkNewNames(
   }
 }
 
+/**
+ * Setiap `productId` harus milik toko ini. Tanpa cek ini, insert menabrak
+ * FK dan jadi 500 `internal_error`; kontraknya 422 per baris (QA-3).
+ */
+async function checkLineProducts(
+  db: AnyDb,
+  storeId: string,
+  lines: z.infer<typeof batchBody>["lines"],
+): Promise<void> {
+  for (const [index, line] of lines.entries()) {
+    if (line.productId === undefined) continue;
+    if (await productExistsInStore(db, storeId, line.productId)) continue;
+    throw new ApiError(422, "validation_error", "Ada baris yang perlu dicek.", {
+      lines: [
+        {
+          index,
+          code: "product_not_found",
+          message: `Barang ${line.productId} tidak ditemukan di toko ini.`,
+        },
+      ],
+    });
+  }
+}
+
 async function handleCreate(c: Context, deps: StockInDeps) {
   const { store } = await currentSession(c, deps);
 
@@ -190,6 +215,7 @@ async function handleCreate(c: Context, deps: StockInDeps) {
   }
 
   await checkNewNames(deps.db, store.id, parsed.data.lines);
+  await checkLineProducts(deps.db, store.id, parsed.data.lines);
   const created = await createStockInBatch(
     deps.db,
     store.id,
