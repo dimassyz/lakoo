@@ -61,7 +61,7 @@ const LABEL: Record<Plan["state"], string> = {
   suggested: "Saran",
   active: "Berjalan",
   completed: "Selesai",
-  exhausted: "Stok habis",
+  exhausted: "Tahap habis",
   sold_out: "Terjual habis",
   stopped: "Dihentikan",
 };
