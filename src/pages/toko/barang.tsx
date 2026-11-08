@@ -14,14 +14,15 @@ import {
   type Filter,
   type Kolom,
 } from "@/lib/barang";
-import { labelStatus, rupiah, tanggalPendek } from "@/lib/ui";
+import { rupiah, tanggalPendek } from "@/lib/ui";
+import { ChipStatus } from "@/components/ChipStatus";
 
 const tombolGaris = "rounded-card border-muted border px-4 py-3 font-semibold";
 
 function gayaChip(aktif: boolean) {
   const dasar =
     "rounded-card border px-3 py-1.5 text-[13px] font-semibold whitespace-nowrap";
-  return `${dasar} ${aktif ? "border-safe text-safe" : "border-muted text-ink"}`;
+  return `${dasar} ${aktif ? "border-navy text-navy" : "border-muted text-ink"}`;
 }
 
 /** FSD §9 — chip status + toggle arsip. */
@@ -51,7 +52,7 @@ function ChipFilter({
           </button>
         ))}
       </div>
-      <label className="flex items-center gap-2 text-[15px]">
+      <label className="flex min-h-11 items-center gap-2 text-[15px]">
         <input
           type="checkbox"
           checked={arsip}
@@ -75,10 +76,11 @@ function KartuBarang({ p }: { p: ProductSummary }) {
       >
         <div className="flex items-baseline justify-between gap-2">
           <p className="font-semibold">{p.name}</p>
-          <p className="text-muted text-[13px]">{labelStatus(p.status)}</p>
+          <ChipStatus status={p.status} />
         </div>
         <p className="text-muted text-[15px]">
-          stok {p.stock} · {rupiah(p.lockedValue)} terkunci
+          stok {p.stock} ·{" "}
+          <span className="angka">{rupiah(p.lockedValue)}</span> terkunci
         </p>
         {ket ? <p className="text-muted text-[13px]">{ket}</p> : null}
       </Link>
@@ -150,11 +152,13 @@ function TabelBarang({ items }: { items: ProductSummary[] }) {
                 {p.name}
               </Link>
             </td>
-            <td>{labelStatus(p.status)}</td>
+            <td>
+              <ChipStatus status={p.status} />
+            </td>
             <td>{p.stock}</td>
-            <td>{rupiah(p.lastCost)}</td>
-            <td>{rupiah(p.sellPrice)}</td>
-            <td>{rupiah(p.lockedValue)}</td>
+            <td className="angka">{rupiah(p.lastCost)}</td>
+            <td className="angka">{rupiah(p.sellPrice)}</td>
+            <td className="angka">{rupiah(p.lockedValue)}</td>
             <td>{p.lastSaleDate ? tanggalPendek(p.lastSaleDate) : "Belum"}</td>
             <td>{p.priorityScore ?? "–"}</td>
           </tr>
