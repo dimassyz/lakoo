@@ -17,11 +17,12 @@ import { useAntrean, type Antrean } from "@/lib/worker";
 
 const kartu = "rounded-card border-line space-y-3 border bg-white p-4";
 const label = "block text-[15px] font-semibold";
-const input = "rounded-btn border-line mt-1 h-[52px] w-full border px-3";
+const input =
+  "rounded-btn border-line mt-1 h-[52px] w-full border px-3 transition duration-150 outline-none focus:border-marigold-kuat focus:ring-[3px] focus:ring-marigold/25";
 const tombolSimpan =
-  "rounded-btn bg-navy inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white disabled:opacity-60";
+  "rounded-btn inline-flex h-[52px] cursor-pointer items-center justify-center bg-marigold px-4 font-semibold text-navy transition duration-150 hover:bg-[#d9932b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:bg-marigold";
 const tombolBiasa =
-  "rounded-btn border-line inline-flex min-h-11 items-center border px-4 text-[15px] font-semibold";
+  "rounded-btn border-line inline-flex min-h-11 cursor-pointer items-center border px-4 text-[15px] font-semibold transition duration-150 hover:bg-navy hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:bg-transparent disabled:hover:text-inherit";
 
 /** FSD §15 — satu PATCH untuk profil + aturan + AI (semua field opsional). */
 function bodySimpan(isi: Isian): StorePatch {
@@ -164,7 +165,10 @@ function PilihPelanggan({
       <legend className={label}>Tipe pelanggan</legend>
       <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {PELANGGAN.map((p) => (
-          <label key={p.nilai} className="flex items-center gap-2 text-[15px]">
+          <label
+            key={p.nilai}
+            className="hover:text-navy flex cursor-pointer items-center gap-2 text-[15px] transition-colors duration-150"
+          >
             <input
               type="checkbox"
               checked={dipilih.includes(p.nilai)}
@@ -175,7 +179,7 @@ function PilihPelanggan({
                     : [...dipilih, p.nilai],
                 )
               }
-              className="h-5 w-5"
+              className="accent-marigold h-5 w-5 cursor-pointer"
             />
             {p.label}
           </label>
@@ -274,12 +278,12 @@ function SaranAI({
   return (
     <section className={kartu}>
       <h2 className="text-[19px] font-semibold">Saran AI</h2>
-      <label className="flex items-center gap-2 text-[15px]">
+      <label className="hover:text-navy flex cursor-pointer items-center gap-2 text-[15px] transition-colors duration-150">
         <input
           type="checkbox"
           checked={ai}
           onChange={(e) => onUbah(e.target.checked)}
-          className="h-5 w-5"
+          className="accent-marigold h-5 w-5 cursor-pointer"
         />
         Gunakan AI untuk menyusun saran
       </label>
