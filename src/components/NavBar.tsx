@@ -27,11 +27,18 @@ const lainnya: Item[] = [
 ];
 
 const tautan =
-  "flex cursor-pointer items-center gap-2 rounded-btn px-3 py-3 text-[15px] transition-colors duration-150";
+  "flex cursor-pointer items-center gap-2 rounded-btn px-3 py-3 text-[15px] transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2";
 /** Varian KHUSUS sidebar desktop (mockup Beranda): baris 40px (py-2).
     Menu "Lainnya" mobile tetap `tautan` — target sentuh ≥44px di HP. */
 const tautanSidebar =
-  "flex cursor-pointer items-center gap-2 rounded-btn px-3 py-2 text-[15px] transition-colors duration-150";
+  "flex cursor-pointer items-center gap-2 rounded-btn px-3 py-2 text-[15px] transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2";
+
+/** Item aktif: cocok persis untuk semua item; khusus Barang juga aktif di
+    sub-rutenya (/toko/barang/baru dan /toko/barang/[id]/ubah). Beranda (/toko)
+    tetap cocok persis agar tidak menyala di semua halaman /toko/*. */
+const isAktif = (pathname: string, href: string) =>
+  pathname === href ||
+  (href === "/toko/barang" && pathname.startsWith("/toko/barang/"));
 /** Tombol kecil ghost — affordance terpusat di @/lib/tombol (v6). */
 const tombolKecil = `${tombolHantu} rounded-btn px-3 py-3 text-[13px]`;
 
@@ -101,7 +108,7 @@ function DaftarItem({
   return (
     <ul className="space-y-1">
       {items.map((item) => {
-        const aktif = pathname === item.href;
+        const aktif = isAktif(pathname, item.href);
         const kelasAktif = sidebar
           ? aktif
             ? "bg-marigold text-navy font-bold"
@@ -175,10 +182,10 @@ function Sidebar({
 }
 
 const selBawah =
-  "flex cursor-pointer flex-col items-center py-3 text-[15px] transition-colors duration-150";
+  "flex cursor-pointer flex-col items-center py-3 text-[15px] transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-navy focus-visible:outline-offset-2";
 
 function SelBawah({ item, pathname }: { item: Item; pathname: string }) {
-  const aktif = pathname === item.href;
+  const aktif = isAktif(pathname, item.href);
   return (
     <li>
       <Link
