@@ -40,6 +40,20 @@ function MetaPrivasi({ origin }: { origin: string }) {
   );
 }
 
+/** Mockup privasi-mobile .top-link — bar kembali di atas kartu, khusus mobile. */
+function BarKembaliMobile() {
+  return (
+    <div className="border-garis text-navy -mx-5 -mt-8 mb-6 border-b px-5 py-4 text-sm font-semibold md:hidden">
+      <Link
+        href="/"
+        className="focus-visible:outline-navy no-underline focus-visible:outline-2 focus-visible:outline-offset-2"
+      >
+        ‹ Kembali ke beranda
+      </Link>
+    </div>
+  );
+}
+
 export default function Privasi({
   kontak,
   origin,
@@ -52,7 +66,8 @@ export default function Privasi({
       <MetaPrivasi origin={origin} />
 
       <main className="mx-auto max-w-[680px] px-5 py-8 md:px-8">
-        <div className="rounded-card border-line space-y-6 border bg-white p-4 md:p-6">
+        <BarKembaliMobile />
+        <div className="rounded-card border-line space-y-6 border bg-white p-6 md:p-8">
           <div className="space-y-2">
             <h1 className="text-[24px] leading-[1.2] font-bold tracking-[-0.01em] md:text-[28px] lg:text-[32px]">
               Privasi
@@ -85,7 +100,7 @@ export default function Privasi({
           <footer className="border-line border-t pt-4">
             <Link
               href="/"
-              className="hover:text-marigold-kuat focus-visible:outline-navy font-semibold underline transition-colors duration-150 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="hover:text-marigold-kuat focus-visible:outline-navy cursor-pointer font-semibold underline transition-colors duration-150 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               Kembali ke beranda
             </Link>

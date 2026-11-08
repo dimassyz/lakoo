@@ -378,7 +378,9 @@ function Akun({ me, antrean }: { me: Me; antrean: Antrean }) {
     <section className={`${kartu} lg:col-start-2 lg:row-start-2`}>
       <h2 className="text-[19px] font-semibold">Akun</h2>
       <p>{me.user.isDemo ? "Akun demo" : (me.user.email ?? "—")}</p>
-      <Keluar antrean={antrean} />
+      <div className="[&>button]:border-muted [&>button]:text-slate [&>button]:hover:border-slate [&>button]:hover:text-navy [&>button]:focus-visible:outline-navy [&>button]:cursor-pointer [&>button]:border [&>button]:font-semibold [&>button]:transition [&>button]:duration-150 [&>button]:focus-visible:outline-2 [&>button]:focus-visible:outline-offset-2 [&>button]:active:translate-y-px">
+        <Keluar antrean={antrean} />
+      </div>
     </section>
   );
 }

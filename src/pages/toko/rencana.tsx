@@ -22,10 +22,10 @@ function Kartu({ plan }: { plan: Plan }) {
     <li>
       <Link
         href={`/toko/barang/${plan.productId}#rencana`}
-        className="rounded-card border-line focus-visible:outline-navy block h-full space-y-2 border bg-white p-4 transition duration-150 focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="rounded-card border-line focus-visible:outline-navy block h-full cursor-pointer space-y-2 border bg-white p-5 transition duration-150 hover:bg-[#F3EFE7] focus-visible:outline-2 focus-visible:outline-offset-2 md:p-6"
       >
         <div className="flex items-baseline justify-between gap-2">
-          <p className="font-semibold">{plan.productName}</p>
+          <p className="text-base font-bold">{plan.productName}</p>
           <p className="text-muted text-[13px]">{labelRencana(plan.state)}</p>
         </div>
         <p>
@@ -35,16 +35,16 @@ function Kartu({ plan }: { plan: Plan }) {
           <p
             className={
               tempo
-                ? "text-danger text-[13px] font-semibold"
-                : "text-muted text-[13px]"
+                ? "text-danger text-sm font-bold"
+                : "text-muted text-sm font-bold"
             }
           >
             cek {tanggalPendek(tahap.dueOn)}
           </p>
         ) : null}
-        <div className="bg-muted/30 mt-1 h-2 w-full rounded-full">
+        <div className="mt-1 h-2 w-full rounded-full bg-[#EDE9E2]">
           <div
-            className="bg-sehat h-2 rounded-full"
+            className="bg-emerald h-2 rounded-full"
             style={{ width: `${Math.min(100, plan.recoveredPercent)}%` }}
           />
         </div>
@@ -82,9 +82,9 @@ function BandAI({ jumlah }: { jumlah: number }) {
 
 function PilihanTab({ tab, onPilih }: { tab: Tab; onPilih: (t: Tab) => void }) {
   const dasar =
-    "rounded-btn inline-flex min-h-11 cursor-pointer items-center border px-4 text-[15px] font-semibold transition duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy active:translate-y-px";
+    "rounded-btn inline-flex min-h-11 cursor-pointer items-center border px-5 text-[15px] font-semibold transition duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy active:translate-y-px";
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-3">
       <button
         type="button"
         aria-pressed={tab === "berjalan"}
@@ -129,7 +129,7 @@ function Isi({
         <button
           type="button"
           onClick={onMuat}
-          className="rounded-btn bg-navy focus-visible:outline-navy mt-3 inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold text-white transition duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
+          className="rounded-btn focus-visible:outline-navy bg-marigold text-navy hover:bg-marigold-hover hover:shadow-card disabled:hover:bg-marigold mt-3 inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold transition-[color,background-color,border-color,box-shadow,transform] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:shadow-none"
         >
           Coba lagi
         </button>
@@ -137,7 +137,12 @@ function Isi({
     );
   }
 
-  if (items.length === 0) return <p>{kosong}</p>;
+  if (items.length === 0)
+    return (
+      <div className="rounded-card border-garis bg-card shadow-card border p-6">
+        <p>{kosong}</p>
+      </div>
+    );
 
   return (
     <ul className="mx-auto max-w-[640px] space-y-4 lg:grid lg:max-w-none lg:grid-cols-2 lg:gap-4 lg:space-y-0">
