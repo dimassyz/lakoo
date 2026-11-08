@@ -60,7 +60,7 @@ const FAQ = [
 /* DESIGN-V3 §3 — tombol utama tinggi 52px, radius 12px (rounded-btn);
    kartu radius 16px (rounded-card), putih di atas kertas, garis rambut. */
 const tombolUtama =
-  "rounded-btn bg-navy inline-flex h-[52px] w-full items-center justify-center px-6 text-base font-semibold text-white disabled:opacity-60 sm:w-auto";
+  "rounded-btn inline-flex h-[52px] w-full cursor-pointer items-center justify-center bg-[#E8A33D] px-6 text-base font-semibold text-[#0A2540] transition duration-150 hover:bg-[#D9932B] hover:shadow-[0_2px_8px_rgb(10_37_64/0.18)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A2540] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:bg-[#E8A33D] disabled:hover:shadow-none sm:w-auto";
 const kartu = "rounded-card border-garis bg-card shadow-card border p-4";
 
 /** SPEC §7b — JSON-LD: SoftwareApplication, Organization, WebSite, FAQPage. */
@@ -176,7 +176,7 @@ function TombolDemo() {
           {memproses ? "Menyiapkan toko contoh…" : "Coba akun demo"}
         </button>
       </div>
-      <p className="text-muted text-base">
+      <p className="text-base text-[#BCD8CB]">
         Gratis. Tanpa kartu kredit. Bahasa Indonesia.
       </p>
       {pesan ? (
@@ -186,7 +186,7 @@ function TombolDemo() {
             type="button"
             onClick={() => void coba()}
             disabled={memproses}
-            className="rounded-btn border-line inline-flex min-h-11 items-center border px-4 text-base font-semibold"
+            className="rounded-btn border-line inline-flex min-h-11 cursor-pointer items-center border px-4 text-base font-semibold transition duration-150 hover:border-[#0A2540] hover:bg-[#0A2540] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A2540] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55"
           >
             Coba lagi
           </button>
@@ -198,11 +198,11 @@ function TombolDemo() {
 
 function Hero() {
   return (
-    <section className="space-y-4">
-      <h1 className="text-[30px] font-bold tracking-[-0.01em] md:text-[36px] lg:text-[46px]">
+    <section className="rounded-card space-y-4 bg-[#0B4A32] px-5 py-6 sm:px-6 lg:bg-transparent lg:p-0">
+      <h1 className="text-[30px] font-bold tracking-[-0.01em] text-white md:text-[36px] lg:text-[46px]">
         Berapa uangmu yang terkunci di rak?
       </h1>
-      <p className="text-base">
+      <p className="text-base text-[#BCD8CB]">
         Lakoo menghitung modal yang tertahan di barang tidak laku dan memberi
         rencana menjualnya kembali.
       </p>
@@ -278,10 +278,16 @@ function PertanyaanUmum() {
 }
 
 function Kaki() {
+  const tautan =
+    "cursor-pointer underline underline-offset-[3px] transition-colors duration-150 hover:text-[#C78118] hover:[text-decoration-thickness:2px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A2540]";
   return (
     <footer className="border-garis text-muted flex flex-wrap gap-4 border-t pt-4 text-[13px]">
-      <Link href="/privasi">Privasi</Link>
-      <a href="https://github.com/dimassyz/lakoo">GitHub</a>
+      <Link href="/privasi" className={tautan}>
+        Privasi
+      </Link>
+      <a href="https://github.com/dimassyz/lakoo" className={tautan}>
+        GitHub
+      </a>
       <span>Karya GTNIC 2026</span>
     </footer>
   );
@@ -295,7 +301,7 @@ export default function Landing({ origin }: { origin: string }) {
           hero dua kolom di lg (teks kiri, kartu angka kanan); teks bacaan
           panjang (Definisi, FAQ) tetap di kolom 672px supaya enak dibaca. */}
       <main className="mx-auto w-full max-w-2xl space-y-10 px-5 py-8 md:px-8 lg:max-w-[1200px] lg:px-10 lg:py-12">
-        <div className="grid items-start gap-6 lg:grid-cols-2">
+        <div className="lg:rounded-card grid items-start gap-6 lg:grid-cols-2 lg:gap-10 lg:bg-[#0B4A32] lg:p-10">
           <Hero />
           <AngkaContoh />
         </div>
