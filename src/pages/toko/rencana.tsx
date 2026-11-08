@@ -22,7 +22,7 @@ function Kartu({ plan }: { plan: Plan }) {
     <li>
       <Link
         href={`/toko/barang/${plan.productId}#rencana`}
-        className="rounded-card border-line block h-full space-y-2 border bg-white p-4"
+        className="rounded-card border-line focus-visible:outline-navy block h-full space-y-2 border bg-white p-4 transition duration-150 focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         <div className="flex items-baseline justify-between gap-2">
           <p className="font-semibold">{plan.productName}</p>
@@ -44,7 +44,7 @@ function Kartu({ plan }: { plan: Plan }) {
         ) : null}
         <div className="bg-muted/30 mt-1 h-2 w-full rounded-full">
           <div
-            className="bg-emerald h-2 rounded-full"
+            className="bg-sehat h-2 rounded-full"
             style={{ width: `${Math.min(100, plan.recoveredPercent)}%` }}
           />
         </div>
@@ -59,19 +59,21 @@ function Kartu({ plan }: { plan: Plan }) {
 /** DESIGN-V3 §5 — band Playbook AI di atas daftar rencana berjalan. */
 function BandAI({ jumlah }: { jumlah: number }) {
   return (
-    <div className="rounded-card bg-navy/5 flex items-start gap-3 p-4">
+    <div className="rounded-card flex items-start gap-3 bg-[#0b4a32] p-4">
       <PenLine
         size={20}
         strokeWidth={1.75}
         aria-hidden="true"
-        className="mt-0.5 shrink-0"
+        className="mt-0.5 shrink-0 text-[#bcd8cb]"
       />
       <div>
-        <p className="font-semibold">
+        <p className="font-semibold text-white">
           Playbook AI · disusun dari pola penjualan tokomu
         </p>
         {jumlah > 0 ? (
-          <p className="text-muted text-[13px]">{jumlah} rencana berjalan</p>
+          <p className="text-[13px] text-[#bcd8cb]">
+            {jumlah} rencana berjalan
+          </p>
         ) : null}
       </div>
     </div>
@@ -80,14 +82,14 @@ function BandAI({ jumlah }: { jumlah: number }) {
 
 function PilihanTab({ tab, onPilih }: { tab: Tab; onPilih: (t: Tab) => void }) {
   const dasar =
-    "rounded-btn inline-flex min-h-11 items-center border px-4 text-[15px] font-semibold";
+    "rounded-btn inline-flex min-h-11 cursor-pointer items-center border px-4 text-[15px] font-semibold transition duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy active:translate-y-px";
   return (
     <div className="flex gap-2">
       <button
         type="button"
         aria-pressed={tab === "berjalan"}
         onClick={() => onPilih("berjalan")}
-        className={`${dasar} ${tab === "berjalan" ? "border-navy text-navy" : "border-line"}`}
+        className={`${dasar} ${tab === "berjalan" ? "border-navy text-navy" : "border-line hover:border-slate hover:text-navy"}`}
       >
         Berjalan
       </button>
@@ -95,7 +97,7 @@ function PilihanTab({ tab, onPilih }: { tab: Tab; onPilih: (t: Tab) => void }) {
         type="button"
         aria-pressed={tab === "riwayat"}
         onClick={() => onPilih("riwayat")}
-        className={`${dasar} ${tab === "riwayat" ? "border-navy text-navy" : "border-line"}`}
+        className={`${dasar} ${tab === "riwayat" ? "border-navy text-navy" : "border-line hover:border-slate hover:text-navy"}`}
       >
         Riwayat
       </button>
@@ -127,7 +129,7 @@ function Isi({
         <button
           type="button"
           onClick={onMuat}
-          className="rounded-btn bg-navy mt-3 inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white"
+          className="rounded-btn bg-navy focus-visible:outline-navy mt-3 inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold text-white transition duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
         >
           Coba lagi
         </button>

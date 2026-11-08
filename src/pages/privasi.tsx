@@ -83,7 +83,10 @@ export default function Privasi({
           </section>
 
           <footer className="border-line border-t pt-4">
-            <Link href="/" className="font-semibold underline">
+            <Link
+              href="/"
+              className="hover:text-marigold-kuat focus-visible:outline-navy font-semibold underline transition-colors duration-150 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
               Kembali ke beranda
             </Link>
           </footer>

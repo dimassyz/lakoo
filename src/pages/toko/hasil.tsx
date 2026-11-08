@@ -7,15 +7,15 @@ import { rupiah, tanggalPendek } from "@/lib/ui";
 
 function Hero({ data }: { data: Results }) {
   return (
-    <section className="rounded-card border-line space-y-2 border bg-white p-4 md:col-span-2 md:p-6 lg:col-span-1">
-      <p className="text-muted">Kas pulih dari rencana</p>
-      <p className="angka text-[34px] leading-[1.1] font-bold text-[#0B8A5F] md:text-[40px] lg:text-[48px]">
+    <section className="rounded-card space-y-2 border border-transparent bg-[#0b4a32] p-4 md:col-span-2 md:p-6 lg:col-span-1">
+      <p className="text-marigold font-bold">Kas pulih dari rencana</p>
+      <p className="angka text-[34px] leading-[1.1] font-bold text-white md:text-[40px] lg:text-[48px]">
         {rupiah(data.totalRecovered)}
       </p>
-      <p className="angka">
+      <p className="angka text-[#bcd8cb]">
         {rupiah(data.recovered30d)} dalam 30 hari terakhir
       </p>
-      <p className="text-muted text-[13px]">
+      <p className="text-[13px] text-[#bcd8cb]">
         {data.activeCount} rencana berjalan · {data.finishedCount} selesai
       </p>
     </section>
@@ -27,7 +27,7 @@ function Ringkasan({ data }: { data: Results }) {
   if (!minggu) return null;
 
   return (
-    <section className="rounded-card border-line space-y-2 border bg-white p-4 lg:col-start-1">
+    <section className="rounded-card border-line space-y-2 border bg-[#f3e9d7] p-4 lg:col-start-1">
       <h2 className="text-[19px] font-semibold">
         Minggu {tanggalPendek(minggu.weekStart)}–{tanggalPendek(minggu.weekEnd)}
       </h2>
@@ -44,7 +44,7 @@ function BarisRencana({ plan }: { plan: Plan }) {
       <div className="flex items-baseline justify-between gap-2">
         <Link
           href={`/toko/barang/${plan.productId}#rencana`}
-          className="font-semibold underline"
+          className="hover:text-marigold-kuat focus-visible:outline-navy font-semibold underline transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           {plan.productName}
         </Link>
@@ -55,7 +55,7 @@ function BarisRencana({ plan }: { plan: Plan }) {
       </p>
       <div className="bg-muted/30 h-2 w-full rounded-full">
         <div
-          className="bg-emerald h-2 rounded-full"
+          className="bg-sehat h-2 rounded-full"
           style={{ width: `${Math.min(100, plan.recoveredPercent)}%` }}
         />
       </div>
@@ -84,7 +84,7 @@ function Kosong() {
       </p>
       <Link
         href="/toko/rencana"
-        className="rounded-btn bg-navy inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white"
+        className="rounded-btn bg-navy focus-visible:outline-navy inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold text-white transition duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
       >
         Lihat rencana
       </Link>
@@ -114,7 +114,7 @@ function Isi({
         <button
           type="button"
           onClick={onMuat}
-          className="rounded-btn bg-navy mt-3 inline-flex h-[52px] items-center justify-center px-4 font-semibold text-white"
+          className="rounded-btn bg-navy focus-visible:outline-navy mt-3 inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold text-white transition duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
         >
           Coba lagi
         </button>
