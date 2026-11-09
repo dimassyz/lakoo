@@ -5,7 +5,7 @@ import {
   dariTabelBarang,
   dariTabelJual,
   MAKS_BARANG,
-  PESAN_BESAR,
+  MAKS_PENJUALAN,
 } from "./importData";
 
 const CSV_BARANG = `Nama_Barang,Harga_Beli,Harga_Jual,Stok,Satuan,Kategori
@@ -53,7 +53,7 @@ describe("import barang (FSD §14)", () => {
     expect(hasil.rows).toHaveLength(0);
   });
 
-  it("menolak lebih dari 500 baris dengan pesan pecah file", () => {
+  it("menolak lebih dari 500 baris dan menyebut jumlah + batasnya (QA-8 F-04)", () => {
     const baris = Array.from(
       { length: MAKS_BARANG + 1 },
       (_, i) => `Barang ${i},1000,1500,5,pcs,lain`,
@@ -65,7 +65,9 @@ describe("import barang (FSD §14)", () => {
     );
     expect(hasil.ok).toBe(false);
     if (hasil.ok) return;
-    expect(hasil.pesan).toBe(PESAN_BESAR);
+    expect(hasil.pesan).toBe(
+      "File berisi 501 baris — maksimal 500 baris per impor. Pecah jadi beberapa file.",
+    );
   });
 });
 
@@ -92,20 +94,106 @@ describe("import penjualan (FSD §14)", () => {
     expect(hasil.rows[0]?.date).toBe("2026-10-02");
     expect(hasil.rows[0]?.qty).toBe("2");
   });
+
+  it("menolak lebih dari 5.000 baris dan menyebut batas penjualan (QA-8 F-04)", () => {
+    const baris = Array.from(
+      { length: MAKS_PENJUALAN + 1 },
+      (_, i) => `2026-10-01,Barang ${i},1`,
+    );
+    const hasil = dariTabelJual(
+      csvKeTabel(`tanggal,nama_barang,jumlah\n${baris.join("\n")}`),
+    );
+    expect(hasil.ok).toBe(false);
+    if (hasil.ok) return;
+    expect(hasil.pesan).toContain("5001 baris");
+    expect(hasil.pesan).toContain("maksimal 5000 baris");
+  });
 });
 
-describe("unduh baris bermasalah (PRD F-04 AC-3)", () => {
-  it("menambahkan kolom alasan dan memakai baris asli", () => {
-    const rows = [{ name: "Teh", costPrice: "0", sellPrice: "0", stock: "1" }];
-    const csv = csvBermasalah(rows, [{ index: 0, message: "invalid_price" }]);
+describe("unduh baris bermasalah (PRD F-04 AC-3, QA-8 F-01)", () => {
+  it("barang: header kolom template dengan alasan terakhir", () => {
+    const rows = [
+      {
+        name: "Teh",
+        unit: "botol",
+        category: "minuman",
+        costPrice: "0",
+        sellPrice: "0",
+        stock: "1",
+      },
+    ];
+    const csv = csvBermasalah("barang", rows, [
+      { index: 0, message: "Harga harus angka bulat ≥ 0." },
+    ]);
     const tabel = csvKeTabel(csv);
     expect(tabel[0]).toEqual([
-      "name",
-      "costPrice",
-      "sellPrice",
-      "stock",
+      "nama_barang",
+      "harga_beli",
+      "harga_jual",
+      "stok",
+      "satuan",
+      "kategori",
       "alasan",
     ]);
-    expect(tabel[1]?.[4]).toBe("invalid_price");
+    expect(tabel[1]).toEqual([
+      "Teh",
+      "0",
+      "0",
+      "1",
+      "botol",
+      "minuman",
+      "Harga harus angka bulat ≥ 0.",
+    ]);
+  });
+});
+
+describe("impor ulang file unduhan baris bermasalah (QA-8 F-01)", () => {
+  it("barang: file unduhan bisa diimpor ulang apa adanya (alasan diabaikan)", () => {
+    const rows = [
+      {
+        name: "Teh Botol",
+        unit: "botol",
+        category: "minuman",
+        costPrice: "12000",
+        sellPrice: "15000",
+        stock: "24",
+      },
+      {
+        name: "Kopi Sachet",
+        unit: "sachet",
+        category: "minuman",
+        costPrice: "800",
+        sellPrice: "1000",
+        stock: "120",
+      },
+    ];
+    const csv = csvBermasalah("barang", rows, [
+      { index: 0, message: "Harga harus angka bulat ≥ 0." },
+      { index: 1, message: "Stok awal harus angka bulat ≥ 0." },
+    ]);
+    const hasil = dariTabelBarang(csvKeTabel(csv));
+    expect(hasil.ok).toBe(true);
+    if (!hasil.ok) return;
+    expect(hasil.rows).toEqual(rows);
+  });
+
+  it("jual: header template penjualan dan bisa diimpor ulang", () => {
+    const rows = [{ date: "2026-10-01", productName: "Teh Botol", qty: "3" }];
+    const csv = csvBermasalah("jual", rows, [
+      { index: 0, message: "Stok tercatat hanya 0" },
+    ]);
+    const tabel = csvKeTabel(csv);
+    expect(tabel[0]).toEqual(["tanggal", "nama_barang", "jumlah", "alasan"]);
+    expect(tabel[1]).toEqual([
+      "2026-10-01",
+      "Teh Botol",
+      "3",
+      "Stok tercatat hanya 0",
+    ]);
+
+    const hasil = dariTabelJual(csvKeTabel(csv));
+    expect(hasil.ok).toBe(true);
+    if (!hasil.ok) return;
+    expect(hasil.rows).toEqual(rows);
   });
 });

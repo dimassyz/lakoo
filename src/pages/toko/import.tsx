@@ -153,6 +153,8 @@ function useImport(jenis: Jenis) {
     ubahDuplikat,
     rows,
     hasil,
+    // Baris yang benar-benar berubah bila disimpan (dibuat + diperbarui).
+    siapSimpan: hasil === null ? 0 : hasil.created + hasil.updated,
     selesai,
     pesan,
     memuat,
@@ -282,20 +284,30 @@ function TabelBermasalah({
 }
 
 function HasilImport({
+  jenis,
   hasil,
   baris,
   selesai,
 }: {
+  jenis: Jenis;
   hasil: ImportResult;
   baris: Baris[];
   selesai: boolean;
 }) {
+  // QA-8 F-03 — ember pratinjau saling lepas dan sama dengan efek commit:
+  // dibuat / diperbarui / dilewati tidak boleh menghitung baris yang sama.
+  const bagian: string[] = [];
+  if (hasil.created > 0) bagian.push(`${hasil.created} baris siap dibuat`);
+  if (hasil.updated > 0) bagian.push(`${hasil.updated} baris akan diperbarui`);
+  if (hasil.skipped > 0) bagian.push(`${hasil.skipped} sudah ada (dilewati)`);
+  bagian.push(`${hasil.invalidRows.length} baris bermasalah`);
+
   return (
     <div className={`${kartu} md:col-span-2`}>
       <p className="font-semibold">
         {selesai
           ? `Selesai: ${hasil.created} dibuat, ${hasil.updated} diperbarui, ${hasil.skipped} dilewati`
-          : `${hasil.validRows} baris siap, ${hasil.invalidRows.length} baris bermasalah, ${hasil.skipped} sudah ada`}
+          : bagian.join(", ")}
       </p>
 
       {hasil.invalidRows.length > 0 ? (
@@ -305,6 +317,7 @@ function HasilImport({
             unduh(
               "baris-bermasalah.csv",
               csvBermasalah(
+                jenis,
                 baris as unknown as Record<string, unknown>[],
                 hasil.invalidRows,
               ),
@@ -341,17 +354,22 @@ function IsiTab({ jenis, aktif }: { jenis: Jenis; aktif: boolean }) {
       ) : null}
 
       {imp.hasil ? (
-        <HasilImport hasil={imp.hasil} baris={imp.rows} selesai={imp.selesai} />
+        <HasilImport
+          jenis={jenis}
+          hasil={imp.hasil}
+          baris={imp.rows}
+          selesai={imp.selesai}
+        />
       ) : null}
 
-      {imp.hasil && !imp.selesai && imp.hasil.validRows > 0 ? (
+      {imp.hasil && !imp.selesai && imp.siapSimpan > 0 ? (
         <button
           type="button"
           onClick={() => void imp.kirim("commit", imp.rows)}
           disabled={imp.memuat}
           className={tombolUtama}
         >
-          Simpan {imp.hasil.validRows} baris
+          Simpan {imp.siapSimpan} baris
         </button>
       ) : null}
 
