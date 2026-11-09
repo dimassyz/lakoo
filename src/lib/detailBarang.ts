@@ -39,28 +39,43 @@ export function useProduk(id: string | undefined) {
   const [data, setData] = useState<ProductDetail | null>(null);
   const [memuat, setMemuat] = useState(true);
   const [gagal, setGagal] = useState(false);
+  const [tidakDitemukan, setTidakDitemukan] = useState(false);
 
   const muat = useCallback(async () => {
     if (!id) return;
     setMemuat(true);
     setGagal(false);
-    const { data: hasil, error } = await api.GET("/products/{productId}", {
-      params: { path: { productId: id } },
-    });
-    if (error || !hasil) {
+    setTidakDitemukan(false);
+    try {
+      const {
+        data: hasil,
+        error,
+        response,
+      } = await api.GET("/products/{productId}", {
+        params: { path: { productId: id } },
+      });
+      if (error || !hasil) {
+        setData(null);
+        // 404 = memang tidak ada; kegagalan lain (termasuk sinyal putus)
+        // adalah "gagal memuat" yang bisa dicoba lagi, bukan vonis kosong.
+        if (response.status === 404) setTidakDitemukan(true);
+        else setGagal(true);
+      } else {
+        setData(hasil);
+      }
+    } catch {
       setData(null);
       setGagal(true);
-    } else {
-      setData(hasil);
+    } finally {
+      setMemuat(false);
     }
-    setMemuat(false);
   }, [id]);
 
   useEffect(() => {
     void muat();
   }, [muat]);
 
-  return { data, memuat, gagal, muat };
+  return { data, memuat, gagal, tidakDitemukan, muat };
 }
 
 /** Rencana suggested/active + rencana terakhir yang sudah berakhir. */
@@ -68,23 +83,39 @@ export function useRencana(id: string | undefined) {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [lastEnded, setLastEnded] = useState<Plan | null>(null);
   const [memuat, setMemuat] = useState(true);
+  const [gagal, setGagal] = useState(false);
 
   const muat = useCallback(async () => {
     if (!id) return;
     setMemuat(true);
-    const { data } = await api.GET("/products/{productId}/plans/current", {
-      params: { path: { productId: id } },
-    });
-    setPlan(data?.plan ?? null);
-    setLastEnded(data?.lastEnded ?? null);
-    setMemuat(false);
+    setGagal(false);
+    try {
+      const { data, error } = await api.GET(
+        "/products/{productId}/plans/current",
+        { params: { path: { productId: id } } },
+      );
+      if (error || !data) {
+        setPlan(null);
+        setLastEnded(null);
+        setGagal(true);
+      } else {
+        setPlan(data.plan ?? null);
+        setLastEnded(data.lastEnded ?? null);
+      }
+    } catch {
+      setPlan(null);
+      setLastEnded(null);
+      setGagal(true);
+    } finally {
+      setMemuat(false);
+    }
   }, [id]);
 
   useEffect(() => {
     void muat();
   }, [muat]);
 
-  return { plan, lastEnded, memuat, muat };
+  return { plan, lastEnded, memuat, gagal, muat };
 }
 
 /** Semua aksi layar detail; tiap fungsi mengembalikan pesan gagal atau null. */

@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
 import { PenLine } from "lucide-react";
+import { GagalMuat } from "@/components/GagalMuat";
 import { AppShell } from "@/components/NavBar";
 import type { Plan } from "@/lib/api";
 import {
@@ -121,20 +122,7 @@ function Isi({
   if (memuat) return <p className="text-muted">Memuat…</p>;
 
   if (gagal) {
-    return (
-      <div className="rounded-card border-line border p-4">
-        <p className="font-semibold">
-          Gagal memuat. Periksa sinyal lalu coba lagi.
-        </p>
-        <button
-          type="button"
-          onClick={onMuat}
-          className="rounded-btn focus-visible:outline-navy bg-marigold text-navy hover:bg-marigold-hover hover:shadow-card disabled:hover:bg-marigold mt-3 inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold transition-[color,background-color,border-color,box-shadow,transform] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:shadow-none"
-        >
-          Coba lagi
-        </button>
-      </div>
-    );
+    return <GagalMuat muat={onMuat} />;
   }
 
   if (items.length === 0)

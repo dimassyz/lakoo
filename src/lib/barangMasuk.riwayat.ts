@@ -15,13 +15,18 @@ export function useRiwayatMasuk() {
   const muat = useCallback(async () => {
     setMemuat(true);
     setGagal(false);
-    const { data, error } = await api.GET("/stock-ins", {});
-    if (error || !data) {
+    try {
+      const { data, error } = await api.GET("/stock-ins", {});
+      if (error || !data) {
+        setGagal(true);
+      } else {
+        setItems(data.items);
+      }
+    } catch {
       setGagal(true);
-    } else {
-      setItems(data.items);
+    } finally {
+      setMemuat(false);
     }
-    setMemuat(false);
   }, []);
 
   useEffect(() => {

@@ -18,6 +18,7 @@ import {
 } from "@/lib/detailBarang";
 import { rupiah, tanggalPendek } from "@/lib/ui";
 import { ChipStatus } from "@/components/ChipStatus";
+import { GagalMuat } from "@/components/GagalMuat";
 
 /* Palet v6 + affordance (mock.css .btn-ghost/.btn-primary): ghost hover
    border slate + teks ink; utama marigold solid teks ink, hover #D9932B. */
@@ -242,6 +243,43 @@ function Kerangka({ children }: { children: React.ReactNode }) {
   );
 }
 
+function TidakDitemukan() {
+  return (
+    <Kerangka>
+      <div className="rounded-card border-garis bg-card border p-4">
+        <p className="text-navy font-semibold">Barang tidak ditemukan.</p>
+        <Link href="/toko/barang" className={`${tombolUtama} mt-4`}>
+          Kembali ke daftar
+        </Link>
+      </div>
+    </Kerangka>
+  );
+}
+
+type PropsRencana = {
+  p: ProductDetail;
+  rencana: ReturnType<typeof useRencana>;
+  aksi: ReturnType<typeof useAksiRencana> & ReturnType<typeof useAksiTahap>;
+  onBagikan: (t: string | null) => void;
+};
+
+function RencanaDetail({ p, rencana, aksi, onBagikan }: PropsRencana) {
+  if (rencana.gagal) {
+    return <GagalMuat muat={() => void rencana.muat()} />;
+  }
+
+  return (
+    <BagianRencana
+      produk={p}
+      plan={rencana.plan}
+      lastEnded={rencana.lastEnded}
+      memuat={rencana.memuat}
+      aksi={aksi}
+      onBagikan={onBagikan}
+    />
+  );
+}
+
 /**
  * DESIGN-V3 §5 — md/lg dua kolom: statistik + grafik di kiri, kartu uang
  * terkunci + aksi di rel kanan (360px pada lg). HP bertumpuk satu kolom.
@@ -310,11 +348,9 @@ function IsiDetail({ p, rencana, aksi, aksiRencana, aksiTahap }: PropsIsi) {
       ) : null}
       <section id="rencana" className="space-y-4">
         <h2 className="text-[19px] font-semibold">Rencana</h2>
-        <BagianRencana
-          produk={p}
-          plan={rencana.plan}
-          lastEnded={rencana.lastEnded}
-          memuat={rencana.memuat}
+        <RencanaDetail
+          p={p}
+          rencana={rencana}
           aksi={{ ...aksiRencana, ...aksiTahap }}
           onBagikan={setBagikan}
         />
@@ -362,15 +398,14 @@ export default function DetailBarangPage() {
     );
   }
 
+  if (produk.tidakDitemukan) {
+    return <TidakDitemukan />;
+  }
+
   if (produk.gagal || !produk.data) {
     return (
       <Kerangka>
-        <div className="rounded-card border-garis bg-card border p-4">
-          <p className="text-navy font-semibold">Barang tidak ditemukan.</p>
-          <Link href="/toko/barang" className={`${tombolUtama} mt-4`}>
-            Kembali ke daftar
-          </Link>
-        </div>
+        <GagalMuat muat={() => void produk.muat()} />
       </Kerangka>
     );
   }

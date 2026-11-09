@@ -57,16 +57,22 @@ export function useBarangAktif() {
   const muat = useCallback(async () => {
     setMemuat(true);
     setGagal(false);
-    const { data, error } = await api.GET("/products", {
-      params: { query: { sort: "frequent" } },
-    });
-    if (error || !data) {
+    try {
+      const { data, error } = await api.GET("/products", {
+        params: { query: { sort: "frequent" } },
+      });
+      if (error || !data) {
+        setItems([]);
+        setGagal(true);
+      } else {
+        setItems(data.items);
+      }
+    } catch {
       setItems([]);
       setGagal(true);
-    } else {
-      setItems(data.items);
+    } finally {
+      setMemuat(false);
     }
-    setMemuat(false);
   }, []);
 
   useEffect(() => {

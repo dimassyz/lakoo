@@ -12,6 +12,7 @@ import {
   TanganiDulu,
   tanpaBarang,
 } from "@/components/DashboardSections";
+import { GagalMuat } from "@/components/GagalMuat";
 import { api, type Dashboard } from "@/lib/api";
 import { tombolUtama } from "@/lib/tombol";
 
@@ -23,10 +24,15 @@ function useDashboard() {
   const muat = useCallback(async () => {
     setMemuat(true);
     setGagal(false);
-    const { data: hasil, error } = await api.GET("/dashboard");
-    if (error) setGagal(true);
-    else setData(hasil ?? null);
-    setMemuat(false);
+    try {
+      const { data: hasil, error } = await api.GET("/dashboard");
+      if (error) setGagal(true);
+      else setData(hasil ?? null);
+    } catch {
+      setGagal(true);
+    } finally {
+      setMemuat(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -85,23 +91,6 @@ function Kerangka() {
   );
 }
 
-function Gagal({ muat }: { muat: () => void }) {
-  return (
-    <div className="rounded-card border-garis bg-card border p-4">
-      <p className="text-navy font-semibold">
-        Gagal memuat. Periksa sinyal lalu coba lagi.
-      </p>
-      <button
-        type="button"
-        onClick={muat}
-        className={`${tombolUtama} rounded-btn mt-4 inline-flex min-h-11 items-center px-4`}
-      >
-        Coba lagi
-      </button>
-    </div>
-  );
-}
-
 export default function BerandaPage() {
   const { data, memuat, gagal, muat } = useDashboard();
 
@@ -112,7 +101,7 @@ export default function BerandaPage() {
       </Head>
       <AppShell store={data?.store}>
         {memuat ? <Kerangka /> : null}
-        {!memuat && gagal ? <Gagal muat={() => void muat()} /> : null}
+        {!memuat && gagal ? <GagalMuat muat={() => void muat()} /> : null}
         {!memuat && !gagal && data ? <Isi data={data} /> : null}
       </AppShell>
       <Link

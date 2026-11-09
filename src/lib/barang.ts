@@ -42,15 +42,22 @@ export function useDaftarBarang(filter: Filter, cari: string, arsip: boolean) {
   const muat = useCallback(async () => {
     setMemuat(true);
     setGagal(false);
-    const { data, error } = await api.GET("/products", {
-      params: { query: query(filter, cari, arsip) },
-    });
-    if (error || !data) {
+    try {
+      const { data, error } = await api.GET("/products", {
+        params: { query: query(filter, cari, arsip) },
+      });
+      if (error || !data) {
+        setGagal(true);
+      } else {
+        setItems(data.items);
+      }
+    } catch {
+      // Fetch melempar saat koneksi putus/abort (bukan {error}) — tanpa
+      // tangkapan ini `memuat` tidak pernah lepas dan halaman macet.
       setGagal(true);
-    } else {
-      setItems(data.items);
+    } finally {
+      setMemuat(false);
     }
-    setMemuat(false);
   }, [filter, cari, arsip]);
 
   // 300 ms: satu request per jeda ketik, bukan satu per huruf.

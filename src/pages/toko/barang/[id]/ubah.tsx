@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import type { ReactNode } from "react";
 import { FormBarang } from "@/components/FormBarang";
+import { GagalMuat } from "@/components/GagalMuat";
 import { AppShell } from "@/components/NavBar";
 import { useProduk } from "@/lib/detailBarang";
 import { isianDari } from "@/lib/formBarang";
@@ -14,6 +15,22 @@ function Kerangka({ children }: { children: ReactNode }) {
         {children}
       </div>
     </AppShell>
+  );
+}
+
+function TidakDitemukan() {
+  return (
+    <Kerangka>
+      <div className="rounded-card border-line border p-4">
+        <p className="font-semibold">Barang tidak ditemukan.</p>
+        <Link
+          href="/toko/barang"
+          className="rounded-btn bg-marigold text-navy focus-visible:outline-navy mt-3 inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold transition duration-150 hover:bg-[#d9932b] hover:shadow-[0_2px_8px_rgb(10_37_64/0.18)] focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
+        >
+          Kembali ke daftar
+        </Link>
+      </div>
+    </Kerangka>
   );
 }
 
@@ -31,18 +48,14 @@ export default function UbahBarangPage() {
     );
   }
 
+  if (!produk.data && produk.tidakDitemukan) {
+    return <TidakDitemukan />;
+  }
+
   if (!produk.data) {
     return (
       <Kerangka>
-        <div className="rounded-card border-line border p-4">
-          <p className="font-semibold">Barang tidak ditemukan.</p>
-          <Link
-            href="/toko/barang"
-            className="rounded-btn bg-marigold text-navy focus-visible:outline-navy mt-3 inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold transition duration-150 hover:bg-[#d9932b] hover:shadow-[0_2px_8px_rgb(10_37_64/0.18)] focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
-          >
-            Kembali ke daftar
-          </Link>
-        </div>
+        <GagalMuat muat={() => void produk.muat()} />
       </Kerangka>
     );
   }
