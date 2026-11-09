@@ -22,24 +22,31 @@ export function useRekap(tanggal: string, mode: Mode, awal?: Nilai) {
   const muat = useCallback(async () => {
     setMemuat(true);
     setGagal(false);
-    const { data: hasil, error } = await api.GET("/sales/recap", {
-      params: { query: { date: tanggal } },
-    });
-    if (error || !hasil) {
+    try {
+      const { data: hasil, error } = await api.GET("/sales/recap", {
+        params: { query: { date: tanggal } },
+      });
+      if (error || !hasil) {
+        setData(null);
+        setGagal(true);
+      } else {
+        setData(hasil);
+        setNilai(
+          awal ??
+            (mode === "quantity"
+              ? Object.fromEntries(
+                  hasil.lines.map((l) => [l.productId, l.recordedQty]),
+                )
+              : {}),
+        );
+      }
+    } catch {
+      // Hanya jalur baca; antrean tulis (outbox) tidak disentuh.
       setData(null);
       setGagal(true);
-    } else {
-      setData(hasil);
-      setNilai(
-        awal ??
-          (mode === "quantity"
-            ? Object.fromEntries(
-                hasil.lines.map((l) => [l.productId, l.recordedQty]),
-              )
-            : {}),
-      );
+    } finally {
+      setMemuat(false);
     }
-    setMemuat(false);
   }, [tanggal, mode, awal]);
 
   useEffect(() => {

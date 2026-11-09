@@ -2,8 +2,9 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
-import { AppShell } from "@/components/NavBar";
 import { BarisNota, BarisRiwayat } from "@/components/BarisMasuk";
+import { GagalMuat } from "@/components/GagalMuat";
+import { AppShell } from "@/components/NavBar";
 import { NotaTempel } from "@/components/NotaTempel";
 import {
   barisDariPayload,
@@ -144,20 +145,7 @@ function IsiRiwayat({ l }: { l: LayarMasuk }) {
   }
 
   if (l.riwayat.gagal) {
-    return (
-      <div className="rounded-card border-line border p-4">
-        <p className="font-semibold">
-          Gagal memuat. Periksa sinyal lalu coba lagi.
-        </p>
-        <button
-          type="button"
-          onClick={() => void l.riwayat.muat()}
-          className="rounded-btn bg-marigold text-navy focus-visible:outline-navy mt-3 inline-flex h-[52px] cursor-pointer items-center justify-center px-4 font-semibold transition duration-150 hover:bg-[#d9932b] hover:shadow-[0_2px_8px_rgb(10_37_64/0.18)] focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
-        >
-          Coba lagi
-        </button>
-      </div>
-    );
+    return <GagalMuat muat={() => void l.riwayat.muat()} />;
   }
 
   if (l.riwayat.items.length === 0) {

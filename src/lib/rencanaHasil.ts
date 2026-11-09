@@ -11,17 +11,25 @@ export function useDaftarRencana(aktif: boolean) {
   const muat = useCallback(async () => {
     setMemuat(true);
     setGagal(false);
-    const res = aktif
-      ? await api.GET("/plans", { params: { query: { state: ["active"] } } })
-      : await api.GET("/plans");
+    try {
+      const res = aktif
+        ? await api.GET("/plans", { params: { query: { state: ["active"] } } })
+        : await api.GET("/plans");
 
-    if (res.error || !res.data) {
+      if (res.error || !res.data) {
+        setItems([]);
+        setGagal(true);
+      } else {
+        setItems(res.data.items);
+      }
+    } catch {
+      // Fetch melempar saat koneksi putus/abort — halaman tidak boleh
+      // tertinggal di "Memuat…" tanpa jalan pulih.
       setItems([]);
       setGagal(true);
-    } else {
-      setItems(res.data.items);
+    } finally {
+      setMemuat(false);
     }
-    setMemuat(false);
   }, [aktif]);
 
   useEffect(() => {
@@ -40,14 +48,20 @@ export function useHasil() {
   const muat = useCallback(async () => {
     setMemuat(true);
     setGagal(false);
-    const { data: hasil, error } = await api.GET("/results");
-    if (error || !hasil) {
+    try {
+      const { data: hasil, error } = await api.GET("/results");
+      if (error || !hasil) {
+        setData(null);
+        setGagal(true);
+      } else {
+        setData(hasil);
+      }
+    } catch {
       setData(null);
       setGagal(true);
-    } else {
-      setData(hasil);
+    } finally {
+      setMemuat(false);
     }
-    setMemuat(false);
   }, []);
 
   useEffect(() => {

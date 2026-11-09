@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
+import { GagalMuat } from "@/components/GagalMuat";
 import { AppShell } from "@/components/NavBar";
 import type { ProductSummary } from "@/lib/api";
 import {
@@ -259,20 +260,7 @@ function IsiDaftar({
   if (memuat) return <p className="text-muted text-base">Memuat…</p>;
 
   if (gagal) {
-    return (
-      <div className="rounded-card border-garis bg-card border p-4">
-        <p className="text-navy font-semibold">
-          Gagal memuat. Periksa sinyal lalu coba lagi.
-        </p>
-        <button
-          type="button"
-          onClick={onMuat}
-          className={`${tombolUtama} mt-4`}
-        >
-          Coba lagi
-        </button>
-      </div>
-    );
+    return <GagalMuat muat={onMuat} />;
   }
 
   if (items.length === 0) return <Kosong adaFilter={adaFilter} />;
