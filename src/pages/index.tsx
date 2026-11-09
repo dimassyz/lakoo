@@ -53,7 +53,7 @@ const FAQ = [
   {
     tanya: "Berapa biayanya?",
     jawab:
-      "Gratis, tanpa kartu kredit dan tanpa masa uji coba berbatas. Anda bisa mencoba akun demo tanpa mendaftar untuk melihat cara kerjanya dengan data toko contoh, lalu membuat akun sendiri saat sudah yakin. Lakoo berbahasa Indonesia sepenuhnya.",
+      "Gratis, tanpa kartu kredit. Lakoo bisa dicoba lewat akun demo berisi data toko contoh untuk melihat cara kerjanya; belum ada pendaftaran akun. Lakoo berbahasa Indonesia sepenuhnya.",
   },
 ];
 

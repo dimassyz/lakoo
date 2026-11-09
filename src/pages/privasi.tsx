@@ -1,7 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 
-/** FSD §2 — halaman statis satu layar; satu-satunya isi dinamis = kontak dari env. */
+/** FSD §2 — halaman statis satu layar; satu-satunya prop dinamis = origin. */
 const BAGIAN = [
   {
     judul: "Yang kami simpan",
@@ -24,7 +24,7 @@ const BAGIAN = [
 /** SPEC §7b — metadata lengkap untuk halaman publik; dipisah agar `Privasi` tetap pendek. */
 function MetaPrivasi({ origin }: { origin: string }) {
   const deskripsi =
-    "Data apa yang disimpan Lakoo, apa yang tidak, dan cara meminta penghapusan akun.";
+    "Data apa yang disimpan Lakoo, apa yang tidak, dan soal penghapusan data.";
   return (
     <Head>
       <title>Privasi — Lakoo</title>
@@ -54,13 +54,7 @@ function BarKembaliMobile() {
   );
 }
 
-export default function Privasi({
-  kontak,
-  origin,
-}: {
-  kontak: string;
-  origin: string;
-}) {
+export default function Privasi({ origin }: { origin: string }) {
   return (
     <>
       <MetaPrivasi origin={origin} />
@@ -86,14 +80,11 @@ export default function Privasi({
           ))}
 
           <section className="space-y-1">
-            <h2 className="text-[19px] font-semibold">Menghapus akun</h2>
+            <h2 className="text-[19px] font-semibold">Menghapus data</h2>
             <p className="leading-[1.7]">
-              Kirim permintaan hapus akun ke{" "}
-              <span className="font-semibold">
-                {kontak || "(alamat kontak belum diatur di lingkungan ini)"}
-              </span>
-              . Kami menghapus akun beserta data tokonya, dan Anda akan mendapat
-              balasan saat selesai.
+              Lakoo tidak punya pendaftaran akun; aksesnya hanya lewat akun demo
+              yang datanya terhapus sendiri dalam 24 jam. Jadi tidak ada data
+              tetap milik Anda yang tersimpan di sini.
             </p>
           </section>
 
@@ -111,11 +102,10 @@ export default function Privasi({
   );
 }
 
-/** FSD §2 — alamat kontak dari env, ditampilkan sebagai teks (bukan tautan). */
+/** FSD §2 — origin untuk URL kanonis di metadata. */
 export function getStaticProps() {
   return {
     props: {
-      kontak: process.env.CONTACT_EMAIL ?? "",
       origin: process.env.APP_ORIGIN ?? "",
     },
   };
