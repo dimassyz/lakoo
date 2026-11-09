@@ -107,7 +107,7 @@ async function sesiB(): Promise<{ req: typeof req; storeId: string }> {
     body: JSON.stringify({
       storeName: "Toko Uji B",
       email: "b@contoh.id",
-      password: "sandi-uji-12345",
+      password: "rahasia123",
     }),
   });
   const cookieB = (
