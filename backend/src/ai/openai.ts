@@ -30,6 +30,7 @@ function requestBody(config: AiClientConfig, context: PromptContext): string {
   return JSON.stringify({
     model: config.model,
     temperature: 0.7,
+    response_format: { type: "json_object" },
     messages: [
       { role: "system", content: SYSTEM_INSTRUCTION },
       { role: "user", content: buildContext(context) },
@@ -72,6 +73,8 @@ export async function requestPlan(
       headers: {
         "content-type": "application/json",
         authorization: `Bearer ${config.apiKey}`,
+        // Gateway menolak User-Agent bawaan Node ("node") — UA ini wajib (terverifikasi).
+        "user-agent": "curl/8.5.0",
       },
       signal: controller.signal,
       body: requestBody(config, context),
