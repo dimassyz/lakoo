@@ -111,6 +111,33 @@ function isInvalid<T extends object>(
   return "code" in value;
 }
 
+/** Tanggal WIB (YYYY-MM-DD) dari timestamp — WIB = UTC+7 tanpa DST. */
+function tanggalWib(waktu: Date | string): string {
+  const d = waktu instanceof Date ? waktu : new Date(waktu);
+  return new Date(d.getTime() + 7 * 3_600_000).toISOString().slice(0, 10);
+}
+
+const BULAN_SINGKAT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mei",
+  "Jun",
+  "Jul",
+  "Agu",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Des",
+];
+
+/** `2026-11-09` → `9 Nov 2026`, untuk pesan yang dibaca pengguna. */
+function tanggalPanjang(iso: string): string {
+  const [tahun, bulan, hari] = iso.split("-");
+  return `${Number(hari)} ${BULAN_SINGKAT[Number(bulan) - 1]} ${tahun}`;
+}
+
 interface ProductLine {
   index: number;
   name: string;
@@ -326,14 +353,15 @@ export async function importProducts(
     counts[effect] += 1;
   }
 
-  const isPreview = input.mode === "preview";
   return {
     mode: input.mode,
     totalRows: input.rows.length,
     validRows: valid.length,
     invalidRows,
-    created: isPreview ? 0 : counts.created,
-    updated: isPreview ? 0 : counts.updated,
+    // QA-8 F-03: preview melaporkan prediksi efek commit (ember saling
+    // lepas), bukan 0 — angka pratinjau harus sama dengan hasil commit.
+    created: counts.created,
+    updated: counts.updated,
     skipped: counts.skipped,
   };
 }
@@ -396,6 +424,7 @@ function feasibleOn(
   >,
   lines: SaleLine[],
   invalidRows: InvalidRow[],
+  dibuatPada: Map<string, string>,
 ): Feasible {
   const result: Feasible = { lines: [], created: 0, updated: 0 };
   for (const line of lines) {
@@ -408,12 +437,21 @@ function feasibleOn(
     }
     const available = row.morningStock + row.stockInOnDate;
     if (available - line.qty < 0) {
+      // QA-8 F-02: penjualan sebelum barang dibuat memang selalu "stok 0"
+      // pada tanggal itu — katakan penyebabnya, bukan angka kosongnya.
+      const dibuat = dibuatPada.get(line.productId);
       invalidRows.push(
-        invalid(
-          line.index,
-          "insufficient_stock",
-          `Stok tercatat hanya ${available}`,
-        ),
+        dibuat !== undefined && line.date < dibuat
+          ? invalid(
+              line.index,
+              "insufficient_stock",
+              `Barang ini baru dibuat ${tanggalPanjang(dibuat)} — penjualan sebelum tanggal itu tidak bisa dicatat.`,
+            )
+          : invalid(
+              line.index,
+              "insufficient_stock",
+              `Stok tercatat hanya ${available}`,
+            ),
       );
       continue;
     }
@@ -431,10 +469,15 @@ export async function importSales(
   today: string,
 ): Promise<ImportResult> {
   const rows = await db
-    .select({ id: products.id, nameKey: products.nameKey })
+    .select({
+      id: products.id,
+      nameKey: products.nameKey,
+      createdAt: products.createdAt,
+    })
     .from(products)
     .where(and(eq(products.storeId, storeId), isNull(products.archivedAt)));
   const byKey = new Map(rows.map((row) => [row.nameKey, row.id]));
+  const dibuatPada = new Map(rows.map((r) => [r.id, tanggalWib(r.createdAt)]));
 
   const invalidRows: InvalidRow[] = [];
   const valid: SaleLine[] = [];
@@ -449,16 +492,13 @@ export async function importSales(
   const counts = { created: 0, updated: 0 };
 
   for (const date of dates) {
-    const recap = new Map(
-      (await recapRows(db, storeId, date, today)).map((row) => [
-        row.productId,
-        row,
-      ]),
-    );
+    const daftarRecap = await recapRows(db, storeId, date, today);
+    const recap = new Map(daftarRecap.map((r) => [r.productId, r]));
     const feasible = feasibleOn(
       recap,
       grouped.filter((line) => line.date === date),
       invalidRows,
+      dibuatPada,
     );
     counts.created += feasible.created;
     counts.updated += feasible.updated;
@@ -468,14 +508,14 @@ export async function importSales(
   }
 
   invalidRows.sort((a, b) => a.index - b.index);
-  const isPreview = input.mode === "preview";
   return {
     mode: input.mode,
     totalRows: input.rows.length,
     validRows: input.rows.length - invalidRows.length,
     invalidRows,
-    created: isPreview ? 0 : counts.created,
-    updated: isPreview ? 0 : counts.updated,
+    // Sama seperti import barang: preview = prediksi efek commit (F-03).
+    created: counts.created,
+    updated: counts.updated,
     skipped: 0,
   };
 }

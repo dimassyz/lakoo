@@ -93,6 +93,64 @@ beforeAll(async () => {
 afterAll(async () => {
   await close();
 });
+/**
+ * Sesi toko kedua untuk suite QA-8 (F-03/F-02): kuota import 20/jam berlaku
+ * per toko, jadi panggilan ekstra suite baru tidak boleh menggerus kuota
+ * toko utama — kalau tidak, tes lama di bawahnya ikut kena 429.
+ */
+let sesiBCache: { req: typeof req; storeId: string } | undefined;
+async function sesiB(): Promise<{ req: typeof req; storeId: string }> {
+  if (sesiBCache) return sesiBCache;
+  const registered = await app.request("/api/v1/auth/register", {
+    method: "POST",
+    headers: { origin: ORIGIN, "content-type": "application/json" },
+    body: JSON.stringify({
+      storeName: "Toko Uji B",
+      email: "b@contoh.id",
+      password: "rahasia123",
+    }),
+  });
+  const cookieB = (
+    registered.headers
+      .getSetCookie()
+      .find((c) => c.startsWith("lakoo_session=")) ?? ""
+  ).split(";")[0] as string;
+  const semua = await db.select().from(stores);
+  const storeIdB = semua.find((x) => x.id !== storeId)!.id;
+  const inserted = await db
+    .insert(products)
+    .values({
+      storeId: storeIdB,
+      name: "Kopi Bubuk",
+      nameKey: "kopi bubuk",
+      unit: "pcs",
+      sellPrice: 15_000,
+    })
+    .returning();
+  await db.insert(stockIns).values({
+    storeId: storeIdB,
+    productId: inserted[0]!.id,
+    batchId: crypto.randomUUID(),
+    receivedOn: "2026-08-01",
+    qty: 20,
+    unitCost: 10_000,
+    kind: "opening",
+  });
+  const reqB = (path: string, body: unknown) =>
+    Promise.resolve(
+      app.request(`/api/v1${path}`, {
+        method: "POST",
+        headers: {
+          origin: ORIGIN,
+          "content-type": "application/json",
+          cookie: cookieB,
+        },
+        body: JSON.stringify(body),
+      }),
+    );
+  sesiBCache = { req: reqB, storeId: storeIdB };
+  return sesiBCache;
+}
 
 describe("POST /imports/products — preview", () => {
   it("tidak menulis apa pun", async () => {
@@ -107,8 +165,10 @@ describe("POST /imports/products — preview", () => {
     const body = (await res.json()) as ImportResult;
 
     expect(body.validRows).toBe(1);
-    expect(body.created).toBe(0);
+    // QA-8 F-03: preview melaporkan prediksi efek commit, bukan 0.
+    expect(body.created).toBe(1);
     expect(body.updated).toBe(0);
+    expect(body.skipped).toBe(0);
     expect((await productRows()).length).toBe(before);
   });
 
@@ -128,6 +188,66 @@ describe("POST /imports/products — preview", () => {
     ).json()) as ImportResult;
     expect(body.skipped).toBe(1);
     expect(body.created).toBe(0);
+  });
+});
+
+describe("POST /imports/products — angka pratinjau (QA-8 F-03)", () => {
+  let sesi: Awaited<ReturnType<typeof sesiB>>;
+  beforeAll(async () => {
+    sesi = await sesiB();
+  });
+  it("mode Lewati: dibuat dan dilewati saling lepas, commit menepatinya", async () => {
+    const rows = [
+      {
+        name: "Kopi Bubuk",
+        costPrice: 10_000,
+        sellPrice: 16_000,
+        stock: 0,
+      },
+      { name: "Permen Karet", costPrice: 500, sellPrice: 1000, stock: 12 },
+    ];
+    const body = (await (
+      await sesi.req("/imports/products", {
+        mode: "preview",
+        onDuplicate: "skip",
+        rows,
+      })
+    ).json()) as ImportResult;
+    expect(body.validRows).toBe(2);
+    expect(body.created).toBe(1);
+    expect(body.updated).toBe(0);
+    expect(body.skipped).toBe(1);
+
+    const commit = (await (
+      await sesi.req("/imports/products", {
+        mode: "commit",
+        onDuplicate: "skip",
+        rows,
+      })
+    ).json()) as ImportResult;
+    expect(commit.created).toBe(body.created);
+    expect(commit.updated).toBe(body.updated);
+    expect(commit.skipped).toBe(body.skipped);
+  });
+
+  it("mode Perbarui harga: duplikat dihitung akan diperbarui, bukan '0 sudah ada'", async () => {
+    const body = (await (
+      await sesi.req("/imports/products", {
+        mode: "preview",
+        onDuplicate: "update_price",
+        rows: [
+          {
+            name: "Kopi Bubuk",
+            costPrice: 10_000,
+            sellPrice: 16_000,
+            stock: 0,
+          },
+        ],
+      })
+    ).json()) as ImportResult;
+    expect(body.created).toBe(0);
+    expect(body.updated).toBe(1);
+    expect(body.skipped).toBe(0);
   });
 });
 
@@ -348,7 +468,8 @@ describe("POST /imports/sales", () => {
       })
     ).json()) as ImportResult;
     expect(body.validRows).toBe(1);
-    expect(body.created).toBe(0);
+    // QA-8 F-03: preview melaporkan prediksi efek commit, bukan 0.
+    expect(body.created).toBe(1);
     expect(await db.select().from(dailySales)).toHaveLength(0);
   });
 
@@ -483,6 +604,56 @@ describe("harga modal terakhir setelah import update_price", () => {
     expect(
       list.items.find((item) => item.name === "Minyak Goreng 2L")?.lastCost,
     ).toBe(32_000);
+  });
+});
+
+describe("POST /imports/sales — penjualan sebelum barang dibuat (QA-8 F-02)", () => {
+  it("pesan menyebut tanggal pembuatan barang, bukan sekadar 'stok 0'", async () => {
+    const sesi = await sesiB();
+    const inserted = await db
+      .insert(products)
+      .values({
+        storeId: sesi.storeId,
+        name: "Susu UHT",
+        nameKey: "susu uht",
+        unit: "pcs",
+        sellPrice: 20_000,
+        // 02:00 UTC = 09:00 WIB pada 9 Nov 2026.
+        createdAt: new Date("2026-11-09T02:00:00Z"),
+      })
+      .returning();
+    await db.insert(stockIns).values({
+      storeId: sesi.storeId,
+      productId: inserted[0]!.id,
+      batchId: crypto.randomUUID(),
+      receivedOn: TODAY,
+      qty: 10,
+      unitCost: 15_000,
+      kind: "opening",
+    });
+
+    const body = (await (
+      await sesi.req("/imports/sales", {
+        mode: "preview",
+        rows: [{ date: "2026-11-08", productName: "Susu UHT", qty: 1 }],
+      })
+    ).json()) as ImportResult;
+    expect(body.invalidRows).toHaveLength(1);
+    expect(body.invalidRows[0]!.code).toBe("insufficient_stock");
+    expect(body.invalidRows[0]!.message).toContain("baru dibuat 9 Nov 2026");
+    expect(body.invalidRows[0]!.message).toContain(
+      "penjualan sebelum tanggal itu tidak bisa dicatat",
+    );
+
+    // Penjualan pada hari pembuatan tetap diterima.
+    const ok = (await (
+      await sesi.req("/imports/sales", {
+        mode: "preview",
+        rows: [{ date: TODAY, productName: "Susu UHT", qty: 1 }],
+      })
+    ).json()) as ImportResult;
+    expect(ok.invalidRows).toHaveLength(0);
+    expect(ok.created).toBe(1);
   });
 });
 
