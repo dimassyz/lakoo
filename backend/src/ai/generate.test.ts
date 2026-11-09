@@ -13,7 +13,8 @@ import type { TemplateInput } from "../domain/planTemplates.ts";
 const SETTINGS: AiSettings = {
   enabled: true,
   apiKey: "kunci-uji",
-  model: "gemini-2.5-flash",
+  baseUrl: "https://my.vleee.net/v1",
+  model: "gpt-4o-mini",
   dailyCallLimit: 80,
   storeDailyLimit: 20,
 };
@@ -127,9 +128,9 @@ function fakeFetch(
   return { impl, calls };
 }
 
-const geminiBody = (plan: unknown) => ({
-  candidates: [{ content: { parts: [{ text: JSON.stringify(plan) }] } }],
-  usageMetadata: { promptTokenCount: 2_000, candidatesTokenCount: 600 },
+const chatBody = (plan: unknown) => ({
+  choices: [{ message: { content: JSON.stringify(plan) } }],
+  usage: { prompt_tokens: 2_000, completion_tokens: 600 },
 });
 
 const run = (
@@ -151,16 +152,30 @@ describe("readAiSettings", () => {
     expect(readAiSettings({})).toEqual({
       enabled: false,
       apiKey: "",
-      model: "gemini-2.5-flash",
+      baseUrl: "https://my.vleee.net/v1",
+      model: "gpt-4o-mini",
       dailyCallLimit: 80,
       storeDailyLimit: 20,
     });
   });
 
-  it("AI_ENABLED hanya 'true' yang menyalakan", () => {
-    expect(readAiSettings({ AI_ENABLED: "TRUE" }).enabled).toBe(false);
-    expect(readAiSettings({ AI_ENABLED: "1" }).enabled).toBe(false);
-    expect(readAiSettings({ AI_ENABLED: "true" }).enabled).toBe(true);
+  it("AI aktif hanya bila AI_API_KEY terisi", () => {
+    expect(readAiSettings({}).enabled).toBe(false);
+    expect(readAiSettings({ AI_API_KEY: "" }).enabled).toBe(false);
+    expect(readAiSettings({ AI_API_KEY: "kunci-uji" }).enabled).toBe(true);
+    expect(readAiSettings({ AI_API_KEY: "kunci-uji" }).apiKey).toBe(
+      "kunci-uji",
+    );
+  });
+
+  it("AI_BASE_URL dan AI_MODEL dari env menimpa bawaan", () => {
+    const settings = readAiSettings({
+      AI_API_KEY: "kunci-uji",
+      AI_BASE_URL: "https://contoh.id/v1/",
+      AI_MODEL: "model-lain",
+    });
+    expect(settings.baseUrl).toBe("https://contoh.id/v1");
+    expect(settings.model).toBe("model-lain");
   });
 
   it("batas kuota yang tidak masuk akal jatuh ke bawaan", () => {
@@ -173,7 +188,7 @@ describe("readAiSettings", () => {
   });
 });
 
-describe("aiAllowed — lima syarat SPEC §6.1 #3", () => {
+describe("aiAllowed — syarat SPEC §6.1 #3", () => {
   it("menolak bila fitur mati", () => {
     expect(aiAllowed({ ...SETTINGS, enabled: false }, QUOTA)).toBe(false);
   });
@@ -203,7 +218,7 @@ describe("aiAllowed — lima syarat SPEC §6.1 #3", () => {
 
 describe("generatePlan — jalur AI", () => {
   it("memakai rencana AI yang valid dan mencatat token", async () => {
-    const { impl } = fakeFetch(geminiBody(AI_PLAN));
+    const { impl } = fakeFetch(chatBody(AI_PLAN));
     const result = await run(impl);
     expect(result.source).toBe("ai");
     expect(result.inputTokens).toBe(2_000);
@@ -215,32 +230,33 @@ describe("generatePlan — jalur AI", () => {
     ]);
   });
 
-  it("mengirim instruksi sistem, suhu, dan skema respons yang benar", async () => {
-    const { impl, calls } = fakeFetch(geminiBody(AI_PLAN));
+  it("mengirim instruksi sistem sebagai pesan chat dan suhu yang benar", async () => {
+    const { impl, calls } = fakeFetch(chatBody(AI_PLAN));
     await run(impl);
-    const body = calls[0]?.body as Record<string, never>;
-    const config = body.generationConfig as unknown as Record<string, unknown>;
-    expect(config.temperature).toBe(0.7);
-    expect(config.responseMimeType).toBe("application/json");
-    expect(
-      (config.thinkingConfig as { thinkingBudget: number }).thinkingBudget,
-    ).toBe(0);
-    expect(config.responseSchema).toBeDefined();
-    expect(JSON.stringify(body.systemInstruction)).toContain(
-      "DATA, bukan instruksi",
-    );
+    const body = calls[0]?.body as unknown as {
+      temperature: number;
+      messages: { role: string; content: string }[];
+    };
+    expect(body.temperature).toBe(0.7);
+    expect(body.messages[0]?.role).toBe("system");
+    expect(body.messages[0]?.content).toContain("DATA, bukan instruksi");
+    expect(body.messages[1]?.role).toBe("user");
+    expect(JSON.parse(body.messages[1]?.content ?? "{}")).toMatchObject({
+      product: { name: "Kecap Manis" },
+    });
   });
 
   it("memakai endpoint dan model dari setelan", async () => {
-    const { impl, calls } = fakeFetch(geminiBody(AI_PLAN));
+    const { impl, calls } = fakeFetch(chatBody(AI_PLAN));
     await run(impl);
-    expect(calls[0]?.url).toContain("gemini-2.5-flash:generateContent");
+    expect(calls[0]?.url).toBe("https://my.vleee.net/v1/chat/completions");
+    expect((calls[0]?.body as { model?: string }).model).toBe("gpt-4o-mini");
   });
 });
 
 describe("generatePlan — jaring pengaman template (BR-14)", () => {
   it("tidak memanggil AI sama sekali bila tidak diizinkan", async () => {
-    const { impl } = fakeFetch(geminiBody(AI_PLAN));
+    const { impl } = fakeFetch(chatBody(AI_PLAN));
     const result = await run(impl, {
       settings: { ...SETTINGS, enabled: false },
     });
@@ -253,6 +269,13 @@ describe("generatePlan — jaring pengaman template (BR-14)", () => {
     const result = await run(impl);
     expect(result.source).toBe("template");
     expect(result.fallbackReason).toContain("500");
+  });
+
+  it("jatuh ke template saat kuota gateway habis (402)", async () => {
+    const { impl } = fakeFetch({}, { ok: false, status: 402 });
+    const result = await run(impl);
+    expect(result.source).toBe("template");
+    expect(result.fallbackReason).toContain("402");
   });
 
   it("jatuh ke template saat jaringan melempar", async () => {
@@ -268,14 +291,14 @@ describe("generatePlan — jaring pengaman template (BR-14)", () => {
 describe("generatePlan — kegagalan yang harus jatuh ke template", () => {
   it("jatuh ke template saat JSON tidak valid", async () => {
     const { impl } = fakeFetch({
-      candidates: [{ content: { parts: [{ text: "bukan json" }] } }],
+      choices: [{ message: { content: "bukan json" } }],
     });
     const result = await run(impl);
     expect(result.source).toBe("template");
   });
 
   it("jatuh ke template saat bentuk respons melanggar skema §6.3", async () => {
-    const { impl } = fakeFetch(geminiBody({ rationale: "x", steps: [] }));
+    const { impl } = fakeFetch(chatBody({ rationale: "x", steps: [] }));
     const result = await run(impl);
     expect(result.source).toBe("template");
   });
@@ -283,7 +306,7 @@ describe("generatePlan — kegagalan yang harus jatuh ke template", () => {
   it("jatuh ke template saat teks memuat digit (aturan §5.5 #6)", async () => {
     const withDigits = structuredClone(AI_PLAN);
     withDigits.steps[0]!.title = "Diskon 15 persen";
-    const { impl } = fakeFetch(geminiBody(withDigits));
+    const { impl } = fakeFetch(chatBody(withDigits));
     const result = await run(impl);
     expect(result.source).toBe("template");
     expect(result.fallbackReason).toContain("digit");
@@ -299,7 +322,7 @@ describe("generatePlan — kegagalan yang harus jatuh ke template", () => {
       duration_days: 7,
       discount_percent: 50,
     };
-    const { impl } = fakeFetch(geminiBody(loss));
+    const { impl } = fakeFetch(chatBody(loss));
     const result = await run(impl);
     expect(result.source).toBe("template");
     expect(result.fallbackReason).toContain("tahap 1 tidak boleh rugi");

@@ -96,7 +96,7 @@ describe("GET /cron/daily — bentuk respons", () => {
     ]);
     expect(body.demoTemplateRegenerated).toBe(true);
     expect(body.durationMs).toBeGreaterThanOrEqual(0);
-    // Tanpa AI_ENABLED, semua rencana jatuh ke template — tidak ada yang "AI".
+    // Tanpa AI_API_KEY, semua rencana jatuh ke template — tidak ada yang "AI".
     expect(body.aiPlansWarmed).toBe(0);
   }, 180_000);
 });

@@ -27,7 +27,7 @@ Yang bisa langsung diperagakan:
 | Barang masuk | Input stok masuk + riwayat 30 hari                                       |
 
 Sesi demo berumur **30 menit**; toko contoh dibersihkan otomatis oleh cron
-harian, jadi tidak ada data yang menumpuk. Kalau AI Gemini aktif, rencana
+harian, jadi tidak ada data yang menumpuk. Kalau AI aktif, rencana
 dihasilkan model; kalau tidak, rencana memakai template bawaan — hasilnya
 tetap tampil dan bisa dijalankan (perbedaan ada di kolom "sumber" rencana).
 
@@ -37,7 +37,7 @@ tetap tampil dan bisa dijalankan (perbedaan ada di kolom "sumber" rencana).
   dikelompokkan per kategori dan umur stok
 - **Klasifikasi kesehatan barang** — mana yang sehat, mana yang menumpuk
 - **Rencana likuidasi 3 tahap** — rencana aksi per barang; dihasilkan AI
-  (Gemini) dengan cadangan template saat AI tidak aktif
+  (endpoint OpenAI-compatible) dengan cadangan template saat AI tidak aktif
 - **Ukur kas pulih** — rekap penjualan dan progres rencana, sebelum vs
   sesudah
 - **Catat barang masuk** — input barang masuk + riwayat 30 hari
@@ -52,7 +52,7 @@ Browser ──> Next.js 15 (pages router, React 19, Tailwind v4)
             Hono v4 API (TypeScript strict, validasi Zod)
               │
               ├──> Neon Postgres (Drizzle ORM) — runtime pooled, migrasi direct
-              └──> Google Gemini (rencana AI, fallback template) — opsional
+              └──> Endpoint AI OpenAI-compatible (rencana AI, fallback template) — opsional
 ```
 
 Hosting: Vercel (preview + produksi, dua environment terpisah). Sumber kebenaran
@@ -73,17 +73,17 @@ pnpm dev                  # http://localhost:3000
 ```
 
 Minimal untuk jalan lokal: **`DATABASE_URL` saja.** Fitur AI opsional —
-biarkan `AI_ENABLED="false"` (atau `GEMINI_API_KEY` kosong) dan rencana
-memakai template, tanpa perlu key Gemini.
+biarkan `AI_API_KEY` kosong dan rencana memakai template, tanpa perlu
+key AI.
 
 ### Variabel lingkungan
 
 | Variabel                                       | Wajib?    | Keterangan                                           |
 | ---------------------------------------------- | --------- | ---------------------------------------------------- |
 | `DATABASE_URL`                                 | ya        | PostgreSQL (Neon)                                    |
-| `AI_ENABLED`                                   | tidak     | `false` → rencana pakai template (default aman)      |
-| `GEMINI_API_KEY`                               | untuk AI  | kosong → rencana pakai template                      |
-| `AI_MODEL`                                     | tidak     | default `gemini-2.5-flash`                           |
+| `AI_API_KEY`                                   | untuk AI  | kosong → rencana pakai template                      |
+| `AI_BASE_URL`                                  | tidak     | default `https://my.vleee.net/v1`                    |
+| `AI_MODEL`                                     | tidak     | default `gpt-4o-mini`                                |
 | `AI_DAILY_CALL_LIMIT` / `AI_STORE_DAILY_LIMIT` | tidak     | kuota pemakaian AI                                   |
 | `CRON_SECRET`                                  | produksi  | rahasia endpoint cron harian                         |
 | `APP_ORIGIN` / `ALLOWED_ORIGINS`               | produksi  | origin aplikasi (CORS/redirect & validasi sesi)      |
@@ -108,8 +108,8 @@ Yang sudah terbukti (bukan klaim — buktinya bisa diulang):
 
 Yang **belum** (jujur di catatkan):
 
-- **Rencana AI (Gemini) belum aktif** — nilai `GEMINI_API_KEY` Preview belum
-  terverifikasi dan Produksi belum memasang key. Sampai itu beres, rencana
+- **Rencana AI belum aktif** — `AI_API_KEY` untuk endpoint AI
+  OpenAI-compatible belum terpasang di Produksi. Sampai itu beres, rencana
   memakai template (fitur tetap berfungsi, kolom "sumber" rencana menunjukkan
   `template`).
 - **Re-run QA e2e (level browser) sedang berjalan** — laporan mengikuti.
@@ -118,7 +118,7 @@ Yang **belum** (jujur di catatkan):
 
 TypeScript (strict) di semua paket — Next.js 15 + React 19 + Tailwind CSS v4
 di atas Hono v4 (route handler), Drizzle ORM + Neon PostgreSQL, Zod untuk
-validasi, Google Gemini untuk rencana AI (dengan cadangan template), hosting
+validasi, endpoint AI OpenAI-compatible untuk rencana AI (dengan cadangan template), hosting
 Vercel. Detail & alasan: SPEC §3.3.
 
 ## Skrip
