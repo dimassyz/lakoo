@@ -4,7 +4,7 @@ import {
   validatePlan,
   type ValidationContext,
 } from "../domain/planValidation.ts";
-import { requestPlan, type GeminiConfig } from "./gemini.ts";
+import { requestPlan, type AiClientConfig } from "./openai.ts";
 import type { PromptContext } from "./prompt.ts";
 import { toPlanDraft } from "./schema.ts";
 
@@ -12,6 +12,7 @@ import { toPlanDraft } from "./schema.ts";
 export interface AiSettings {
   enabled: boolean;
   apiKey: string;
+  baseUrl: string;
   model: string;
   dailyCallLimit: number;
   storeDailyLimit: number;
@@ -22,13 +23,25 @@ const intFrom = (raw: string | undefined, fallback: number): number => {
   return Number.isFinite(value) && value >= 0 ? value : fallback;
 };
 
+const DEFAULT_BASE_URL = "https://my.vleee.net/v1";
+const DEFAULT_MODEL = "gpt-4o-mini";
+
+/**
+ * Aktivasi AI hanya dari `AI_API_KEY`: key kosong → `enabled` false → semua
+ * rencana jatuh ke template. Base URL & model punya bawaan OpenAI-compatible
+ * dan bisa diganti lewat env tanpa sentuh kode.
+ */
 export function readAiSettings(
   env: Record<string, string | undefined> = process.env,
 ): AiSettings {
+  const apiKey = env.AI_API_KEY ?? "";
+  const baseUrl = (env.AI_BASE_URL ?? "").trim().replace(/\/+$/, "");
+  const model = (env.AI_MODEL ?? "").trim();
   return {
-    enabled: env.AI_ENABLED === "true",
-    apiKey: env.GEMINI_API_KEY ?? "",
-    model: env.AI_MODEL ?? "gemini-2.5-flash",
+    enabled: apiKey !== "",
+    apiKey,
+    baseUrl: baseUrl === "" ? DEFAULT_BASE_URL : baseUrl,
+    model: model === "" ? DEFAULT_MODEL : model,
     dailyCallLimit: intFrom(env.AI_DAILY_CALL_LIMIT, 80),
     storeDailyLimit: intFrom(env.AI_STORE_DAILY_LIMIT, 20),
   };
@@ -40,7 +53,7 @@ export interface QuotaState {
   storeCallsToday: number;
 }
 
-/** Kelima syarat §6.1 #3: AI_ENABLED, GEMINI_API_KEY, aiEnabled toko, kuota global, kuota toko. */
+/** Syarat §6.1 #3: AI_API_KEY terisi (enabled), aiEnabled toko, kuota global, kuota toko. */
 export function aiAllowed(settings: AiSettings, quota: QuotaState): boolean {
   if (!settings.enabled || settings.apiKey === "") return false;
   if (!quota.storeAiEnabled) return false;
@@ -66,8 +79,9 @@ export interface GenerateResult {
   fallbackReason?: string;
 }
 
-const configOf = (settings: AiSettings): GeminiConfig => ({
+const configOf = (settings: AiSettings): AiClientConfig => ({
   apiKey: settings.apiKey,
+  baseUrl: settings.baseUrl,
   model: settings.model,
 });
 

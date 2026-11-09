@@ -44,7 +44,7 @@ export async function aiQuotaFor(
   };
 }
 
-/** SPEC §6.1 #7: catat calls + token dari `usageMetadata` setelah panggilan AI. */
+/** SPEC §6.1 #7: catat calls + token dari field `usage` setelah panggilan AI. */
 export async function recordAiUsage(
   db: AnyDb,
   today: string,

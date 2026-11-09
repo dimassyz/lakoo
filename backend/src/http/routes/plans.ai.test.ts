@@ -15,13 +15,8 @@ const ORIGIN = "https://lakoo.test";
 const NOW = new Date("2026-11-09T03:00:00Z");
 const TODAY = "2026-11-09";
 
-let db: AnyDb;
-let close: () => Promise<void>;
-let app: ReturnType<typeof createApp>;
-let cookie = "";
-let storeId = "";
-let matiId = "";
-let larisId = "";
+/** Diisi buildWorld setelah seed — mock fetch membacanya saat request terjadi. */
+const shared = { larisId: "" };
 
 const aiPlan = () => ({
   rationale: "Barang lama tidak laku dan uangnya terkunci di rak",
@@ -33,7 +28,7 @@ const aiPlan = () => ({
       success_criteria: "Paket terjual",
       duration_days: 7,
       discount_percent: 10,
-      bundle_product_id: larisId,
+      bundle_product_id: shared.larisId,
     },
     {
       action_type: "discount",
@@ -53,27 +48,25 @@ const aiPlan = () => ({
   ],
 });
 
-const geminiBody = (plan: unknown) => ({
-  candidates: [{ content: { parts: [{ text: JSON.stringify(plan) }] } }],
-  usageMetadata: { promptTokenCount: 2_000, candidatesTokenCount: 600 },
+const chatBody = (plan: unknown) => ({
+  choices: [{ message: { content: JSON.stringify(plan) } }],
+  usage: { prompt_tokens: 2_000, completion_tokens: 600 },
 });
 
-const fetchMock = vi.fn(async () => ({
-  ok: true,
-  status: 200,
-  json: async () => geminiBody(aiPlan()),
-}));
-const fakeFetch = () => fetchMock as unknown as typeof fetch;
+interface World {
+  db: AnyDb;
+  close: () => Promise<void>;
+  matiId: string;
+  mati2Id: string;
+  req: (path: string, method?: string) => Promise<Response>;
+}
 
-const req = (path: string, method = "GET") =>
-  Promise.resolve(
-    app.request(`/api/v1${path}`, {
-      method,
-      headers: { origin: ORIGIN, "content-type": "application/json", cookie },
-    }),
-  );
-
-async function seedProduct(name: string, daysAgo: number): Promise<string> {
+async function seedProduct(
+  db: AnyDb,
+  storeId: string,
+  name: string,
+  daysAgo: number,
+): Promise<string> {
   const inserted = await db
     .insert(products)
     .values({
@@ -98,17 +91,18 @@ async function seedProduct(name: string, daysAgo: number): Promise<string> {
   return inserted[0]!.id;
 }
 
-beforeAll(async () => {
+async function buildWorld(
+  env: Record<string, string | undefined>,
+  fetchImpl: typeof fetch,
+): Promise<World> {
   const created = await createTestDb();
-  db = created.db as AnyDb;
-  close = () => created.client.close();
-
-  app = createApp({
+  const db = created.db as AnyDb;
+  const app = createApp({
     db,
     allowedOrigins: [ORIGIN],
     now: () => NOW,
-    env: { AI_ENABLED: "true", GEMINI_API_KEY: "kunci-uji" },
-    fetchImpl: fakeFetch(),
+    env,
+    fetchImpl,
   });
 
   const registered = await Promise.resolve(
@@ -122,28 +116,60 @@ beforeAll(async () => {
       }),
     }),
   );
-  cookie = (
+  const cookie = (
     registered.headers
       .getSetCookie()
       .find((c) => c.startsWith("lakoo_session=")) ?? ""
   ).split(";")[0] as string;
-  storeId = (await db.select().from(stores).limit(1))[0]!.id;
+  const storeId = (await db.select().from(stores).limit(1))[0]!.id;
   await db
     .update(stores)
     .set({ aiEnabled: true })
     .where(eq(stores.id, storeId));
 
-  larisId = await seedProduct("Barang Laris", 3);
-  matiId = await seedProduct("Barang Mati", 200);
-}, 120_000);
+  shared.larisId = await seedProduct(db, storeId, "Barang Laris", 3);
+  const matiId = await seedProduct(db, storeId, "Barang Mati", 200);
+  const mati2Id = await seedProduct(db, storeId, "Barang Mati Dua", 200);
 
-afterAll(async () => {
-  await close();
-});
+  const req = (path: string, method = "GET") =>
+    Promise.resolve(
+      app.request(`/api/v1${path}`, {
+        method,
+        headers: {
+          origin: ORIGIN,
+          "content-type": "application/json",
+          cookie,
+        },
+      }),
+    );
+
+  return { db, close: () => created.client.close(), matiId, mati2Id, req };
+}
+
+const usageRows = (db: AnyDb) =>
+  db.select().from(aiUsageDaily).where(eq(aiUsageDaily.usageDate, TODAY));
 
 describe("POST /products/{id}/plans — jalur AI sungguhan", () => {
+  let world: World;
+  const fetchMock = vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    json: async () => chatBody(aiPlan()),
+  }));
+
+  beforeAll(async () => {
+    world = await buildWorld(
+      { AI_API_KEY: "kunci-uji" },
+      fetchMock as unknown as typeof fetch,
+    );
+  }, 120_000);
+
+  afterAll(async () => {
+    await world.close();
+  });
+
   it("memakai AI, menyimpan rencana, dan mencatat ai_usage_daily", async () => {
-    const res = await req(`/products/${matiId}/plans`, "POST");
+    const res = await world.req(`/products/${world.matiId}/plans`, "POST");
     expect(res.status).toBe(201);
 
     const body = (await res.json()) as {
@@ -153,28 +179,108 @@ describe("POST /products/{id}/plans — jalur AI sungguhan", () => {
     expect(body.source).toBe("ai");
     expect(body.steps).toHaveLength(3);
 
-    const usage = await db
-      .select()
-      .from(aiUsageDaily)
-      .where(eq(aiUsageDaily.usageDate, TODAY));
+    const usage = await usageRows(world.db);
     expect(usage).toHaveLength(1);
     expect(usage[0]!.calls).toBe(1);
-    // Token dari usageMetadata Gemini, bukan perkiraan.
+    // Token dari field usage chat-completions, bukan perkiraan.
     expect(usage[0]!.inputTokens).toBe(2_000);
     expect(usage[0]!.outputTokens).toBe(600);
 
-    // Prompt AI wajib membawa riwayat 7 minggu — array kosong = saran tanpa data.
-    const [, init] = fetchMock.mock.calls[0] as unknown as [
+    // Panggilan keluar = chat-completions OpenAI-compatible dengan Bearer key.
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [
       string,
-      { body: string },
+      {
+        body: string;
+        headers: Record<string, string>;
+      },
     ];
-    const prompt = JSON.parse(init.body) as {
-      contents: { parts: { text: string }[] }[];
+    expect(url).toBe("https://my.vleee.net/v1/chat/completions");
+    expect(init.headers.authorization).toBe("Bearer kunci-uji");
+    const sent = JSON.parse(init.body) as {
+      model: string;
+      messages: { role: string; content: string }[];
     };
-    const sent = prompt.contents[0]!.parts[0]!.text;
-    const context = JSON.parse(sent.slice(sent.indexOf("{"))) as {
+    expect(sent.model).toBe("gpt-4o-mini");
+    const userMessage = sent.messages.find((m) => m.role === "user");
+    // Prompt AI wajib membawa riwayat 7 minggu — array kosong = saran tanpa data.
+    const context = JSON.parse(userMessage?.content ?? "{}") as {
       product: { week_qty: number[] };
     };
     expect(context.product.week_qty).toHaveLength(7);
+  }, 60_000);
+});
+
+describe("POST /products/{id}/plans — tanpa AI_API_KEY", () => {
+  let world: World;
+  const fetchMock = vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    json: async () => chatBody(aiPlan()),
+  }));
+
+  beforeAll(async () => {
+    world = await buildWorld({}, fetchMock as unknown as typeof fetch);
+  }, 120_000);
+
+  afterAll(async () => {
+    await world.close();
+  });
+
+  it("selalu jatuh ke template dan tidak memanggil gateway sama sekali", async () => {
+    const res = await world.req(`/products/${world.matiId}/plans`, "POST");
+    expect(res.status).toBe(201);
+
+    const body = (await res.json()) as {
+      source: string;
+      steps: { actionType: string }[];
+    };
+    expect(body.source).toBe("template");
+    expect(body.steps).toHaveLength(3);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await usageRows(world.db)).toHaveLength(0);
+  }, 60_000);
+});
+
+describe("POST /products/{id}/plans — gateway AI error", () => {
+  let world: World;
+  let errorStatus = 402;
+  const fetchMock = vi.fn(async () => ({
+    ok: false,
+    status: errorStatus,
+    json: async () => ({ error: { message: "gateway error" } }),
+  }));
+
+  beforeAll(async () => {
+    world = await buildWorld(
+      { AI_API_KEY: "kunci-uji" },
+      fetchMock as unknown as typeof fetch,
+    );
+  }, 120_000);
+
+  afterAll(async () => {
+    await world.close();
+  });
+
+  it("402 (kuota gateway habis) → rencana template, tanpa usage tercatat", async () => {
+    errorStatus = 402;
+    const res = await world.req(`/products/${world.matiId}/plans`, "POST");
+    expect(res.status).toBe(201);
+
+    const body = (await res.json()) as {
+      source: string;
+      steps: { actionType: string }[];
+    };
+    expect(body.source).toBe("template");
+    expect(body.steps).toHaveLength(3);
+    expect(await usageRows(world.db)).toHaveLength(0);
+  }, 60_000);
+
+  it("500 → rencana template", async () => {
+    errorStatus = 500;
+    const res = await world.req(`/products/${world.mati2Id}/plans`, "POST");
+    expect(res.status).toBe(201);
+
+    const body = (await res.json()) as { source: string };
+    expect(body.source).toBe("template");
   }, 60_000);
 });

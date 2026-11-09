@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ACTION_TYPES } from "../domain/pricing.ts";
 import type { PlanDraft, PlanStepDraft } from "../domain/planValidation.ts";
 
-/** Skema output model (SPEC §6.3), persis seperti yang dikirim ke Gemini. */
+/** Skema output model (SPEC §6.3) — bentuk JSON yang wajib dikembalikan AI. */
 const stepSchema = z.object({
   action_type: z.enum(ACTION_TYPES),
   title: z.string().max(60),
@@ -40,36 +40,3 @@ export function toPlanDraft(plan: AiPlan): PlanDraft {
     })),
   };
 }
-
-/** `responseSchema` Gemini — subset OpenAPI, tanpa kunci yang tidak dikenal model. */
-export const GEMINI_RESPONSE_SCHEMA = {
-  type: "object",
-  properties: {
-    rationale: { type: "string" },
-    steps: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          action_type: { type: "string", enum: [...ACTION_TYPES] },
-          title: { type: "string" },
-          instructions: { type: "string" },
-          success_criteria: { type: "string" },
-          duration_days: { type: "integer" },
-          discount_percent: { type: "integer" },
-          bundle_product_id: { type: "string" },
-          below_cost_percent: { type: "integer" },
-          share_copy: { type: "string" },
-        },
-        required: [
-          "action_type",
-          "title",
-          "instructions",
-          "success_criteria",
-          "duration_days",
-        ],
-      },
-    },
-  },
-  required: ["rationale", "steps"],
-} as const;
