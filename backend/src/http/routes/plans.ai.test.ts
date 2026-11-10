@@ -189,18 +189,18 @@ describe("POST /products/{id}/plans — jalur AI sungguhan", () => {
     // Panggilan keluar = chat-completions OpenAI-compatible dengan Bearer key.
     const [url, init] = fetchMock.mock.calls[0] as unknown as [
       string,
-      {
-        body: string;
-        headers: Record<string, string>;
-      },
+      { body: string; headers: Record<string, string> },
     ];
     expect(url).toBe("https://my.vleee.net/v1/chat/completions");
     expect(init.headers.authorization).toBe("Bearer kunci-uji");
+    expect(init.headers["user-agent"]).toBe("curl/8.5.0");
     const sent = JSON.parse(init.body) as {
       model: string;
+      response_format: { type: string };
       messages: { role: string; content: string }[];
     };
     expect(sent.model).toBe("gpt-4o-mini");
+    expect(sent.response_format).toEqual({ type: "json_object" });
     const userMessage = sent.messages.find((m) => m.role === "user");
     // Prompt AI wajib membawa riwayat 7 minggu — array kosong = saran tanpa data.
     const context = JSON.parse(userMessage?.content ?? "{}") as {
